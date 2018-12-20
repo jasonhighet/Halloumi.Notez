@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Halloumi.Notez.Engine;
 
 namespace Halloumi.Notez.TestHarness
@@ -28,14 +29,21 @@ namespace Halloumi.Notez.TestHarness
             //MidiHelper.SaveToCsv(phrase, "test.csv");
             //MidiHelper.SaveToMidi(phrase, "test.mid");
 
-            var phrase = MidiHelper.ReadMidi(@"TestMidi\void.mid");
-            foreach (var element in phrase.Elements)
+            var files = Directory.GetFiles("TestMidi", "*.mid");
+
+            foreach (var file in files)
             {
-                Console.WriteLine(NoteHelper.NumberToNote(element.Note) + "\t" + element.Duration);
+                Console.WriteLine(file);
+
+                var phrase = MidiHelper.ReadMidi(file);
+                Console.WriteLine(NoteHelper.GetTotalDuration(phrase));
+
+                var scaleName = ScaleHelper.FindMatchingScales(phrase)[0].Scale.Name;
+                Console.WriteLine(scaleName);
+
             }
 
-            var scaleName = ScaleHelper.FindMatchingScales(phrase)[0].Scale.Name;
-            Console.WriteLine(scaleName);
+
 
 
             //MidiHelper.SaveMidiAsCsv(@"TestMidi\void.mid");

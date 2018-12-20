@@ -116,6 +116,11 @@ namespace Halloumi.Notez.Engine
         {
             return "C,C#,D,D#,E,F,F#,G,G#,A,A#,B".Split(',').ToList();
         }
+
+        public static decimal GetTotalDuration(Phrase phrase)
+        {
+            return phrase.Elements.Sum(x => x.Duration);
+        }
     }
 
     public enum Interval
