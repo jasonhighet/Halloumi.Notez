@@ -11,13 +11,28 @@ namespace Halloumi.Notez.Engine
             var tab = new TabParser();
             tab.LoadTabFromTabText(tabText);
 
-            return new Phrase
+            var phrase = new Phrase
             {
                 Elements = tab
                     .TabNotes
                     .Select(x => new PhraseElement { Note = x.Number, Duration = x.Length })
                     .ToList()
             };
+
+            UpdatePositionsFromDurations(phrase);
+
+            return phrase;
+        }
+
+        private static void UpdatePositionsFromDurations(Phrase phrase)
+        {
+            foreach (var element in phrase.Elements)
+            {
+                var currentIndex = phrase.Elements.IndexOf(element);
+                element.Position = phrase.Elements
+                    .Where(x => phrase.Elements.IndexOf(x) < currentIndex)
+                    .Sum(x => x.Duration);
+            }
         }
 
         public static Phrase ParseTabFile(string filepath)
@@ -27,13 +42,17 @@ namespace Halloumi.Notez.Engine
                 var tab = new TabParser();
                 tab.LoadTabFromTabText(tabText);
 
-                return new Phrase
+                var phrase = new Phrase
                 {
                     Elements = tab
                         .TabNotes
                         .Select(x => new PhraseElement {Note = x.Number, Duration = x.Length})
                         .ToList()
                 };
+
+            UpdatePositionsFromDurations(phrase);
+
+            return phrase;
 
         }
     }

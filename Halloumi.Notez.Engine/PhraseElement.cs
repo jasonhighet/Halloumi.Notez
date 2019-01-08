@@ -10,12 +10,17 @@ namespace Halloumi.Notez.Engine
     {
         public int Note { get; set; }
         public decimal Duration { get; set; }
+        public decimal Position { get; set; }
+
+        public decimal OffPosition => Position + Duration;
+
         public PhraseElement Clone()
         {
             return new PhraseElement()
             {
                 Note = Note,
-                Duration = Duration
+                Duration = Duration,
+                Position = Position
             };
         }
 

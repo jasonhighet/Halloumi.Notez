@@ -119,7 +119,7 @@ namespace Halloumi.Notez.Engine
 
         public static decimal GetTotalDuration(Phrase phrase)
         {
-            return phrase.Elements.Sum(x => x.Duration);
+            return phrase.Elements.Max(x => x.OffPosition);
         }
     }
 

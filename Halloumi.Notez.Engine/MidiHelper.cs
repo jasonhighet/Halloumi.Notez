@@ -1,12 +1,17 @@
 ﻿using Melanchall.DryWetMidi.Smf;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Melanchall.DryWetMidi.Smf.Interaction;
 using Melanchall.DryWetMidi.Tools;
 
 namespace Halloumi.Notez.Engine
 {
     public class MidiHelper
     {
+        private const int NoteOffset = 24;
+
         public static void SaveToMidi(Phrase phrase, string filepath)
         {
             var builder = BuildMidi(phrase);
@@ -47,8 +52,6 @@ namespace Halloumi.Notez.Engine
         {
             var midi = MidiFile.Read(filepath);
 
-            const int noteOffset = 24;
-
             if (midi.Chunks.Count == 0)
                 throw new ApplicationException("Invalid Midi File");
 
@@ -57,33 +60,48 @@ namespace Halloumi.Notez.Engine
 
             var phrase = new Phrase();
 
-            PhraseElement phraseElement = null;
-            long deltaTime = 0;
-            foreach (var midiEvent in chunk.Events)
+            using (var manager = new TimedEventsManager(chunk.Events))
             {
-                deltaTime += midiEvent.DeltaTime;
+                phrase.Elements = manager.Events
+                    .Where(x => x.Event is NoteOnEvent)
+                    .Select(GetNewPhraseElement)
+                    .ToList();
 
-                if (midiEvent is NoteOnEvent)
+                var offNotes = manager.Events
+                    .Where(x => x.Event is NoteOffEvent)
+                    .Select(x => new Tuple<decimal, int>((decimal) x.Time / 24,
+                        ((NoteOffEvent) x.Event).NoteNumber - NoteOffset))
+                    .ToList();
+
+                foreach (var element in phrase.Elements)
                 {
-                    var noteOn = midiEvent as NoteOnEvent;
-                    phraseElement = new PhraseElement()
-                    {
-                        Note = noteOn.NoteNumber - noteOffset,
-                        Duration = (int)(noteOn.DeltaTime / 24M)
-                };
-                }
-                else if (midiEvent is NoteOffEvent)
-                {
-                    if (phraseElement == null) continue;
+                    var offNote = offNotes
+                        .FirstOrDefault(x => x.Item1 > element.Position && x.Item2 == element.Note);
+                    if (offNote == null) throw new ApplicationException("No off note found");
+                    element.Duration = offNote.Item1 - element.Position;
 
-                    phraseElement.Duration = (int)(deltaTime / 24M);
-                    phrase.Elements.Add(phraseElement);
-
-                    deltaTime = 0;
+                    element.Duration = Math.Round(element.Duration * 2, MidpointRounding.AwayFromZero) / 2;
                 }
             }
 
             return phrase;
         }
+
+        private static PhraseElement GetNewPhraseElement(TimedEvent timedEvent)
+        {
+            var noteOn = timedEvent.Event as NoteOnEvent;
+            if (noteOn == null) throw new ArgumentNullException();
+
+            var element = new PhraseElement()
+            {
+                Note = noteOn.NoteNumber - NoteOffset,
+                Position = (decimal)timedEvent.Time / 24
+            };
+
+            element.Position = Math.Round(element.Position * 2, MidpointRounding.AwayFromZero) / 2;
+
+            return element;
+        }
+
     }
 }
