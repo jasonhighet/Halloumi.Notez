@@ -1,5 +1,6 @@
 ﻿using Halloumi.Notez.Engine;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -30,14 +31,15 @@ namespace Halloumi.Notez.TestHarness
             .ThenBy(x => x.Note)
             .ToList();
 
-            var onoffProbabilities = allNotes
+            var probabilities = allNotes
                 .Select(x => x.Position)
                 .Distinct()
                 .OrderBy(x => x)
                 .Select(x => new
                 {
                     Position = x,
-                    Chance = allNotes.Where(y => y.Position == x).Sum(y => y.Count) / Convert.ToDouble(riffs.Count)
+                    OnOffChance = allNotes.Where(y => y.Position == x).Sum(y => y.Count) / Convert.ToDouble(riffs.Count),
+                    Notes = allNotes.Where(y => y.Position == x).ToList()
                 })
                 .ToList();
 
@@ -52,19 +54,19 @@ namespace Halloumi.Notez.TestHarness
             for (var i = 0; i < 10; i++)
             {
                 var selectedNotes =
-                (from onoffProbability in onoffProbabilities
-                 let noteOn = GetRandomBool(random, onoffProbability.Chance)
+                (from onoffProbability in probabilities
+                 let noteOn = GetRandomBool(random, onoffProbability.OnOffChance)
                  where noteOn
                  select onoffProbability).ToList();
 
                 while (selectedNotes.Count > noteCount)
                 {
-                    var leastPopularNote = selectedNotes.OrderBy(x => x.Chance).FirstOrDefault();
+                    var leastPopularNote = selectedNotes.OrderBy(x => x.OnOffChance).FirstOrDefault();
                     selectedNotes.Remove(leastPopularNote);
                 }
                 while (selectedNotes.Count < noteCount)
                 {
-                    var mostPopularNote = onoffProbabilities.Except(selectedNotes).OrderByDescending(x => x.Chance).FirstOrDefault();
+                    var mostPopularNote = probabilities.Except(selectedNotes).OrderByDescending(x => x.OnOffChance).FirstOrDefault();
                     selectedNotes.Add(mostPopularNote);
                 }
 
@@ -72,7 +74,10 @@ namespace Halloumi.Notez.TestHarness
 
                 foreach (var note in selectedNotes)
                 {
-                    Console.Write(note.Position + " ");
+                    var noteNumbers = note.Notes.ToDictionary(x => x.Note , x => x.Count);
+                    var randomNote = GetRandomNote(noteNumbers);
+
+                    Console.Write(note.Position.ToString("00") + " " + NoteHelper.NumberToNote(randomNote) + "\t");
                 }
 
                 Console.WriteLine();
@@ -82,6 +87,11 @@ namespace Halloumi.Notez.TestHarness
 
 
             Console.ReadLine();
+        }
+
+        private static int GetRandomNote(Dictionary<int, int> noteNumbers)
+        {
+            return noteNumbers.ToList().OrderByDescending(x => x.Value).ThenBy(x => x.Key).FirstOrDefault().Key;
         }
 
         private static int GetNumberOfNotes(Random random, int minNotes, int maxNotes)
