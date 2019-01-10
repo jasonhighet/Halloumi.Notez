@@ -51,10 +51,11 @@ namespace Halloumi.Notez.TestHarness
 
             var random = new Random();
 
-            const int riffCount = 100;
-            var phrase = new Phrase();
+            const int riffCount = 32;
             for (var i = 0; i < riffCount; i++)
             {
+                var phrase = new Phrase();
+
                 var noteCount = GetNumberOfNotes(random, minNotes, maxNotes);
 
                 var selectedNotes =
@@ -80,29 +81,28 @@ namespace Halloumi.Notez.TestHarness
                 {
                     var noteNumbers = note.Notes.ToDictionary(x => x.Note , x => x.Count);
                     var randomNote = GetRandomNote(random, noteNumbers);
-
-
+                    
                     phrase.Elements.Add(new PhraseElement
                     {
-                        Position = note.Position + (i * riffLength),
+                        Position = note.Position,
                         Duration = 1,
                         Note = randomNote
                     });
                 }
 
-                Console.WriteLine("Phrase " + i);
+                PhraseHelper.UpdateDurationsFromPositions(phrase, riffLength);
+
+                MidiHelper.SaveToMidi(phrase, "Riff" + i + ".mid");
             }
 
-            PhraseHelper.UpdateDurationsFromPositions(phrase, riffCount * riffLength);
 
-            MidiHelper.SaveToMidi(phrase, "Riff.mid");
 
             Console.WriteLine();
 
 
 
 
-            Console.ReadLine();
+           // Console.ReadLine();
         }
 
         private static int GetRandomNote(Random random, Dictionary<int, int> noteNumbers)
