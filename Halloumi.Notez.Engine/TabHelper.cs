@@ -19,20 +19,9 @@ namespace Halloumi.Notez.Engine
                     .ToList()
             };
 
-            UpdatePositionsFromDurations(phrase);
+            PhraseHelper.UpdatePositionsFromDurations(phrase);
 
             return phrase;
-        }
-
-        private static void UpdatePositionsFromDurations(Phrase phrase)
-        {
-            foreach (var element in phrase.Elements)
-            {
-                var currentIndex = phrase.Elements.IndexOf(element);
-                element.Position = phrase.Elements
-                    .Where(x => phrase.Elements.IndexOf(x) < currentIndex)
-                    .Sum(x => x.Duration);
-            }
         }
 
         public static Phrase ParseTabFile(string filepath)
@@ -50,7 +39,7 @@ namespace Halloumi.Notez.Engine
                         .ToList()
                 };
 
-            UpdatePositionsFromDurations(phrase);
+            PhraseHelper.UpdatePositionsFromDurations(phrase);
 
             return phrase;
 

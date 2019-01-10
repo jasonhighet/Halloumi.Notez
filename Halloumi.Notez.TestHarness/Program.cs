@@ -10,9 +10,11 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
+            const int riffLength = 32;
+
             var riffs = Directory.GetFiles("TestMidi", "*.mid")
                 .Select(MidiHelper.ReadMidi)
-                .Where(riff => NoteHelper.GetTotalDuration(riff) == 32)
+                .Where(riff => NoteHelper.GetTotalDuration(riff) == riffLength)
                 .Where(riff => ScaleHelper.FindMatchingScales(riff).Select(x => x.Scale.Name).Contains("C Natural Minor"))
                 .ToList();
 
@@ -48,11 +50,13 @@ namespace Halloumi.Notez.TestHarness
             var maxNotes = riffs.Select(x => x.Elements.Count).Max();
 
             var random = new Random();
-            var noteCount = GetNumberOfNotes(random, minNotes, maxNotes);
 
-
-            for (var i = 0; i < 10; i++)
+            const int riffCount = 100;
+            var phrase = new Phrase();
+            for (var i = 0; i < riffCount; i++)
             {
+                var noteCount = GetNumberOfNotes(random, minNotes, maxNotes);
+
                 var selectedNotes =
                 (from onoffProbability in probabilities
                  let noteOn = GetRandomBool(random, onoffProbability.OnOffChance)
@@ -75,13 +79,25 @@ namespace Halloumi.Notez.TestHarness
                 foreach (var note in selectedNotes)
                 {
                     var noteNumbers = note.Notes.ToDictionary(x => x.Note , x => x.Count);
-                    var randomNote = GetRandomNote(noteNumbers);
+                    var randomNote = GetRandomNote(random, noteNumbers);
 
-                    Console.Write(note.Position.ToString("00") + " " + NoteHelper.NumberToNote(randomNote) + "\t");
+
+                    phrase.Elements.Add(new PhraseElement
+                    {
+                        Position = note.Position + (i * riffLength),
+                        Duration = 1,
+                        Note = randomNote
+                    });
                 }
 
-                Console.WriteLine();
+                Console.WriteLine("Phrase " + i);
             }
+
+            PhraseHelper.UpdateDurationsFromPositions(phrase, riffCount * riffLength);
+
+            MidiHelper.SaveToMidi(phrase, "Riff.mid");
+
+            Console.WriteLine();
 
 
 
@@ -89,17 +105,27 @@ namespace Halloumi.Notez.TestHarness
             Console.ReadLine();
         }
 
-        private static int GetRandomNote(Dictionary<int, int> noteNumbers)
+        private static int GetRandomNote(Random random, Dictionary<int, int> noteNumbers)
         {
-            return noteNumbers.ToList().OrderByDescending(x => x.Value).ThenBy(x => x.Key).FirstOrDefault().Key;
+            var numbers = new List<int>();
+            foreach (var noteNumber in noteNumbers)
+            {
+                for (var i = 0; i < noteNumber.Value; i++)
+                {
+                    numbers.Add(noteNumber.Key);
+                }
+            }
+
+            var randomIndex = random.Next(0, numbers.Count);
+
+            return numbers[randomIndex];
         }
 
         private static int GetNumberOfNotes(Random random, int minNotes, int maxNotes)
         {
             var range = maxNotes - minNotes;
-            return minNotes + Convert.ToInt32(Math.Round(range * GetBellCurvedRandom(random)));
-            //return minNotes + Convert.ToInt32(Math.Round(range * random.NextDouble()));
-
+            //return minNotes + Convert.ToInt32(Math.Round(range * GetBellCurvedRandom(random)));
+            return minNotes + Convert.ToInt32(Math.Round(range * random.NextDouble()));
         }
 
         private static bool GetRandomBool(Random random, double chanceOfTrue)
