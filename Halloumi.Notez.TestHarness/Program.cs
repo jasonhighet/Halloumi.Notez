@@ -12,13 +12,13 @@ namespace Halloumi.Notez.TestHarness
         {
             var generator = new PhraseGenerator();
             
-            const int riffCount = 8;
-            for (var i = 0; i < riffCount; i++)
-            {
-                var phrase = generator.GeneratePhrase();
-                MidiHelper.SaveToMidi(phrase, "Riff" + i + ".mid");
-            }
-            // Console.ReadLine();
+            //const int riffCount = 8;
+            //for (var i = 0; i < riffCount; i++)
+            //{
+            //    var phrase = generator.GeneratePhrase();
+            //    MidiHelper.SaveToMidi(phrase, "Riff" + i + ".mid");
+            //}
+            Console.ReadLine();
         }
     }
 }

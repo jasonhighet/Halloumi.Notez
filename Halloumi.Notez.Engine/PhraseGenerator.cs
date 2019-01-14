@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,7 +26,7 @@ namespace Halloumi.Notez.Engine
         {
             var riffs = Directory.GetFiles("TestMidi", "*.mid")
                 .Select(MidiHelper.ReadMidi)
-                .Where(riff => NoteHelper.GetTotalDuration(riff) == RiffLength)
+                .Where(riff => riff.PhraseLength == RiffLength)
                 .Where(riff => ScaleHelper.FindMatchingScales(riff).Select(x => x.Scale.Name).Contains("C Natural Minor"))
                 .ToList();
 
@@ -59,12 +60,17 @@ namespace Halloumi.Notez.Engine
 
             _minNotes = riffs.Select(x => x.Elements.Count).Min();
             _maxNotes = riffs.Select(x => x.Elements.Count).Max();
+
+
+            foreach (var riff in riffs)
+            {
+                Console.WriteLine(riffs.IndexOf(riff));
+                var match = RepeatingElementsFinder.FindRepeatingElements(riff);
+            }
+
+            
         }
 
-        private void RemoveNotes(Phrase phrase, int startPosition, int endPosition)
-        {
-            phrase.Elements.RemoveAll(x => x.Position >= startPosition && x.Position <= endPosition);
-        }
 
         public Phrase GeneratePhrase()
         {

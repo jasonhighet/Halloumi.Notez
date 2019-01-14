@@ -84,6 +84,7 @@ namespace Halloumi.Notez.Engine
                 }
             }
 
+            phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
             return phrase;
         }
 

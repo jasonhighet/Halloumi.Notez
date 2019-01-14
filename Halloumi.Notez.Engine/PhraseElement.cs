@@ -12,7 +12,7 @@ namespace Halloumi.Notez.Engine
         public decimal Duration { get; set; }
         public decimal Position { get; set; }
 
-        public decimal OffPosition => Position + Duration;
+        public decimal OffPosition => Position + Duration - 1;
 
         public PhraseElement Clone()
         {

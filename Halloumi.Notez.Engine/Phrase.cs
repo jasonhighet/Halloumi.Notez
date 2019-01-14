@@ -15,12 +15,15 @@ namespace Halloumi.Notez.Engine
 
         public List<PhraseElement> Elements { get; set; }
 
+        public decimal PhraseLength { get; set; }
+
 
         public Phrase Clone()
         {
             return new Phrase()
             {
-                Elements = Elements.Select(x => x.Clone()).ToList()
+                Elements = Elements.Select(x => x.Clone()).ToList(),
+                PhraseLength = PhraseLength
             };
         }
     }
