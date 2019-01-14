@@ -30,7 +30,7 @@ namespace Halloumi.Notez.Engine
                             continue;
 
                         var result = Compare(phrase, windowStart, compareWindowStart, windowSize);
-                        if (result == CompareResult.PerfectMatch || result == CompareResult.TimingMatch)
+                        if (result == MatchResult.PerfectMatch || result == MatchResult.TimingMatch)
                         {
                             windowMatches.Add(new WindowMatch
                             {
@@ -50,7 +50,7 @@ namespace Halloumi.Notez.Engine
             {
                 var subMatches = windowMatches
                     .Where(x => x != match)
-                    .Where(x => (match.MatchType == CompareResult.PerfectMatch && x.MatchType == CompareResult.TimingMatch) || match.MatchType == x.MatchType)
+                    .Where(x => (match.MatchType == MatchResult.PerfectMatch && x.MatchType == MatchResult.TimingMatch) || match.MatchType == x.MatchType)
                     .Where(x => x.MatchWindowStart >= match.MatchWindowStart && x.WindowSize <= match.WindowSize)
                     .ToList();
 
@@ -59,26 +59,12 @@ namespace Halloumi.Notez.Engine
 
             windowMatches.RemoveAll(x => matchesToRemove.Contains(x));
 
-            foreach (var match in windowMatches)
-            {
-                Console.WriteLine(match.MatchType
-                                  + "match! "
-                                  + match.WindowStart
-                                  + " to "
-                                  + (match.WindowStart + match.WindowSize - 1)
-                                  + " matches "
-                                  + match.MatchWindowStart
-                                  + " to "
-                                  + (match.MatchWindowStart + match.WindowSize - 1));
-            }
-            
-
             return windowMatches;
         }
 
-        private static CompareResult Compare(Phrase phrase, int windowStart, int compareWindowStart, int windowSize)
+        private static MatchResult Compare(Phrase phrase, int windowStart, int compareWindowStart, int windowSize)
         {
-            var matches = new List<CompareResult>();
+            var matches = new List<MatchResult>();
 
             for (var i = 0; i < windowSize; i++)
             {
@@ -88,39 +74,39 @@ namespace Halloumi.Notez.Engine
                 matches.Add(CompareElements(element1, element2));
             }
 
-            if (matches.All(x => x == CompareResult.PerfectMatch))
-                return CompareResult.PerfectMatch;
+            if (matches.All(x => x == MatchResult.PerfectMatch))
+                return MatchResult.PerfectMatch;
 
-            if (matches.All(x => x == CompareResult.PerfectMatch || x == CompareResult.PitchMatch))
-                return CompareResult.PitchMatch;
+            if (matches.All(x => x == MatchResult.PerfectMatch || x == MatchResult.PitchMatch))
+                return MatchResult.PitchMatch;
 
-            if (matches.All(x => x == CompareResult.PerfectMatch || x == CompareResult.TimingMatch))
-                return CompareResult.TimingMatch;
+            if (matches.All(x => x == MatchResult.PerfectMatch || x == MatchResult.TimingMatch))
+                return MatchResult.TimingMatch;
 
-            if (matches.All(x => x == CompareResult.BlankMatch))
-                return CompareResult.BlankMatch;
+            if (matches.All(x => x == MatchResult.BlankMatch))
+                return MatchResult.BlankMatch;
 
-            return CompareResult.NoMatch;
+            return MatchResult.NoMatch;
         }
 
-        private static CompareResult CompareElements(PhraseElement element1, PhraseElement element2)
+        private static MatchResult CompareElements(PhraseElement element1, PhraseElement element2)
         {
             if (element1 == null && element2 == null)
-                return CompareResult.BlankMatch;
+                return MatchResult.BlankMatch;
 
             if (element1 == null || element2 == null)
-                return CompareResult.NoMatch;
+                return MatchResult.NoMatch;
 
             if (element1.Duration == element2.Duration && element1.Note == element2.Note)
-                return CompareResult.PerfectMatch;
+                return MatchResult.PerfectMatch;
 
             if (element1.Duration == element2.Duration && element1.Note != element2.Note)
-                return CompareResult.TimingMatch;
+                return MatchResult.TimingMatch;
 
             if (element1.Duration != element2.Duration && element1.Note == element2.Note)
-                return CompareResult.TimingMatch;
+                return MatchResult.TimingMatch;
 
-            return CompareResult.NoMatch;
+            return MatchResult.NoMatch;
         }
 
         private static bool NotesStartAndEndOnWindowDivision(Phrase phrase, int windowStart, int windowEnd)
@@ -131,7 +117,7 @@ namespace Halloumi.Notez.Engine
             return start && end;
         }
 
-        public enum CompareResult
+        public enum MatchResult
         {
             NoMatch,
             PerfectMatch,
@@ -145,7 +131,7 @@ namespace Halloumi.Notez.Engine
             public int WindowSize { get; set; }
             public int WindowStart { get; set; }
             public int MatchWindowStart { get; set; }
-            public CompareResult MatchType { get; set; }
+            public MatchResult MatchType { get; set; }
         }
 
     }

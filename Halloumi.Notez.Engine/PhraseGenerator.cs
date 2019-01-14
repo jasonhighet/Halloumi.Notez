@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Halloumi.Notez.Engine
 {
@@ -16,9 +13,19 @@ namespace Halloumi.Notez.Engine
         private List<NoteProbability> _probabilities;
         private const int RiffLength = 32;
 
+        private double _chanceOfTimingRepeat;
+        private double _chanceOfPerfectRepeat;
+        private int _minTimingRepeats;
+        private int _maxTimingRepeats;
+        private int _minPerfectRepeats;
+        private int _maxPerfectRepeats;
+        private List<RepeatingElementsFinder.WindowMatch> _timingRepeats;
+        private List<RepeatingElementsFinder.WindowMatch> _perfectRepeats;
+
+
         public PhraseGenerator()
         {
-            _random = new Random();
+            _random = new Random(DateTime.Now.Millisecond);
             LoadTrainingData();
         }
 
@@ -31,10 +38,10 @@ namespace Halloumi.Notez.Engine
                 .ToList();
 
             var allNotes = riffs.SelectMany(x => x.Elements).GroupBy(x => new
-                {
-                    x.Position,
-                    x.Note
-                })
+            {
+                x.Position,
+                x.Note
+            })
                 .Select(x => new
                 {
                     x.Key.Position,
@@ -62,13 +69,31 @@ namespace Halloumi.Notez.Engine
             _maxNotes = riffs.Select(x => x.Elements.Count).Max();
 
 
-            foreach (var riff in riffs)
-            {
-                Console.WriteLine(riffs.IndexOf(riff));
-                var match = RepeatingElementsFinder.FindRepeatingElements(riff);
-            }
+            var repeats = riffs.Select(RepeatingElementsFinder.FindRepeatingElements).ToList();
 
-            
+            _chanceOfTimingRepeat = repeats.Count(x => x.Any(y => y.MatchType == RepeatingElementsFinder.MatchResult.TimingMatch)) / Convert.ToDouble(repeats.Count);
+            _chanceOfPerfectRepeat = repeats.Count(x => x.Any(y => y.MatchType == RepeatingElementsFinder.MatchResult.PerfectMatch)) / Convert.ToDouble(repeats.Count);
+
+            _maxTimingRepeats = repeats
+                .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.TimingMatch))
+                .Max(x => x);
+
+            _minTimingRepeats = repeats
+                .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.TimingMatch))
+                .Where(x => x != 0)
+                .Min(x => x);
+
+            _maxPerfectRepeats = repeats
+                .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.PerfectMatch))
+                .Max(x => x);
+
+            _minPerfectRepeats = repeats
+                .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.PerfectMatch))
+                .Where(x => x != 0)
+                .Min(x => x);
+
+            _timingRepeats = repeats.SelectMany(x => x).Where(x => x.MatchType == RepeatingElementsFinder.MatchResult.TimingMatch).ToList();
+            _perfectRepeats = repeats.SelectMany(x => x).Where(x => x.MatchType == RepeatingElementsFinder.MatchResult.PerfectMatch).ToList();
         }
 
 
@@ -80,9 +105,9 @@ namespace Halloumi.Notez.Engine
 
             var selectedNotes =
             (from onoffProbability in _probabilities
-                let noteOn = GetRandomBool(onoffProbability.OnOffChance)
-                where noteOn
-                select onoffProbability).ToList();
+             let noteOn = GetRandomBool(onoffProbability.OnOffChance)
+             where noteOn
+             select onoffProbability).ToList();
 
             while (selectedNotes.Count > noteCount)
             {
@@ -111,7 +136,81 @@ namespace Halloumi.Notez.Engine
 
             PhraseHelper.UpdateDurationsFromPositions(phrase, RiffLength);
 
+            var perfectRepeats = GetPerfectRepeats();
+            var timingRepeats = GetTimingRepeats(perfectRepeats);
+
             return phrase;
+        }
+
+        private List<RepeatingElementsFinder.WindowMatch> GetPerfectRepeats()
+        {
+            var repeats = new List<RepeatingElementsFinder.WindowMatch>();
+            if (!GetRandomBool(_chanceOfPerfectRepeat))
+                return repeats;
+
+            var repeatCount = _random.Next(_minPerfectRepeats, _maxPerfectRepeats + 1);
+
+            for (var i = 0; i < repeatCount; i++)
+            {
+                var availableRepeats = _perfectRepeats.Except(repeats).ToList();
+                foreach (var repeat in repeats)
+                {
+                    availableRepeats.RemoveAll(x => AreRegionsOverlapping(repeat.MatchWindowStart, repeat.WindowSize, x.MatchWindowStart, x.WindowSize));
+                }
+
+
+                if (availableRepeats.Count == 0)
+                    break;
+
+                var index = _random.Next(0, availableRepeats.Count);
+
+                repeats.Add(availableRepeats[index]);
+            }
+
+            repeats = repeats.OrderBy(x => x.WindowStart).ThenBy(x => x.WindowSize).ToList();
+
+            return repeats;
+        }
+
+        private IEnumerable<RepeatingElementsFinder.WindowMatch> GetTimingRepeats(IReadOnlyCollection<RepeatingElementsFinder.WindowMatch> perfectRepeats)
+        {
+            var repeats = new List<RepeatingElementsFinder.WindowMatch>();
+            if (!GetRandomBool(_chanceOfTimingRepeat))
+                return repeats;
+
+            var repeatCount = _random.Next(_minTimingRepeats, _maxTimingRepeats + 1);
+
+            for (var i = 0; i < repeatCount; i++)
+            {
+                var availableRepeats = _timingRepeats.Except(repeats).ToList();
+                foreach (var repeat in repeats)
+                {
+                    availableRepeats.RemoveAll(x => AreRegionsOverlapping(repeat.MatchWindowStart, repeat.WindowSize, x.MatchWindowStart, x.WindowSize));
+                }
+                foreach (var repeat in perfectRepeats)
+                {
+                    availableRepeats.RemoveAll(x => AreRegionsOverlapping(repeat.MatchWindowStart, repeat.WindowSize, x.MatchWindowStart, x.WindowSize));
+                }
+
+
+                if (availableRepeats.Count == 0)
+                    break;
+
+                var index = _random.Next(0, availableRepeats.Count);
+
+                repeats.Add(availableRepeats[index]);
+            }
+
+            repeats = repeats.OrderBy(x => x.WindowStart).ThenBy(x => x.WindowSize).ToList();
+
+            return repeats;
+        }
+
+        public static bool AreRegionsOverlapping(int start, int length, int compareStart, int compareLength)
+        {
+            var end = start + length - 1;
+            var compareEnd = compareStart + compareLength - 1;
+            return (start >= compareStart && start <= compareEnd) || (end >= compareStart && end <= compareEnd);
         }
 
         private int GetRandomNote(Dictionary<int, int> noteNumbers)
@@ -132,8 +231,8 @@ namespace Halloumi.Notez.Engine
 
         private int GetNumberOfNotes()
         {
-            var range = _maxNotes - _minNotes;
-            return _minNotes + Convert.ToInt32(Math.Round(range * GetBellCurvedRandom()));
+            return _random.Next(_minNotes, _maxNotes + 1);
+            //return GetBellCurvedRandom(_minNotes, _maxNotes);
         }
 
         private bool GetRandomBool(double chanceOfTrue)
@@ -142,10 +241,16 @@ namespace Halloumi.Notez.Engine
             return randomNumber <= chanceOfTrue;
         }
 
-        private double GetBellCurvedRandom()
-        {
-            return (Math.Pow(2 * _random.NextDouble() - 1, 3) / 2) + .5;
-        }
+        //private double GetBellCurvedRandom()
+        //{
+        //    return (Math.Pow(2 * _random.NextDouble() - 1, 3) / 2) + .5;
+        //}
+
+        //private int GetBellCurvedRandom(int min, int maxInclusive)
+        //{
+        //    var range = maxInclusive - min;
+        //    return min + Convert.ToInt32(Math.Round(range * GetBellCurvedRandom()));
+        //}
 
         public class NoteProbability
         {
