@@ -16,7 +16,7 @@ namespace Halloumi.Notez.TestHarness
             for (var i = 0; i < riffCount; i++)
             {
                 var phrase = generator.GeneratePhrase();
-                //MidiHelper.SaveToMidi(phrase, "Riff" + i + ".mid");
+                MidiHelper.SaveToMidi(phrase, "Riff" + i + ".mid");
             }
             Console.ReadLine();
         }

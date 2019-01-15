@@ -39,7 +39,7 @@ namespace Halloumi.Notez.Engine
 
             var allNotes = riffs.SelectMany(x => x.Elements).GroupBy(x => new
             {
-                x.Position,
+                Position = Math.Round(x.Position,0),
                 x.Note
             })
                 .Select(x => new
@@ -99,15 +99,96 @@ namespace Halloumi.Notez.Engine
 
         public Phrase GeneratePhrase()
         {
-            var phrase = new Phrase();
-
             var noteCount = GetNumberOfNotes();
+            var phrase = GenratePhraseBasic(noteCount);
+
+            var perfectRepeats = GetPerfectRepeats();
+            var timingRepeats = GetTimingRepeats(perfectRepeats);
+            var repeats = perfectRepeats.Union(timingRepeats)
+                .OrderBy(x => x.WindowSize)
+                .ThenBy(x => x.WindowStart)
+                .ThenBy(x => x.MatchWindowStart)
+                .ToList();
+
+            foreach (var repeat in repeats)
+            {
+                var sectionStartPositions = new List<decimal>
+                {
+                    repeat.WindowStart,
+                    repeat.WindowStart + repeat.WindowSize,
+                    repeat.MatchWindowStart,
+                    repeat.MatchWindowStart + repeat.WindowSize
+                };
+
+                foreach (var position in sectionStartPositions)
+                {
+                    var element = phrase.Elements.FirstOrDefault(x => x.Position == position);
+                    if (element != null) continue;
+
+                    element = GetNewRandomElement(position);
+                    if (element != null)
+                        phrase.Elements.Add(element);
+                }
+            }
+
+            foreach (var repeat in repeats)
+            {
+                phrase.Elements.RemoveAll(x => x.Position >= repeat.MatchWindowStart &&
+                                                   x.Position < repeat.MatchWindowStart + repeat.WindowSize);
+
+                var repeatingElements = phrase
+                    .Elements
+                    .Where(x => x.Position >= repeat.WindowStart 
+                        && x.Position < repeat.WindowStart + repeat.WindowSize)
+                    .Select(x => x.Clone())
+                    .ToList();
+
+                foreach (var element in repeatingElements)
+                {
+                    element.Position = element.Position - repeat.WindowStart + repeat.MatchWindowStart;
+                    if (repeat.MatchType != RepeatingElementsFinder.MatchResult.TimingMatch) continue;
+
+                    var probability = _probabilities.FirstOrDefault(x => x.Position == element.Position);
+                    if (probability != null)
+                        element.Note = GetRandomNote(probability.Notes);
+                }
+
+                phrase.Elements.AddRange(repeatingElements);
+            }
+
+
+            phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ToList();
+            PhraseHelper.UpdateDurationsFromPositions(phrase, RiffLength);
+
+
+            return phrase;
+        }
+
+        private PhraseElement GetNewRandomElement(decimal position)
+        {
+            var probability = _probabilities.FirstOrDefault(x => x.Position == position);
+            if (probability == null)
+                return null;
+
+            var randomNote = GetRandomNote(probability.Notes);
+
+            return new PhraseElement
+            {
+                Position = position,
+                Duration = 1,
+                Note = randomNote
+            };
+        }
+
+        private Phrase GenratePhraseBasic(int noteCount)
+        {
+            var phrase = new Phrase();
 
             var selectedNotes =
             (from onoffProbability in _probabilities
-             let noteOn = GetRandomBool(onoffProbability.OnOffChance)
-             where noteOn
-             select onoffProbability).ToList();
+                let noteOn = GetRandomBool(onoffProbability.OnOffChance)
+                where noteOn
+                select onoffProbability).ToList();
 
             while (selectedNotes.Count > noteCount)
             {
@@ -116,7 +197,9 @@ namespace Halloumi.Notez.Engine
             }
             while (selectedNotes.Count < noteCount)
             {
-                var mostPopularNote = _probabilities.Except(selectedNotes).OrderByDescending(x => x.OnOffChance).FirstOrDefault();
+                var mostPopularNote = _probabilities.Except(selectedNotes)
+                    .OrderByDescending(x => x.OnOffChance)
+                    .FirstOrDefault();
                 selectedNotes.Add(mostPopularNote);
             }
 
@@ -135,10 +218,6 @@ namespace Halloumi.Notez.Engine
             }
 
             PhraseHelper.UpdateDurationsFromPositions(phrase, RiffLength);
-
-            var perfectRepeats = GetPerfectRepeats();
-            var timingRepeats = GetTimingRepeats(perfectRepeats);
-
             return phrase;
         }
 
