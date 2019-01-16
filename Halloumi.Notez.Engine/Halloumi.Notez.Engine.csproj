@@ -49,8 +49,10 @@
     <Compile Include="Phrase.cs" />
     <Compile Include="PhraseElement.cs" />
     <Compile Include="NoteHelper.cs" />
+    <Compile Include="PhraseGenerator.cs" />
     <Compile Include="PhraseHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RepeatingElementsFinder.cs" />
     <Compile Include="ScaleHelper.cs" />
     <Compile Include="TabHelper.cs" />
     <Compile Include="TabParser.cs" />
