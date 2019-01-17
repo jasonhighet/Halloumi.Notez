@@ -62,6 +62,12 @@
     <Content Include="TestMidi\ac1.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\break.mid">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestMidi\cochise.mid">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="TestMidi\dust.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -80,7 +86,19 @@
     <Content Include="TestMidi\ghosts.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\hunter.mid">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestMidi\iron.mid">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="TestMidi\lord.mid">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestMidi\shove.mid">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestMidi\shove2.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TestMidi\show.mid">

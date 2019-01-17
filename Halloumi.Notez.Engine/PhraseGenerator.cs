@@ -12,7 +12,7 @@ namespace Halloumi.Notez.Engine
         private readonly Random _random;
         private List<NoteProbability> _probabilities;
         private const int RiffLength = 32;
-
+        private const string baseScale = "C Natural Minor";
         private double _chanceOfTimingRepeat;
         private double _chanceOfPerfectRepeat;
         private int _minTimingRepeats;
@@ -33,8 +33,22 @@ namespace Halloumi.Notez.Engine
         {
             var riffs = Directory.GetFiles("TestMidi", "*.mid")
                 .Select(MidiHelper.ReadMidi)
-                .Where(riff => riff.PhraseLength == RiffLength)
-                .Where(riff => ScaleHelper.FindMatchingScales(riff).Select(x => x.Scale.Name).Contains("C Natural Minor"))
+                .ToList();
+
+            foreach (var wrongSizeRiffs in riffs.Where(riff => riff.PhraseLength != RiffLength))
+            {
+                Console.WriteLine("Riff " + wrongSizeRiffs.Description + " is not " + RiffLength + " steps long");
+            }
+
+            riffs = riffs.Where(riff => riff.PhraseLength == RiffLength).ToList();
+
+            var wrongScaleRiffs = riffs.Except(riffs.Where(riff => ScaleHelper.FindMatchingScales(riff).Select(x => x.Scale.Name).Contains(baseScale)));
+            foreach (var wrongScaleRiff in wrongScaleRiffs)
+            {
+                Console.WriteLine("Riff " + wrongScaleRiff.Description + " is not " + baseScale);
+            }
+
+            riffs = riffs.Where(riff => ScaleHelper.FindMatchingScales(riff).Select(x => x.Scale.Name).Contains("C Natural Minor"))
                 .ToList();
 
             var allNotes = riffs.SelectMany(x => x.Elements).GroupBy(x => new

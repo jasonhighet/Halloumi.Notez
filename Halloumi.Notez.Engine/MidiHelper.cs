@@ -85,6 +85,9 @@ namespace Halloumi.Notez.Engine
             }
 
             phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
+
+            phrase.Description = Path.GetFileName(filepath);
+
             return phrase;
         }
 
