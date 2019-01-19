@@ -35,21 +35,43 @@ namespace Halloumi.Notez.Engine
                 .Select(MidiHelper.ReadMidi)
                 .ToList();
 
-            foreach (var wrongSizeRiffs in riffs.Where(riff => riff.PhraseLength != RiffLength))
+            //foreach (var largeRiff in riffs.Where(riff => riff.PhraseLength >= RiffLength))
+            //{
+            //    PhraseHelper.TrimPhrase(largeRiff, RiffLength);
+            //}
+
+            //foreach (var halfSizeRiff in riffs.Where(riff => riff.PhraseLength == RiffLength / 2))
+            //{
+            //    PhraseHelper.DuplicatePhrase(halfSizeRiff);
+            //}
+
+            //foreach (var quarterSizeRiff in riffs.Where(riff => riff.PhraseLength == RiffLength / 4))
+            //{
+            //    PhraseHelper.DuplicatePhrase(quarterSizeRiff);
+            //    PhraseHelper.DuplicatePhrase(quarterSizeRiff);
+            //}
+
+            foreach (var wrongSizeRiff in riffs.Where(riff => riff.PhraseLength != RiffLength))
             {
-                Console.WriteLine("Riff " + wrongSizeRiffs.Description + " is not " + RiffLength + " steps long");
+                Console.WriteLine("Riff " + wrongSizeRiff.Description + " is not " + RiffLength + " steps long - it's " + wrongSizeRiff.PhraseLength);
             }
 
             riffs = riffs.Where(riff => riff.PhraseLength == RiffLength).ToList();
 
-            var wrongScaleRiffs = riffs.Except(riffs.Where(riff => ScaleHelper.FindMatchingScales(riff).Select(x => x.Scale.Name).Contains(baseScale)));
-            foreach (var wrongScaleRiff in wrongScaleRiffs)
+            var wrongScaleRiffs = new List<Phrase>();
+            foreach (var scaleRiff in riffs)
             {
-                Console.WriteLine("Riff " + wrongScaleRiff.Description + " is not " + baseScale);
+                var matchingScales = ScaleHelper.FindMatchingScales(scaleRiff).Where(x => x.DistanceFromScale == 0).Select(x => x.Scale.Name).ToList();
+                if (!matchingScales.Contains(baseScale))
+                {
+                    Console.WriteLine("Riff " + scaleRiff.Description + " DOES NOT contain base scale - is possibly " + (matchingScales.FirstOrDefault() ?? "??"));
+                    wrongScaleRiffs.Add(scaleRiff);
+                }
             }
 
-            riffs = riffs.Where(riff => ScaleHelper.FindMatchingScales(riff).Select(x => x.Scale.Name).Contains("C Natural Minor"))
-                .ToList();
+            riffs = riffs.Except(wrongScaleRiffs).ToList();
+
+            riffs = riffs.OrderBy(x => _random.NextDouble()).Take(3).ToList();
 
             var allNotes = riffs.SelectMany(x => x.Elements).GroupBy(x => new
             {

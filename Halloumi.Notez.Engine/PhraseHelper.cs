@@ -8,6 +8,26 @@ namespace Halloumi.Notez.Engine
 {
     public static class PhraseHelper
     {
+        public static void TrimPhrase(Phrase phrase, decimal newLength)
+        {
+            phrase.PhraseLength = newLength;
+            phrase.Elements.RemoveAll(x => x.Position >= newLength);
+            UpdateDurationsFromPositions(phrase, newLength);
+        }
+
+        public static void DuplicatePhrase(Phrase phrase)
+        {
+            var newLength = phrase.PhraseLength * 2;
+            var newElements = phrase.Elements.Select(x => x.Clone()).ToList();
+            foreach (var newElement in newElements)
+            {
+                newElement.Position += phrase.PhraseLength;
+            }
+
+            phrase.PhraseLength = newLength;
+            phrase.Elements.AddRange(newElements);
+        }
+
         public static void UpdatePositionsFromDurations(Phrase phrase)
         {
             foreach (var element in phrase.Elements)
