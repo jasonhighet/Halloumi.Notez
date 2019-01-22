@@ -17,6 +17,8 @@ namespace Halloumi.Notez.Engine
 
         public decimal PhraseLength { get; set; }
 
+        public decimal Bpm { get; set; }
+
         public string Description { get; internal set; }
 
         public Phrase Clone()
@@ -25,7 +27,8 @@ namespace Halloumi.Notez.Engine
             {
                 Elements = Elements.Select(x => x.Clone()).ToList(),
                 PhraseLength = PhraseLength,
-                Description = Description
+                Description = Description,
+                Bpm = Bpm
             };
         }
     }

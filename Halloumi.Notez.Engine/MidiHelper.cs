@@ -28,7 +28,7 @@ namespace Halloumi.Notez.Engine
         private static MidiBuilder BuildMidi(Phrase phrase)
         {
 
-            var midiBuilder = new MidiBuilder();
+            var midiBuilder = new MidiBuilder(phrase.Description, phrase.Bpm);
 
             foreach (var element in phrase.Elements)
             {

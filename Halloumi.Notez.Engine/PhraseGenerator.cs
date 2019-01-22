@@ -11,8 +11,9 @@ namespace Halloumi.Notez.Engine
         private int _maxNotes;
         private readonly Random _random;
         private List<NoteProbability> _probabilities;
-        private const int RiffLength = 32;
+        private const int riffLength = 32;
         private const string baseScale = "C Natural Minor";
+        private const int numberOfRiffsToMerge = 3;
         private double _chanceOfTimingRepeat;
         private double _chanceOfPerfectRepeat;
         private int _minTimingRepeats;
@@ -51,12 +52,12 @@ namespace Halloumi.Notez.Engine
             //    PhraseHelper.DuplicatePhrase(quarterSizeRiff);
             //}
 
-            foreach (var wrongSizeRiff in riffs.Where(riff => riff.PhraseLength != RiffLength))
+            foreach (var wrongSizeRiff in riffs.Where(riff => riff.PhraseLength != riffLength))
             {
-                Console.WriteLine("Riff " + wrongSizeRiff.Description + " is not " + RiffLength + " steps long - it's " + wrongSizeRiff.PhraseLength);
+                Console.WriteLine("Riff " + wrongSizeRiff.Description + " is not " + riffLength + " steps long - it's " + wrongSizeRiff.PhraseLength);
             }
 
-            riffs = riffs.Where(riff => riff.PhraseLength == RiffLength).ToList();
+            riffs = riffs.Where(riff => riff.PhraseLength == riffLength).ToList();
 
             var wrongScaleRiffs = new List<Phrase>();
             foreach (var scaleRiff in riffs)
@@ -71,7 +72,7 @@ namespace Halloumi.Notez.Engine
 
             riffs = riffs.Except(wrongScaleRiffs).ToList();
 
-            riffs = riffs.OrderBy(x => _random.NextDouble()).Take(3).ToList();
+            riffs = riffs.OrderBy(x => _random.NextDouble()).Take(numberOfRiffsToMerge).ToList();
 
             var allNotes = riffs.SelectMany(x => x.Elements).GroupBy(x => new
             {
@@ -194,8 +195,9 @@ namespace Halloumi.Notez.Engine
 
 
             phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ToList();
-            PhraseHelper.UpdateDurationsFromPositions(phrase, RiffLength);
+            PhraseHelper.UpdateDurationsFromPositions(phrase, riffLength);
 
+            phrase.Bpm = 60;
 
             return phrase;
         }
@@ -253,7 +255,7 @@ namespace Halloumi.Notez.Engine
                 });
             }
 
-            PhraseHelper.UpdateDurationsFromPositions(phrase, RiffLength);
+            PhraseHelper.UpdateDurationsFromPositions(phrase, riffLength);
             return phrase;
         }
 

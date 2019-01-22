@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Halloumi.Notez.Engine", "Ha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Halloumi.Notez.TestHarness", "Halloumi.Notez.TestHarness\Halloumi.Notez.TestHarness.csproj", "{1447AB07-DC45-44FB-923E-9CAB1BE89E8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Halloumi.Notez.Api", "..\Halloumi.Notez.Api\Halloumi.Notez.Api.csproj", "{8655D4E3-821D-4AED-BC53-3A9EA54B98D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{1447AB07-DC45-44FB-923E-9CAB1BE89E8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1447AB07-DC45-44FB-923E-9CAB1BE89E8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1447AB07-DC45-44FB-923E-9CAB1BE89E8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8655D4E3-821D-4AED-BC53-3A9EA54B98D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8655D4E3-821D-4AED-BC53-3A9EA54B98D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8655D4E3-821D-4AED-BC53-3A9EA54B98D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8655D4E3-821D-4AED-BC53-3A9EA54B98D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

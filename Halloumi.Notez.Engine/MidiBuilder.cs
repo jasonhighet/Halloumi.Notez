@@ -13,13 +13,23 @@ namespace Halloumi.Notez.Engine
     {
         private readonly TrackChunk _trackChunk;
 
-        public MidiBuilder(string name = "Riff")
+        private readonly TrackChunk _bpmChunk;
+
+        public MidiBuilder(string name = "Riff", decimal bpm = 120)
         {
+            _bpmChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
+
             _trackChunk = new TrackChunk();
-            _trackChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
+            //_trackChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
+            _trackChunk.Events.Add(new TextEvent(name + "\0"));
 
             AddTimeSignatureEvent();
-            AddTimeSignatureEvent();
+            //AddTimeSignatureEvent();
+        }
+
+        private long GetBpmAsMicroseconds(decimal bpm)
+        {
+            return Convert.ToInt64( (1 / (bpm / 60)) * 1000000);
         }
 
         public void AddNote(int note, decimal lengthInThirtySecondNotes)
@@ -48,13 +58,13 @@ namespace Halloumi.Notez.Engine
 
         public void SaveToFile(string filepath)
         {
-            var newMidi = new MidiFile(new List<MidiChunk> { _trackChunk });
+            var newMidi = new MidiFile(new List<MidiChunk> { _bpmChunk, _trackChunk });
             newMidi.Write(filepath, true);
         }
 
         public void SaveToCsvFile(string filepath)
         {
-            var newMidi = new MidiFile(new List<MidiChunk> { _trackChunk });
+            var newMidi = new MidiFile(new List<MidiChunk> { _bpmChunk, _trackChunk });
             var csvConverter = new CsvConverter();
             csvConverter.ConvertMidiFileToCsv(newMidi, filepath, true);
         }
