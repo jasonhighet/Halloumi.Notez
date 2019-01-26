@@ -122,11 +122,13 @@ namespace Halloumi.Notez.Engine
 
             _maxPerfectRepeats = repeats
                 .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.PerfectMatch))
+                .Union(new List<int> { 0 })
                 .Max(x => x);
 
             _minPerfectRepeats = repeats
                 .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.PerfectMatch))
                 .Where(x => x != 0)
+                .Union(new List<int> { 0 })
                 .Min(x => x);
 
             _timingRepeats = repeats.SelectMany(x => x).Where(x => x.MatchType == RepeatingElementsFinder.MatchResult.TimingMatch).ToList();

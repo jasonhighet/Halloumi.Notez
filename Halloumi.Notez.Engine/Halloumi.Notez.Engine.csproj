@@ -64,12 +64,16 @@
     <Content Include="TestMidi\ac1.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\bombtrack.mid" />
+    <Content Include="TestMidi\bombtrack2.mid" />
     <Content Include="TestMidi\break.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\bulls.mid" />
     <Content Include="TestMidi\cochise.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\cockroaches.mid" />
     <Content Include="TestMidi\dust.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -91,12 +95,15 @@
     <Content Include="TestMidi\hunter.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\inextremo.mid" />
     <Content Include="TestMidi\iron.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TestMidi\lord.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\random01.mid" />
+    <Content Include="TestMidi\rehab.mid" />
     <Content Include="TestMidi\shove.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -109,6 +116,7 @@
     <Content Include="TestMidi\void.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestMidi\wrench.mid" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
