@@ -11,9 +11,9 @@ namespace Halloumi.Notez.Engine
         private int _maxNotes;
         private readonly Random _random;
         private List<NoteProbability> _probabilities;
-        private const int riffLength = 32;
+        private int _riffLength = 32;
         private const string baseScale = "C Natural Minor";
-        private const int numberOfRiffsToMerge = 3;
+        private int _numberOfRiffsToMerge = 2;
         private double _chanceOfTimingRepeat;
         private double _chanceOfPerfectRepeat;
         private int _minTimingRepeats;
@@ -24,9 +24,12 @@ namespace Halloumi.Notez.Engine
         private List<RepeatingElementsFinder.WindowMatch> _perfectRepeats;
 
 
-        public PhraseGenerator()
+        public PhraseGenerator(int riffLength = 32)
         {
+            _riffLength = riffLength;
             _random = new Random(DateTime.Now.Millisecond);
+            _numberOfRiffsToMerge = _random.Next(2, 4);
+
             LoadTrainingData();
         }
 
@@ -36,28 +39,28 @@ namespace Halloumi.Notez.Engine
                 .Select(MidiHelper.ReadMidi)
                 .ToList();
 
-            //foreach (var largeRiff in riffs.Where(riff => riff.PhraseLength >= RiffLength))
-            //{
-            //    PhraseHelper.TrimPhrase(largeRiff, RiffLength);
-            //}
-
-            //foreach (var halfSizeRiff in riffs.Where(riff => riff.PhraseLength == RiffLength / 2))
-            //{
-            //    PhraseHelper.DuplicatePhrase(halfSizeRiff);
-            //}
-
-            //foreach (var quarterSizeRiff in riffs.Where(riff => riff.PhraseLength == RiffLength / 4))
-            //{
-            //    PhraseHelper.DuplicatePhrase(quarterSizeRiff);
-            //    PhraseHelper.DuplicatePhrase(quarterSizeRiff);
-            //}
-
-            foreach (var wrongSizeRiff in riffs.Where(riff => riff.PhraseLength != riffLength))
+            foreach (var largeRiff in riffs.Where(riff => riff.PhraseLength >= _riffLength))
             {
-                Console.WriteLine("Riff " + wrongSizeRiff.Description + " is not " + riffLength + " steps long - it's " + wrongSizeRiff.PhraseLength);
+                PhraseHelper.TrimPhrase(largeRiff, _riffLength);
             }
 
-            riffs = riffs.Where(riff => riff.PhraseLength == riffLength).ToList();
+            foreach (var halfSizeRiff in riffs.Where(riff => riff.PhraseLength == _riffLength / 2))
+            {
+                PhraseHelper.DuplicatePhrase(halfSizeRiff);
+            }
+
+            foreach (var quarterSizeRiff in riffs.Where(riff => riff.PhraseLength == _riffLength / 4))
+            {
+                PhraseHelper.DuplicatePhrase(quarterSizeRiff);
+                PhraseHelper.DuplicatePhrase(quarterSizeRiff);
+            }
+
+            foreach (var wrongSizeRiff in riffs.Where(riff => riff.PhraseLength != _riffLength))
+            {
+                Console.WriteLine("Riff " + wrongSizeRiff.Description + " is not " + _riffLength + " steps long - it's " + wrongSizeRiff.PhraseLength);
+            }
+
+            riffs = riffs.Where(riff => riff.PhraseLength == _riffLength).ToList();
 
             var wrongScaleRiffs = new List<Phrase>();
             foreach (var scaleRiff in riffs)
@@ -72,7 +75,7 @@ namespace Halloumi.Notez.Engine
 
             riffs = riffs.Except(wrongScaleRiffs).ToList();
 
-            riffs = riffs.OrderBy(x => _random.NextDouble()).Take(numberOfRiffsToMerge).ToList();
+            riffs = riffs.OrderBy(x => _random.NextDouble()).Take(_numberOfRiffsToMerge).ToList();
 
             var allNotes = riffs.SelectMany(x => x.Elements).GroupBy(x => new
             {
@@ -113,11 +116,13 @@ namespace Halloumi.Notez.Engine
 
             _maxTimingRepeats = repeats
                 .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.TimingMatch))
+                .Union(new List<int> { 0 })
                 .Max(x => x);
 
             _minTimingRepeats = repeats
                 .Select(x => x.Count(y => y.MatchType == RepeatingElementsFinder.MatchResult.TimingMatch))
                 .Where(x => x != 0)
+                .Union(new List<int> { 0 })
                 .Min(x => x);
 
             _maxPerfectRepeats = repeats
@@ -197,7 +202,7 @@ namespace Halloumi.Notez.Engine
 
 
             phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ToList();
-            PhraseHelper.UpdateDurationsFromPositions(phrase, riffLength);
+            PhraseHelper.UpdateDurationsFromPositions(phrase, _riffLength);
 
             phrase.Bpm = 60;
 
@@ -243,6 +248,8 @@ namespace Halloumi.Notez.Engine
                 selectedNotes.Add(mostPopularNote);
             }
 
+            selectedNotes = selectedNotes.Where(x => x != null).ToList();
+
             selectedNotes = selectedNotes.OrderBy(x => x.Position).ToList();
 
             foreach (var note in selectedNotes)
@@ -257,7 +264,7 @@ namespace Halloumi.Notez.Engine
                 });
             }
 
-            PhraseHelper.UpdateDurationsFromPositions(phrase, riffLength);
+            PhraseHelper.UpdateDurationsFromPositions(phrase, _riffLength);
             return phrase;
         }
 

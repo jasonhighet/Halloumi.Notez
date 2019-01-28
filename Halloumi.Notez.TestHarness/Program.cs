@@ -10,17 +10,17 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            const int riffCount = 8;
+            const int riffCount = 16;
             for (var i = 1; i <= riffCount; i++)
             {
                 var midiPath = @"RandomRiff" + i + ".mid";
 
-                var generator = new PhraseGenerator();
+                var generator = new PhraseGenerator(32);
                 var phrase = generator.GeneratePhrase();
                 MidiHelper.SaveToMidi(phrase, midiPath);
             }
 
-            Console.ReadLine();
+            //Console.ReadLine();
         }
     }
 }
