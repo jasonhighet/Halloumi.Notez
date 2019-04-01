@@ -10,7 +10,7 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            const int riffCount = 16;
+            const int riffCount = 24;
             for (var i = 1; i <= riffCount; i++)
             {
                 var midiPath = @"RandomRiff" + i + ".mid";

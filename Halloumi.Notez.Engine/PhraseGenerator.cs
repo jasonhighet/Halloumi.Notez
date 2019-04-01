@@ -25,7 +25,7 @@ namespace Halloumi.Notez.Engine
         private List<Phrase> _riffs;
 
 
-        public PhraseGenerator(int riffLength = 32)
+        public PhraseGenerator(int riffLength = 16)
         {
             _riffLength = riffLength;
             _random = new Random(DateTime.Now.Millisecond);
@@ -38,9 +38,11 @@ namespace Halloumi.Notez.Engine
         {
             _riffs = Directory.GetFiles("TestMidi", "*.mid")
                 .Select(MidiHelper.ReadMidi)
+                //.Where(riff => riff.PhraseLength <= _riffLength)
                 .ToList();
 
-            foreach (var largeRiff in _riffs.Where(riff => riff.PhraseLength >= _riffLength))
+            var largeRiffs = _riffs.Where(riff => riff.PhraseLength > _riffLength).ToList();
+            foreach (var largeRiff in largeRiffs)
             {
                 PhraseHelper.TrimPhrase(largeRiff, _riffLength);
             }
@@ -142,9 +144,19 @@ namespace Halloumi.Notez.Engine
             _perfectRepeats = repeats.SelectMany(x => x).Where(x => x.MatchType == RepeatingElementsFinder.MatchResult.PerfectMatch).ToList();
         }
 
-        public Phrase GeneratePhrase()
+        public Phrase GeneratePhrase(string baseRiff = "")
         {
             var riffs = _riffs.OrderBy(x => _random.NextDouble()).Take(_numberOfRiffsToMerge).ToList();
+            if (baseRiff != "")
+            {
+                var riff = _riffs.Where(x => x.Description.ToLower() == baseRiff.ToLower()).ToList();
+                if (riff.Count == 1)
+                {
+                    riffs = riffs.Except(riff).Take(_numberOfRiffsToMerge - 1).ToList();
+                    riffs.InsertRange(0, riff);
+                }
+            }
+        
             GenerateRiffProbabilities(riffs);
 
             var noteCount = GetNumberOfNotes();
