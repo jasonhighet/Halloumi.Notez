@@ -11,7 +11,7 @@ namespace Halloumi.Notez.TestHarness
         static void Main(string[] args)
         {
             const int riffCount = 24;
-            var generator = new PhraseGenerator(32, @"Doom");
+            var generator = new PhraseGenerator(32, @"Doom\Main");
             for (var i = 1; i <= riffCount; i++)
             {
                 var midiPath = @"RandomRiff" + i + ".mid";

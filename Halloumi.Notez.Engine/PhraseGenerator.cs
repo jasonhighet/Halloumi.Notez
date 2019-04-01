@@ -86,6 +86,19 @@ namespace Halloumi.Notez.Engine
                 var lowNote = octaveRiff.Elements.Min(x => x.Note);
                 var highNote = octaveRiff.Elements.Max(x => x.Note);
 
+                if (lowNote >= NoteHelper.NoteToNumber("C3") && lowNote < NoteHelper.NoteToNumber("C4"))
+                {
+                    NoteHelper.ShiftNotesDirect(octaveRiff, 1, Interval.Octave, Direction.Down);
+                    lowNote = octaveRiff.Elements.Min(x => x.Note);
+                    highNote = octaveRiff.Elements.Max(x => x.Note);
+                }
+                if (lowNote >= NoteHelper.NoteToNumber("C1") && lowNote < NoteHelper.NoteToNumber("C2"))
+                {
+                    NoteHelper.ShiftNotesDirect(octaveRiff, 1, Interval.Octave, Direction.Up);
+                    lowNote = octaveRiff.Elements.Min(x => x.Note);
+                    highNote = octaveRiff.Elements.Max(x => x.Note);
+                }
+
                 if (lowNote < lowestNote || highNote > highestNote)
                 {
                     Console.WriteLine("Riff " 

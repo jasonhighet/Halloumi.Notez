@@ -78,6 +78,14 @@ namespace Halloumi.Notez.Engine
             return shiftedPhrase;
         }
 
+        public static void ShiftNotesDirect(Phrase phrase, int amount, Interval step, Direction direction)
+        {
+            foreach (var element in phrase.Elements)
+            {
+                element.Note = ShiftNote(element.Note, amount, step, direction);
+            }
+        }
+
 
         private static string FormateNote(int octave, int noteIndex)
         {
