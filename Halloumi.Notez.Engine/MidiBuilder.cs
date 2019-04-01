@@ -15,13 +15,13 @@ namespace Halloumi.Notez.Engine
 
         private readonly TrackChunk _bpmChunk;
 
-        public MidiBuilder(string name = "Riff", decimal bpm = 120)
+        public MidiBuilder(string name = "Riff", decimal bpm = 120, MidiInstrument instrument = MidiInstrument.AcousticGrandPiano)
         {
             _bpmChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
 
             _trackChunk = new TrackChunk();
 
-            _trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)30));
+            _trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(instrument)));
 
             _trackChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
             //_trackChunk.Events.Add(new TextEvent(name + "\0"));

@@ -23,10 +23,11 @@ namespace Halloumi.Notez.Engine
         private List<RepeatingElementsFinder.WindowMatch> _timingRepeats;
         private List<RepeatingElementsFinder.WindowMatch> _perfectRepeats;
         private List<Phrase> _riffs;
+        private string _rootFolder = "TestMidi";
 
-
-        public PhraseGenerator(int riffLength = 16)
+        public PhraseGenerator(int riffLength = 16, string rootFolder = "")
         {
+            _rootFolder = Path.Combine(_rootFolder, rootFolder);
             _riffLength = riffLength;
             _random = new Random(DateTime.Now.Millisecond);
             _numberOfRiffsToMerge = _random.Next(2, 4);
@@ -36,9 +37,8 @@ namespace Halloumi.Notez.Engine
 
         private void LoadTrainingData()
         {
-            _riffs = Directory.GetFiles("TestMidi", "*.mid")
+            _riffs = Directory.GetFiles(_rootFolder, "*.mid", SearchOption.AllDirectories)
                 .Select(MidiHelper.ReadMidi)
-                //.Where(riff => riff.PhraseLength <= _riffLength)
                 .ToList();
 
             var largeRiffs = _riffs.Where(riff => riff.PhraseLength > _riffLength).ToList();
@@ -75,8 +75,31 @@ namespace Halloumi.Notez.Engine
                     wrongScaleRiffs.Add(scaleRiff);
                 }
             }
-
             _riffs = _riffs.Except(wrongScaleRiffs).ToList();
+
+
+            var wrongOctaveRiffs = new List<Phrase>();
+            var lowestNote = NoteHelper.NoteToNumber("C2");
+            var highestNote = NoteHelper.NoteToNumber("C4");
+            foreach (var octaveRiff in _riffs)
+            {
+                var lowNote = octaveRiff.Elements.Min(x => x.Note);
+                var highNote = octaveRiff.Elements.Max(x => x.Note);
+
+                if (lowNote < lowestNote || highNote > highestNote)
+                {
+                    Console.WriteLine("Riff " 
+                        + octaveRiff.Description 
+                        + " (" + NoteHelper.NumberToNote(lowNote) 
+                        + "-" + NoteHelper.NumberToNote(highNote) 
+                        + ") is outside the correct note range ("
+                        + NoteHelper.NumberToNote(lowestNote)
+                        + "-" + NoteHelper.NumberToNote(highestNote)
+                        + ")." );
+                    wrongOctaveRiffs.Add(octaveRiff);
+                }
+            }
+            _riffs = _riffs.Except(wrongOctaveRiffs).ToList();
         }
 
         private void GenerateRiffProbabilities(List<Phrase> riffs)
@@ -218,6 +241,8 @@ namespace Halloumi.Notez.Engine
 
 
             phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ToList();
+            phrase.Elements.RemoveAll(x => x.Position >= _riffLength);
+
             PhraseHelper.UpdateDurationsFromPositions(phrase, _riffLength);
 
             phrase.Bpm = 60;
@@ -279,6 +304,7 @@ namespace Halloumi.Notez.Engine
                     Note = randomNote
                 });
             }
+            phrase.Elements.RemoveAll(x => x.Position >= _riffLength);
 
             PhraseHelper.UpdateDurationsFromPositions(phrase, _riffLength);
             return phrase;

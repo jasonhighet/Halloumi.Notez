@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="MidiBuilder.cs" />
     <Compile Include="MidiHelper.cs" />
+    <Compile Include="MidiInstrument.cs" />
     <Compile Include="Phrase.cs" />
     <Compile Include="PhraseElement.cs" />
     <Compile Include="NoteHelper.cs" />
@@ -61,160 +62,154 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="TestMidi\ac1.mid">
+    <Content Include="TestMidi\Doom\Alt\bombtrack2.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\blackdog.mid">
+    <Content Include="TestMidi\Doom\Alt\bullet.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\bombtrack.mid">
+    <Content Include="TestMidi\Doom\Alt\bulls.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\bombtrack2.mid">
+    <Content Include="TestMidi\Doom\Alt\dragonaut2.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\break.mid">
+    <Content Include="TestMidi\Doom\Alt\dust.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\bullet.mid">
+    <Content Include="TestMidi\Doom\Alt\electric2.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\bulls.mid">
+    <Content Include="TestMidi\Doom\Alt\kasmir.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\cochise.mid">
+    <Content Include="TestMidi\Doom\Alt\kasmir_bridge.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\cockroaches.mid">
+    <Content Include="TestMidi\Doom\Alt\killing.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\dragonaut1.mid">
+    <Content Include="TestMidi\Doom\Alt\rehab.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\dragonaut2.mid">
+    <Content Include="TestMidi\Doom\Alt\revolver.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\drown.mid">
+    <Content Include="TestMidi\Doom\Alt\shove2.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\dust.mid">
+    <Content Include="TestMidi\Doom\Alt\wakeup.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\dward.mid">
+    <Content Include="TestMidi\Doom\Alt\wrench.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\electric1.mid">
+    <Content Include="TestMidi\Doom\Main\ac1.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\electric2.mid">
+    <Content Include="TestMidi\Doom\Main\blackdog.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\enemy.mid">
+    <Content Include="TestMidi\Doom\Main\bombtrack.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\face.mid">
+    <Content Include="TestMidi\Doom\Main\break.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\fiesta.mid">
+    <Content Include="TestMidi\Doom\Main\cochise.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\freedom.mid">
+    <Content Include="TestMidi\Doom\Main\cockroaches.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\funeralopolis.mid">
+    <Content Include="TestMidi\Doom\Main\dragonaut1.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\g1.mid">
+    <Content Include="TestMidi\Doom\Main\drown.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\gasoline.mid">
+    <Content Include="TestMidi\Doom\Main\dward.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\ghosts.mid">
+    <Content Include="TestMidi\Doom\Main\enemy.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\gradio.mid">
+    <Content Include="TestMidi\Doom\Main\face.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\hunter.mid">
+    <Content Include="TestMidi\Doom\Main\freedom.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\idol.mid">
+    <Content Include="TestMidi\Doom\Main\funeralopolis.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\iron.mid">
+    <Content Include="TestMidi\Doom\Main\gasoline.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\joad.mid">
+    <Content Include="TestMidi\Doom\Main\ghosts.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\kasmir.mid">
+    <Content Include="TestMidi\Doom\Main\gradio.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\kasmir_bridge.mid">
+    <Content Include="TestMidi\Doom\Main\hunter.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\killing.mid">
+    <Content Include="TestMidi\Doom\Main\iron.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\lord.mid">
+    <Content Include="TestMidi\Doom\Main\joad.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\maggyfarm.mid">
+    <Content Include="TestMidi\Doom\Main\lord.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\meantime.mid">
+    <Content Include="TestMidi\Doom\Main\maggyfarm.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\moby.mid">
+    <Content Include="TestMidi\Doom\Main\meantime.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\nib.mid">
+    <Content Include="TestMidi\Doom\Main\moby.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\random01.mid">
+    <Content Include="TestMidi\Doom\Main\nib.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\rehab.mid">
+    <Content Include="TestMidi\Doom\Main\shove.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\revolver.mid">
+    <Content Include="TestMidi\Doom\Main\show.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\shove.mid">
+    <Content Include="TestMidi\Doom\Main\smoke.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\shove2.mid">
+    <Content Include="TestMidi\Doom\Main\supernaut.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\show.mid">
+    <Content Include="TestMidi\Doom\Main\sweatloaf.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\smoke.mid">
+    <Content Include="TestMidi\Doom\Main\universe.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\solitude.mid">
+    <Content Include="TestMidi\Doom\Main\void.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\supernaut.mid">
+    <Content Include="TestMidi\Doom\Main\zero.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\sweatloaf.mid">
+    <Content Include="TestMidi\Doom\Scary\electric1.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\universe.mid">
+    <Content Include="TestMidi\Doom\Scary\g1.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\void.mid">
+    <Content Include="TestMidi\Doom\Scary\idol.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestMidi\wakeup.mid">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestMidi\wrench.mid">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestMidi\zero.mid">
+    <Content Include="TestMidi\Doom\Scary\solitude.mid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

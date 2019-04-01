@@ -11,16 +11,20 @@ namespace Halloumi.Notez.TestHarness
         static void Main(string[] args)
         {
             const int riffCount = 24;
+            var generator = new PhraseGenerator(32, @"Doom");
             for (var i = 1; i <= riffCount; i++)
             {
                 var midiPath = @"RandomRiff" + i + ".mid";
-
-                var generator = new PhraseGenerator(32);
                 var phrase = generator.GeneratePhrase();
-                MidiHelper.SaveToMidi(phrase, midiPath);
+
+                phrase = NoteHelper.ShiftNotes(phrase, 1, Interval.Octave, Direction.Down);
+                PhraseHelper.DuplicatePhrase(phrase);
+                PhraseHelper.DuplicatePhrase(phrase);
+
+                MidiHelper.SaveToMidi(phrase, midiPath, MidiInstrument.DistortedGuitar);
             }
 
-            //Console.ReadLine();
+            Console.ReadLine();
         }
     }
 }

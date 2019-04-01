@@ -22,7 +22,7 @@ namespace Halloumi.Notez.Api.Controllers
 
             var generator = new PhraseGenerator();
             var phrase = generator.GeneratePhrase();
-            MidiHelper.SaveToMidi(phrase, midiPath);
+            MidiHelper.SaveToMidi(phrase, midiPath, MidiInstrument.OverdrivenGuitar);
  
             var stream = new FileStream(midiPath, FileMode.Open, FileAccess.Read);
             var result = new HttpResponseMessage(HttpStatusCode.OK)

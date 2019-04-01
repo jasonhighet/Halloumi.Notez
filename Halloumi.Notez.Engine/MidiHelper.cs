@@ -12,23 +12,23 @@ namespace Halloumi.Notez.Engine
     {
         private const int NoteOffset = 24;
 
-        public static void SaveToMidi(Phrase phrase, string filepath)
+        public static void SaveToMidi(Phrase phrase, string filepath, MidiInstrument instrument = MidiInstrument.AcousticGrandPiano)
         {
-            var builder = BuildMidi(phrase);
+            var builder = BuildMidi(phrase, instrument);
             builder.SaveToFile(filepath);
         }
 
         public static void SaveToCsv(Phrase phrase, string filepath)
         {
-            var builder = BuildMidi(phrase);
+            var builder = BuildMidi(phrase, MidiInstrument.AcousticGrandPiano);
             builder.SaveToCsvFile(filepath);
 
         }
 
-        private static MidiBuilder BuildMidi(Phrase phrase)
+        private static MidiBuilder BuildMidi(Phrase phrase, MidiInstrument instrument)
         {
 
-            var midiBuilder = new MidiBuilder(phrase.Description, phrase.Bpm);
+            var midiBuilder = new MidiBuilder(phrase.Description, phrase.Bpm, instrument);
 
             foreach (var element in phrase.Elements)
             {
