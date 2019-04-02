@@ -21,10 +21,10 @@ namespace Halloumi.Notez.TestHarness
                 PhraseHelper.DuplicatePhrase(phrase);
                 PhraseHelper.DuplicatePhrase(phrase);
 
-                MidiHelper.SaveToMidi(phrase, midiPath, MidiInstrument.DistortedGuitar);
+                MidiHelper.SaveToMidi(phrase, midiPath, MidiInstrument.OverdrivenGuitar);
             }
 
-            Console.ReadLine();
+            //Console.ReadLine();
         }
     }
 }

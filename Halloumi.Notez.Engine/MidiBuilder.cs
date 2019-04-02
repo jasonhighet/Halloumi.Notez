@@ -20,14 +20,10 @@ namespace Halloumi.Notez.Engine
             _bpmChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
 
             _trackChunk = new TrackChunk();
-
             _trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(instrument)));
-
             _trackChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
-            //_trackChunk.Events.Add(new TextEvent(name + "\0"));
 
             AddTimeSignatureEvent();
-            //AddTimeSignatureEvent();
         }
 
         private long GetBpmAsMicroseconds(decimal bpm)
