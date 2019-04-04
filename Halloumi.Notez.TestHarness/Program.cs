@@ -31,8 +31,10 @@ namespace Halloumi.Notez.TestHarness
         {
             var lowNote = phrase.Elements.Min(x => x.Note);
             var getUpCount = GetUpCount(lowNote);
-            var midiPath = @"RandomRiff" + index + "_" + getUpCount + ".mid";
-            return midiPath;
+            if(getUpCount == 0)
+                return @"RandomRiff" + index + ".mid";
+            else
+                return @"RandomRiff" + index + "_" + getUpCount + ".mid";
         }
 
         private static void DeleteMidiFiles()
