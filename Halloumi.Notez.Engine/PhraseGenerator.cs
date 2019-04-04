@@ -260,6 +260,14 @@ namespace Halloumi.Notez.Engine
 
             phrase.Bpm = 60;
 
+
+            //var lowNote = phrase.Elements.Min(x => x.Note);
+            //var highNote = phrase.Elements.Max(x => x.Note);
+            //if (lowNote >= NoteHelper.NoteToNumber("C2") && highNote <= NoteHelper.NoteToNumber("C3"))
+            //{
+            //    NoteHelper.ShiftNotesDirect(phrase, 1, Interval.Octave, Direction.Up);
+            //}
+
             return phrase;
         }
 
