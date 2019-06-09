@@ -22,7 +22,6 @@ namespace Halloumi.Notez.Engine
         {
             var builder = BuildMidi(phrase, MidiInstrument.AcousticGrandPiano);
             builder.SaveToCsvFile(filepath);
-
         }
 
         private static MidiBuilder BuildMidi(Phrase phrase, MidiInstrument instrument)

@@ -23,6 +23,7 @@ namespace Halloumi.Notez.Engine
             var scaleDefinitions = new Dictionary<string, int[]>
             {
                 {"Natural Minor", new[] {0, 2, 1, 2, 2, 1, 2}},
+                {"Harmonic Minor", new[] {0, 2, 1, 2, 2, 1, 3}},
                 {"Major", new[] {0, 2, 2, 1, 2, 2, 2}}
             };
 
@@ -156,27 +157,48 @@ namespace Halloumi.Notez.Engine
             var matches = new List<ScaleMatch>();
             foreach (var scale in GetScales())
             {
-                var match = new ScaleMatch
-                {
-                    Scale = scale, DistanceFromScale = 0
-                };
-
-                foreach (var note in noteNumbers)
-                {
-                    var distanceFromScale = DistanceFromScale(note, scale);
-                    if(distanceFromScale != 0)
-                        match.NotInScale.Add(note);
-
-                    match.DistanceFromScale += distanceFromScale;
-                }
-
-                match.NotInScale = match.NotInScale.Distinct().OrderBy(x => x).ToList();
+                ScaleMatch match = MatchNotesToScale(noteNumbers, scale);
                 matches.Add(match);
             }
 
             return matches.OrderBy(x => x.DistanceFromScale)
                 .ThenBy(x=> Math.Abs(NoteHelper.GetDistanceBetweenNotes(notes[0], x.Scale.Notes[0])))
                 .ToList();
+        }
+
+        public static ScaleMatch MatchPhraseToScale(Phrase phrase, string scaleName)
+        {
+            var notes = phrase.Elements.Select(x => x.Note).Distinct().ToList();
+            var scale = GetScaleByName(scaleName);
+            var noteNumbers = notes
+                .Select(NoteHelper.NumberToNoteOnly)
+                .Select(NoteHelper.NoteToNumber)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            return MatchNotesToScale(noteNumbers, scale);
+        }
+
+        private static ScaleMatch MatchNotesToScale(List<int> noteNumbers, Scale scale)
+        {
+            var match = new ScaleMatch
+            {
+                Scale = scale,
+                DistanceFromScale = 0
+            };
+
+            foreach (var note in noteNumbers)
+            {
+                var distanceFromScale = DistanceFromScale(note, scale);
+                if (distanceFromScale != 0)
+                    match.NotInScale.Add(note);
+
+                match.DistanceFromScale += distanceFromScale;
+            }
+
+            match.NotInScale = match.NotInScale.Distinct().OrderBy(x => x).ToList();
+            return match;
         }
 
         private static int DistanceFromScale(int note, Scale scale)
