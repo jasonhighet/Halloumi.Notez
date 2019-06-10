@@ -1,7 +1,8 @@
-﻿using System.IO;
+﻿using Halloumi.Notez.Engine.Notes;
+using System.IO;
 using System.Linq;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Tabs
 {
     public static class TabHelper
     {

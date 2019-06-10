@@ -7,7 +7,7 @@ using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Smf;
 using Melanchall.DryWetMidi.Tools;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Midi
 {
     public class MidiBuilder
     {

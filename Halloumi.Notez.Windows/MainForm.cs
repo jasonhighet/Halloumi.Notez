@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Halloumi.Notez.Engine;
+using Halloumi.Notez.Engine.Tabs;
 
 namespace Halloumi.Notez.Windows
 {

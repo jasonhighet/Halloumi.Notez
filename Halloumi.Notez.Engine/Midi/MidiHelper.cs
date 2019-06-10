@@ -5,8 +5,9 @@ using System.IO;
 using System.Linq;
 using Melanchall.DryWetMidi.Smf.Interaction;
 using Melanchall.DryWetMidi.Tools;
+using Halloumi.Notez.Engine.Notes;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Midi
 {
     public class MidiHelper
     {

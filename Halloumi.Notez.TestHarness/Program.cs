@@ -1,9 +1,14 @@
 ﻿using Halloumi.Notez.Engine;
+using Halloumi.Notez.Engine.Generator;
+using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Melanchall.DryWetMidi.Smf;
+using Melanchall.DryWetMidi.Smf.Interaction;
 
 namespace Halloumi.Notez.TestHarness
 {
@@ -12,151 +17,76 @@ namespace Halloumi.Notez.TestHarness
         static void Main(string[] args)
         {
             var folder = @".\TestMidi\Death";
-            var clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
-                .Where(x => !x.EndsWith(" 4.mid"))
-                //.Where(x => x.Contains("ATG-"))
-                .OrderBy(x => Path.GetFileNameWithoutExtension(x))
-                .Select(x => new Clip
-                {
-                    File = x,
-                    Name = Path.GetFileNameWithoutExtension(x),
-                    Song = Regex.Replace(Path.GetFileNameWithoutExtension(x), @"[\d-]", string.Empty),
-                    Section = Path.GetFileNameWithoutExtension(x).Split(' ')[0],
-                    Artist = Path.GetFileNameWithoutExtension(x).Split('-')[0],
-                    Phrase = MidiHelper.ReadMidi(x),
-                    MatchingScales = new List<ScaleHelper.ScaleMatch>()
-                })
+            //    var sourceLibrary = new SourceLibrary();
+            //    sourceLibrary.LoadLibrary(folder);
+
+            var files = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
+                .Select(x => new { Phrase = MidiHelper.ReadMidi(x), File = x })
+                .Where(x=> IsDamaged(x.Phrase))
+                .Select(x=>x.File)
                 .ToList();
 
-            foreach (var clip in clips)
+            Console.WriteLine(files.Count);
+
+            foreach (var file in files)
             {
-                var scales = ScaleHelper.FindMatchingScales(clip.Phrase);
-                var minDistance = scales.Min(x => x.DistanceFromScale);
-                clip.MatchingScales = scales.Where(x => x.DistanceFromScale == minDistance).ToList();
+                var midi = MidiFile.Read(file);
+                //if (midi.Chunks.Count == 0)
+                //    throw new ApplicationException("Invalid Midi File");
+
+                //if (!(midi.Chunks[0] is TrackChunk chunk))
+                //    throw new ApplicationException("Invalid Midi File");
+
+                ////var noteOns = chunk.Events.Where(x => x is NoteOnEvent).ToList();
+
+                //var i = 4;
+                //while (chunk.Events[i] is PitchBendEvent)
+                //{
+                //    chunk.Events[i].DeltaTime = 0;
+                //    i++;
+                //}
+
+
+                var newFile = @"C:\Users\jason\Desktop\metalmidi\test\" + Path.GetFileName(file);
+
+                midi.Write(newFile, true, MidiFileFormat.SingleTrack);
+
+                //using (var manager = new TimedEventsManager(chunk.Events))
+                //{
+                //    foreach (var element in manager.Events)
+                //    {
+                //    }
+                //}
+
             }
 
-            var sections = clips
-                .GroupBy(x => x.Section, (key, group) => new SectionCounts()
-                {
-                    Name = key,
-                    ScaleCounts = group.SelectMany(x => x.MatchingScales)
-                        .Select(x => x.Scale.Name)
-                        .GroupBy(x => x)
-                        .Select(x => new ScaleCount() { Count = x.Count(), Scale = x.Key })
-                        .OrderByDescending(x => x.Count)
-                        .ToList()
-                })
-                .ToList();
+            //var counts = midis.Select(x => x.PhraseLength - x.Elements.Min(y => y.Position))
+            //    .GroupBy(x => x)
+            //    .Select(x => new { Count = x.Count(), Length = x.Key })
+            //    .Where(x=>x.Length != 16 && x.Length != 32 && x.Length != 64 && x.Length != 128 && x.Length != 256)
+            //    .OrderBy(x=> x.Length)
+            //    .ToList();
 
-            var songs = clips
-                .GroupBy(x => x.Song, (key, group) => new SectionCounts()
-                {
-                    Name = key,
-                    ScaleCounts = group.SelectMany(x => x.MatchingScales)
-                        .Select(x => x.Scale.Name)
-                        .GroupBy(x => x)
-                        .Select(x => new ScaleCount() { Count = x.Count(), Scale = x.Key })
-                        .OrderByDescending(x => x.Count)
-                        .ToList()
-                })
-                .ToList();
+            //var midi = MidiHelper.ReadMidi(".\\TestMidi\\Death\\bridge\\ATG-Blinded4 1.mid");
 
-            var artists = clips
-                .GroupBy(x => x.Artist, (key, group) => new SectionCounts()
-                {
-                    Name = key,
-                    ScaleCounts = group.SelectMany(x => x.MatchingScales)
-                        .Select(x => x.Scale.Name)
-                        .GroupBy(x => x)
-                        .Select(x => new ScaleCount() { Count = x.Count(), Scale = x.Key })
-                        .OrderByDescending(x => x.Count)
-                        .ToList()
-                })
-                .ToList();
-
-
-            foreach (var clip in clips)
-            {
-                var matchingScales = clip.MatchingScales.Select(x => x.Scale.Name).ToList();
-                                
-                var section = sections.FirstOrDefault(x => x.Name == clip.Section);
-                var song = songs.FirstOrDefault(x => x.Name == clip.Song);
-                var artist = artists.FirstOrDefault(x => x.Name == clip.Artist);
-                clip.Scale = matchingScales
-                    .OrderByDescending(x => GetSectionRank(section, x))
-                    .ThenByDescending(x => GetSectionRank(song, x))
-                    .ThenByDescending(x => GetSectionRank(artist, x))
-                    .ThenByDescending(x => x.EndsWith("Minor") ? 1 : 0)
-                    .FirstOrDefault();
-            }
-
-            foreach (var section in sections)
-            {
-                var sectionClips = clips.Where(x => x.Section == section.Name).ToList();
-                var scaleCount = sectionClips.Select(x => x.Scale).GroupBy(x => x).Count();
-                if (scaleCount == 1)
-                    continue;
-                if (scaleCount > 2)
-                    throw new ApplicationException("Too many scales");
-
-                var primaryScale = sectionClips
-                    .Select(x => x.Scale)
-                    .GroupBy(x => x)
-                    .OrderByDescending(x => x.Count())
-                    .Select(x => x.Key).First();
-
-                foreach (var clip in sectionClips)
-                {
-                    clip.Scale = primaryScale;
-                    if (!clip.MatchingScales.Select(x => x.Scale.Name).Contains(primaryScale))
-                    {
-                        clip.ScaleMatch = ScaleHelper.MatchPhraseToScale(clip.Phrase, primaryScale);
-                        clip.ScaleMatchIncomplete = true;
-                    }
-                }
-            }
-
-            foreach (var clip in clips)
-            {
-                Console.WriteLine(clip.Name.PadRight(20) + clip.Scale + ((clip.ScaleMatchIncomplete) ? $"({clip.ScaleMatch.DistanceFromScale})" : ""));
-            }
 
             Console.ReadLine();
         }
 
-        private static int GetSectionRank(SectionCounts section, string scaleName)
+        public static bool IsDamaged(Phrase phrase)
         {
-            if (!section.ScaleCounts.Exists(x => x.Scale == scaleName))
-                return 0;
+            //if (phrase.Elements.Min(y => y.Position) == 0)
+            //    return false;
 
-            return section.ScaleCounts.FirstOrDefault(x => x.Scale == scaleName).Count;
+            var length = phrase.PhraseLength - phrase.Elements.Min(y => y.Position);
+
+            if (length != 16 && length != 32 && length != 64 && length != 128 && length != 256)
+                return true;
+
+            return false;
         }
-
-        private class SectionCounts
-        {
-            public string Name { get; set; }
-            public List<ScaleCount> ScaleCounts { get; set; }
-        }
-
-        private class ScaleCount
-        {
-            public string Scale { get; set; }
-            public int Count { get; set; }
-        }
-
-        private class Clip
-        {
-            public string File { get; set; }
-            public string Name { get; set; }
-            public string Song { get; set; }
-            public string Artist { get; set; }
-            public string Section { get; set; }
-            public Phrase Phrase { get; set; }
-            public List<ScaleHelper.ScaleMatch> MatchingScales { get; set; }
-            public string Scale { get; set; }
-            public bool ScaleMatchIncomplete { get; set; }
-            public ScaleHelper.ScaleMatch ScaleMatch { get; set; }
-        }
-
     }
 }
+
+
+

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Notes
 {
     public static class ScaleHelper
     {

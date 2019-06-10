@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Generator
 {
     public class RiffGenerator
     {

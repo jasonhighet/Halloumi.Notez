@@ -44,21 +44,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MidiBuilder.cs" />
-    <Compile Include="MidiFileLibraryHelper.cs" />
-    <Compile Include="MidiHelper.cs" />
-    <Compile Include="MidiInstrument.cs" />
-    <Compile Include="Phrase.cs" />
-    <Compile Include="PhraseElement.cs" />
-    <Compile Include="NoteHelper.cs" />
-    <Compile Include="PhraseGenerator.cs" />
-    <Compile Include="PhraseHelper.cs" />
+    <Compile Include="Generator\SourceLibrary.cs" />
+    <Compile Include="Midi\MidiBuilder.cs" />
+    <Compile Include="Midi\MidiFileLibraryHelper.cs" />
+    <Compile Include="Midi\MidiHelper.cs" />
+    <Compile Include="Midi\MidiInstrument.cs" />
+    <Compile Include="Notes\Phrase.cs" />
+    <Compile Include="Notes\PhraseElement.cs" />
+    <Compile Include="Notes\NoteHelper.cs" />
+    <Compile Include="Generator\PhraseGenerator.cs" />
+    <Compile Include="Notes\PhraseHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RepeatingElementsFinder.cs" />
-    <Compile Include="RiffGenerator.cs" />
-    <Compile Include="ScaleHelper.cs" />
-    <Compile Include="TabHelper.cs" />
-    <Compile Include="TabParser.cs" />
+    <Compile Include="Generator\RepeatingElementsFinder.cs" />
+    <Compile Include="Generator\RiffGenerator.cs" />
+    <Compile Include="Notes\ScaleHelper.cs" />
+    <Compile Include="Tabs\TabHelper.cs" />
+    <Compile Include="Tabs\TabParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

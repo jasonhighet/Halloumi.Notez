@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Notes
 {
     public class NoteHelper
     {

@@ -1,4 +1,6 @@
 ﻿using Halloumi.Notez.Engine;
+using Halloumi.Notez.Engine.Generator;
+using Halloumi.Notez.Engine.Midi;
 using System;
 using System.Collections.Generic;
 using System.IO;

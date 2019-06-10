@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Halloumi.Notez.Engine.Notes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Tabs
 {
     public class TabParser
     {

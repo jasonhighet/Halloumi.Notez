@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Halloumi.Notez.Engine
+namespace Halloumi.Notez.Engine.Generator
 {
     public class PhraseGenerator
     {
@@ -12,7 +14,7 @@ namespace Halloumi.Notez.Engine
         private readonly Random _random;
         private List<NoteProbability> _probabilities;
         private int _riffLength = 32;
-        private const string baseScale = "C Natural Minor";
+        private string _baseScale = "C Natural Minor";
         private int _numberOfRiffsToMerge = 2;
         private double _chanceOfTimingRepeat;
         private double _chanceOfPerfectRepeat;
@@ -25,21 +27,31 @@ namespace Halloumi.Notez.Engine
         private List<Phrase> _riffs;
         private string _rootFolder = "TestMidi";
 
-        public PhraseGenerator(int riffLength = 16, string rootFolder = "")
+        public PhraseGenerator(int riffLength = 16, string rootFolder = "", List<Phrase> sourceRiffs = null, string baseScale = "C Natural Minor")
         {
             _rootFolder = Path.Combine(_rootFolder, rootFolder);
             _riffLength = riffLength;
             _random = new Random(DateTime.Now.Millisecond);
             _numberOfRiffsToMerge = _random.Next(2, 4);
+            _baseScale = baseScale;
 
-            LoadTrainingData();
+            LoadTrainingData(sourceRiffs);
         }
 
-        private void LoadTrainingData()
+        private void LoadTrainingData(List<Phrase> sourceRiffs = null)
         {
-            _riffs = Directory.GetFiles(_rootFolder, "*.mid", SearchOption.AllDirectories)
-                .Select(MidiHelper.ReadMidi)
-                .ToList();
+            if (sourceRiffs == null)
+            {
+                _riffs = Directory.GetFiles(_rootFolder, "*.mid", SearchOption.AllDirectories)
+                    .Select(MidiHelper.ReadMidi)
+                    .ToList();
+            }
+            else
+            {
+                _riffs = sourceRiffs.ToList();
+            }
+
+
 
             var largeRiffs = _riffs.Where(riff => riff.PhraseLength > _riffLength).ToList();
             foreach (var largeRiff in largeRiffs)
@@ -69,7 +81,7 @@ namespace Halloumi.Notez.Engine
             foreach (var scaleRiff in _riffs)
             {
                 var matchingScales = ScaleHelper.FindMatchingScales(scaleRiff).Where(x => x.DistanceFromScale == 0).Select(x => x.Scale.Name).ToList();
-                if (!matchingScales.Contains(baseScale))
+                if (!matchingScales.Contains(_baseScale))
                 {
                     Console.WriteLine("Riff " + scaleRiff.Description + " DOES NOT contain base scale - is possibly " + (matchingScales.FirstOrDefault() ?? "??"));
                     wrongScaleRiffs.Add(scaleRiff);
