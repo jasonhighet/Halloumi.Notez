@@ -18,27 +18,90 @@ namespace Halloumi.Notez.Engine.Generator
         {
             LoadClips(folder);
             CalculateScales();
+            MashToScale();
 
-            foreach (var clip in Clips)
+            CalculateLengths();
+        }
+
+        private void CalculateLengths()
+        {
+            var sections = Clips
+                .GroupBy(x => x.Section, (key, group) => new
+                {
+                    Name = key,
+                    Lengths = group.Select(x => x.Phrase.PhraseLength)
+                        .GroupBy(x => x)
+                        .Select(x => new {Count = x.Count(), Length = x.Key})
+                        .OrderByDescending(x => x.Count)
+                        .ToList()
+                })
+                .ToList();
+
+            var invalidClips = Clips.Where(x => !ValidLength(x.Phrase.PhraseLength)).ToList();
+            foreach (var clip in invalidClips)
             {
-                if (clip.ScaleMatchIncomplete)
-                    clip.Phrase = ScaleHelper.MashNotesToScale(clip.Phrase, clip.Scale);
+                var section = sections.FirstOrDefault(x => x.Name == clip.Section);
 
-                clip.Phrase = ScaleHelper.TransposeToScale(clip.Phrase, clip.Scale, "C Harmonic Minor");
-                Console.WriteLine(clip.Name.PadRight(20) + clip.Scale + ((clip.ScaleMatchIncomplete) ? $"({clip.ScaleMatch.DistanceFromScale})" : ""));
+                var closestValidMatch = section?.Lengths
+                    .Where(x => ValidLength(x.Length))
+                    .OrderBy(x => clip.Phrase.PhraseLength - x.Length)
+                    .FirstOrDefault();
+
+                if (closestValidMatch == null) continue;
+
+                var diff = closestValidMatch.Length - clip.Phrase.PhraseLength;
+                if (diff > 0 && (diff / closestValidMatch.Length) < .25M)
+                {
+                    clip.Phrase.PhraseLength = closestValidMatch.Length;
+                }
+            }
+
+
+            invalidClips = Clips.Where(x => !ValidLength(x.Phrase.PhraseLength)).ToList();
+            foreach (var clip in invalidClips)
+            {
+                Console.WriteLine("Invalid Length:" + clip.Name + " " + clip.Phrase.PhraseLength);
             }
         }
 
+        private static bool ValidLength(decimal length)
+        {
+            return length == 16 
+                   || length == 32 
+                   || length == 64 
+                   || length == 128 
+                   || length == 256;
+        }
+
+        private void MashToScale()
+        {
+            foreach (var clip in InstrumentClips())
+            {
+                if (clip.ScaleMatchIncomplete)
+                {
+                    clip.Phrase = ScaleHelper.MashNotesToScale(clip.Phrase, clip.Scale);
+                    Console.WriteLine(clip.Name.PadRight(20) + clip.Scale + ((clip.ScaleMatchIncomplete) ? $"({clip.ScaleMatch.DistanceFromScale})" : ""));
+                }
+                clip.Phrase = ScaleHelper.TransposeToScale(clip.Phrase, clip.Scale, "C Harmonic Minor");
+            }
+        }
+
+        private IEnumerable<Clip> InstrumentClips()
+        {
+            return Clips.Where(x => !x.File.EndsWith(" 4.mid"));
+        }
+
+        
         private void CalculateScales()
         {
-            foreach (var clip in Clips)
+            foreach (var clip in InstrumentClips())
             {
                 var scales = ScaleHelper.FindMatchingScales(clip.Phrase);
                 var minDistance = scales.Min(x => x.DistanceFromScale);
                 clip.MatchingScales = scales.Where(x => x.DistanceFromScale == minDistance).ToList();
             }
 
-            var sections = Clips
+            var sections = InstrumentClips()
                 .GroupBy(x => x.Section, (key, group) => new SectionCounts()
                 {
                     Name = key,
@@ -51,7 +114,7 @@ namespace Halloumi.Notez.Engine.Generator
                 })
                 .ToList();
 
-            var songs = Clips
+            var songs = InstrumentClips()
                 .GroupBy(x => x.Song, (key, group) => new SectionCounts()
                 {
                     Name = key,
@@ -64,7 +127,7 @@ namespace Halloumi.Notez.Engine.Generator
                 })
                 .ToList();
 
-            var artists = Clips
+            var artists = InstrumentClips()
                 .GroupBy(x => x.Artist, (key, group) => new SectionCounts()
                 {
                     Name = key,
@@ -78,7 +141,7 @@ namespace Halloumi.Notez.Engine.Generator
                 .ToList();
 
 
-            foreach (var clip in Clips)
+            foreach (var clip in InstrumentClips())
             {
                 var matchingScales = clip.MatchingScales.Select(x => x.Scale.Name).ToList();
 
@@ -95,7 +158,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             foreach (var section in sections)
             {
-                var sectionClips = Clips.Where(x => x.Section == section.Name).ToList();
+                var sectionClips = InstrumentClips().Where(x => x.Section == section.Name).ToList();
                 var scaleCount = sectionClips.Select(x => x.Scale).GroupBy(x => x).Count();
                 if (scaleCount == 1)
                     continue;
@@ -111,53 +174,42 @@ namespace Halloumi.Notez.Engine.Generator
                 foreach (var clip in sectionClips)
                 {
                     clip.Scale = primaryScale;
-                    if (!clip.MatchingScales.Select(x => x.Scale.Name).Contains(primaryScale))
-                    {
-                        clip.ScaleMatch = ScaleHelper.MatchPhraseToScale(clip.Phrase, primaryScale);
-                        clip.ScaleMatchIncomplete = true;
-                    }
+                    if (clip.MatchingScales.Select(x => x.Scale.Name).Contains(primaryScale)) continue;
+
+                    clip.ScaleMatch = ScaleHelper.MatchPhraseToScale(clip.Phrase, primaryScale);
+                    clip.ScaleMatchIncomplete = true;
                 }
             }
 
-            var riffs = this.Clips.Select(x => x.Phrase).ToList();
+            //var riffs = InstrumentClips().Select(x => x.Phrase).ToList();
 
-            var counts = riffs.GroupBy(x => x.PhraseLength, (key, group) => new
-            {
-                Length = key,
-                Count = group.Count()
-            })
-            .OrderByDescending(x => x.Count)
-            .ToList();
+            //var counts = riffs.GroupBy(x => x.PhraseLength, (key, group) => new
+            //{
+            //    Length = key,
+            //    Count = group.Count()
+            //})
+            //.OrderByDescending(x => x.Count)
+            //.ToList();
 
-            foreach (var count in counts)
-            {
-                Console.WriteLine(count.Length + "\t" + count.Count);
-            }
+            //foreach (var count in counts)
+            //{
+            //    Console.WriteLine(count.Length + "\t" + count.Count);
+            //}
 
-            var riff = Clips.FirstOrDefault(x => x.Phrase.PhraseLength == 136);
-
-            NoteHelper.GetTotalDuration(riff.Phrase);
-
-            Console.WriteLine(riff.Name +" " + NoteHelper.GetTotalDuration(riff.Phrase));
-
-
-            // var generator = new PhraseGenerator(riffLength: 64, sourceRiffs: riffs);
 
         }
 
         private void LoadClips(string folder)
         {
             Clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
-                .Where(x => !x.EndsWith(" 4.mid"))
-                .Where(x => x.Contains("ATG-"))
-                .OrderBy(x => Path.GetFileNameWithoutExtension(x))
+                .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
                 .Select(x => new Clip
                 {
                     File = x,
                     Name = Path.GetFileNameWithoutExtension(x),
-                    Song = Regex.Replace(Path.GetFileNameWithoutExtension(x), @"[\d-]", string.Empty),
-                    Section = Path.GetFileNameWithoutExtension(x).Split(' ')[0],
-                    Artist = Path.GetFileNameWithoutExtension(x).Split('-')[0],
+                    Song = Regex.Replace(Path.GetFileNameWithoutExtension(x) + "", @"[\d-]", string.Empty),
+                    Section = (Path.GetFileNameWithoutExtension(x) + "").Split(' ')[0],
+                    Artist = (Path.GetFileNameWithoutExtension(x) + "").Split('-')[0],
                     Phrase = MidiHelper.ReadMidi(x),
                 })
                 .ToList();
@@ -165,10 +217,9 @@ namespace Halloumi.Notez.Engine.Generator
 
         private static int GetSectionRank(SectionCounts section, string scaleName)
         {
-            if (!section.ScaleCounts.Exists(x => x.Scale == scaleName))
-                return 0;
+            var counts = section.ScaleCounts.FirstOrDefault(x => x.Scale == scaleName);
 
-            return section.ScaleCounts.FirstOrDefault(x => x.Scale == scaleName).Count;
+            return counts?.Count ?? 0;
         }
 
 
