@@ -86,6 +86,8 @@ namespace Halloumi.Notez.Engine.Midi
 
             phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
 
+            phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ThenBy(x => x.Note).ToList();
+
             phrase.Description = Path.GetFileName(filepath);
 
             return phrase;

@@ -10,9 +10,10 @@ namespace Halloumi.Notez.Engine.Generator
         public static List<WindowMatch> FindRepeatingElements(Phrase phrase)
         {
             var sequenceLength = Convert.ToInt32(phrase.PhraseLength);
+            var minWindowSize = phrase.Elements.Min(x => x.Duration);
             var windowMatches = new List<WindowMatch>();
 
-            for (var windowSize = sequenceLength / 2; windowSize > 1; windowSize--)
+            for (var windowSize = sequenceLength / 2; windowSize > minWindowSize; windowSize--)
             {
                 var lastWindowStart = sequenceLength - (windowSize * 2);
 

@@ -62,11 +62,31 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 Console.WriteLine("Invalid Length:" + clip.Name + " " + clip.Phrase.PhraseLength);
             }
+
+            var validClips = Clips.Where(x => ValidLength(x.Phrase.PhraseLength)).ToList();
+            foreach (var clip in validClips)
+            {
+                var initialLength = clip.Phrase.PhraseLength;
+                while (PhraseHelper.IsPhraseDuplicated(clip.Phrase))
+                {
+                    var halfLength = clip.Phrase.Elements.Count / 2;
+                    clip.Phrase.Elements.RemoveAll(x => clip.Phrase.Elements.IndexOf(x) >= halfLength);
+                    clip.Phrase.PhraseLength /= 2M;
+                }
+                if(initialLength != clip.Phrase.PhraseLength)
+                    Console.WriteLine($"{clip.Name} reduced from {initialLength} to {clip.Phrase.PhraseLength}");
+            }
+
+            Clips.RemoveAll(x => !ValidLength(x.Phrase.PhraseLength));
+
         }
 
         private static bool ValidLength(decimal length)
         {
-            return length == 16 
+            return length == 2
+                   || length == 4
+                   || length == 8
+                   || length == 16 
                    || length == 32 
                    || length == 64 
                    || length == 128 
@@ -180,23 +200,6 @@ namespace Halloumi.Notez.Engine.Generator
                     clip.ScaleMatchIncomplete = true;
                 }
             }
-
-            //var riffs = InstrumentClips().Select(x => x.Phrase).ToList();
-
-            //var counts = riffs.GroupBy(x => x.PhraseLength, (key, group) => new
-            //{
-            //    Length = key,
-            //    Count = group.Count()
-            //})
-            //.OrderByDescending(x => x.Count)
-            //.ToList();
-
-            //foreach (var count in counts)
-            //{
-            //    Console.WriteLine(count.Length + "\t" + count.Count);
-            //}
-
-
         }
 
         private void LoadClips(string folder)

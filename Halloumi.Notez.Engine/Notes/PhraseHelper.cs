@@ -12,7 +12,12 @@ namespace Halloumi.Notez.Engine.Notes
         {
             phrase.PhraseLength = newLength;
             phrase.Elements.RemoveAll(x => x.Position >= newLength);
-            UpdateDurationsFromPositions(phrase, newLength);
+
+            var lastElement = phrase.Elements.LastOrDefault();
+            if(lastElement == null)
+                return;
+
+            lastElement.Duration = newLength - lastElement.Position;
         }
 
         public static void DuplicatePhrase(Phrase phrase)
@@ -26,6 +31,36 @@ namespace Halloumi.Notez.Engine.Notes
 
             phrase.PhraseLength = newLength;
             phrase.Elements.AddRange(newElements);
+        }
+
+        public static bool IsPhraseDuplicated(Phrase phrase)
+        {
+            if (phrase.Elements.Count % 2 != 0)
+                return false;
+
+            var halfLength = phrase.Elements.Count / 2;
+            for (var i = 0; i < halfLength; i++)
+            {
+                if (!AreTheSame(phrase.Elements[i], phrase.Elements[i + halfLength]))
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        public static bool AreTheSame(Phrase phrase1, Phrase phrase2)
+        {
+            if (phrase1.PhraseLength != phrase2.PhraseLength)
+                return false;
+
+            return !phrase1.Elements.Where((t, i) => !AreTheSame(t, phrase2.Elements[i])).Any();
+        }
+
+        private static bool AreTheSame(PhraseElement element1, PhraseElement element2)
+        {
+            return (element1.Note == element2.Note
+                    && element1.Duration == element2.Duration);
         }
 
         public static void UpdatePositionsFromDurations(Phrase phrase)

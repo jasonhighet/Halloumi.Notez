@@ -13,9 +13,9 @@ namespace Halloumi.Notez.Engine.Generator
         private int _maxNotes;
         private readonly Random _random;
         private List<NoteProbability> _probabilities;
-        private int _riffLength = 32;
-        private string _baseScale = "C Natural Minor";
-        private int _numberOfRiffsToMerge = 2;
+        private readonly int _riffLength;
+        private readonly string _baseScale;
+        private readonly int _numberOfRiffsToMerge;
         private double _chanceOfTimingRepeat;
         private double _chanceOfPerfectRepeat;
         private int _minTimingRepeats;
@@ -25,7 +25,7 @@ namespace Halloumi.Notez.Engine.Generator
         private List<RepeatingElementsFinder.WindowMatch> _timingRepeats;
         private List<RepeatingElementsFinder.WindowMatch> _perfectRepeats;
         private List<Phrase> _riffs;
-        private string _rootFolder = "TestMidi";
+        private readonly string _rootFolder = "TestMidi";
 
         public PhraseGenerator(int riffLength = 16, string rootFolder = "", List<Phrase> sourceRiffs = null, string baseScale = "C Natural Minor")
         {
@@ -59,12 +59,12 @@ namespace Halloumi.Notez.Engine.Generator
                 PhraseHelper.TrimPhrase(largeRiff, _riffLength);
             }
 
-            foreach (var halfSizeRiff in _riffs.Where(riff => riff.PhraseLength == _riffLength / 2))
+            foreach (var halfSizeRiff in _riffs.Where(riff => riff.PhraseLength == _riffLength / 2M))
             {
                 PhraseHelper.DuplicatePhrase(halfSizeRiff);
             }
 
-            foreach (var quarterSizeRiff in _riffs.Where(riff => riff.PhraseLength == _riffLength / 4))
+            foreach (var quarterSizeRiff in _riffs.Where(riff => riff.PhraseLength == _riffLength / 4M))
             {
                 PhraseHelper.DuplicatePhrase(quarterSizeRiff);
                 PhraseHelper.DuplicatePhrase(quarterSizeRiff);
@@ -127,7 +127,7 @@ namespace Halloumi.Notez.Engine.Generator
             _riffs = _riffs.Except(wrongOctaveRiffs).ToList();
         }
 
-        private void GenerateRiffProbabilities(List<Phrase> riffs)
+        private void GenerateRiffProbabilities(IReadOnlyCollection<Phrase> riffs)
         {
             var allNotes = riffs.SelectMany(x => x.Elements).GroupBy(x => new
             {
