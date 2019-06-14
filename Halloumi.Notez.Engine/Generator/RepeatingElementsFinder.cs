@@ -13,7 +13,7 @@ namespace Halloumi.Notez.Engine.Generator
             var minWindowSize = phrase.Elements.Min(x => x.Duration);
             var windowMatches = new List<WindowMatch>();
 
-            for (var windowSize = sequenceLength / 2; windowSize > minWindowSize; windowSize--)
+            for (var windowSize = sequenceLength / 2; windowSize >= minWindowSize; windowSize--)
             {
                 var lastWindowStart = sequenceLength - (windowSize * 2);
 
@@ -73,7 +73,8 @@ namespace Halloumi.Notez.Engine.Generator
                 var element1 = phrase.Elements.FirstOrDefault(x => x.Position == windowStart + i);
                 var element2 = phrase.Elements.FirstOrDefault(x => x.Position == compareWindowStart + i);
 
-                matches.Add(CompareElements(element1, element2));
+                if(!(element1== null && element2 == null))
+                    matches.Add(CompareElements(element1, element2));
             }
 
             if (matches.All(x => x == MatchResult.PerfectMatch))

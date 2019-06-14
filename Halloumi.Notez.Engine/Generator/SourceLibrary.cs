@@ -21,6 +21,24 @@ namespace Halloumi.Notez.Engine.Generator
             MashToScale();
 
             CalculateLengths();
+
+            foreach (var clip in InstrumentClips())
+            {
+                var repeats = RepeatingElementsFinder.FindRepeatingElements(clip.Phrase);
+                Console.WriteLine(clip.Name + " " + repeats.Count);
+            }
+
+        }
+
+        private string GetElementKey(PhraseElement element)
+        {
+            return $"{element.Note}_{element.Duration}";
+        }
+
+        private class PatternMatch
+        {
+            public List<PhraseElement> Pattern { get; set; }
+            public List<int> StartIndexes { get; set; }
         }
 
         private void CalculateLengths()
@@ -31,7 +49,7 @@ namespace Halloumi.Notez.Engine.Generator
                     Name = key,
                     Lengths = group.Select(x => x.Phrase.PhraseLength)
                         .GroupBy(x => x)
-                        .Select(x => new {Count = x.Count(), Length = x.Key})
+                        .Select(x => new { Count = x.Count(), Length = x.Key })
                         .OrderByDescending(x => x.Count)
                         .ToList()
                 })
@@ -73,7 +91,7 @@ namespace Halloumi.Notez.Engine.Generator
                     clip.Phrase.Elements.RemoveAll(x => clip.Phrase.Elements.IndexOf(x) >= halfLength);
                     clip.Phrase.PhraseLength /= 2M;
                 }
-                if(initialLength != clip.Phrase.PhraseLength)
+                if (initialLength != clip.Phrase.PhraseLength)
                     Console.WriteLine($"{clip.Name} reduced from {initialLength} to {clip.Phrase.PhraseLength}");
             }
 
@@ -86,10 +104,10 @@ namespace Halloumi.Notez.Engine.Generator
             return length == 2
                    || length == 4
                    || length == 8
-                   || length == 16 
-                   || length == 32 
-                   || length == 64 
-                   || length == 128 
+                   || length == 16
+                   || length == 32
+                   || length == 64
+                   || length == 128
                    || length == 256;
         }
 
@@ -111,7 +129,7 @@ namespace Halloumi.Notez.Engine.Generator
             return Clips.Where(x => !x.File.EndsWith(" 4.mid"));
         }
 
-        
+
         private void CalculateScales()
         {
             foreach (var clip in InstrumentClips())

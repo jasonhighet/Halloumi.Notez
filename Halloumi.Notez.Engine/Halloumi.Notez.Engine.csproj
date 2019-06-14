@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Generator\PatternFinder.cs" />
     <Compile Include="Generator\SourceLibrary.cs" />
     <Compile Include="Midi\MidiBuilder.cs" />
     <Compile Include="Midi\MidiFileLibraryHelper.cs" />
