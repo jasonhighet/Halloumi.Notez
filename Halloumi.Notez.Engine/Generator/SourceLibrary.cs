@@ -19,15 +19,23 @@ namespace Halloumi.Notez.Engine.Generator
             LoadClips(folder);
             CalculateScales();
             MashToScale();
-
+            MergeChords();
             CalculateLengths();
+
 
             foreach (var clip in InstrumentClips())
             {
-                var repeats = RepeatingElementsFinder.FindRepeatingElements(clip.Phrase);
-                Console.WriteLine(clip.Name + " " + repeats.Count);
+                PatternFinder.FindPatterns(clip.Phrase);
             }
 
+        }
+
+        private void MergeChords()
+        {
+            foreach (var clip in InstrumentClips())
+            {
+                PhraseHelper.MergeChords(clip.Phrase);
+            }
         }
 
         private string GetElementKey(PhraseElement element)
@@ -91,8 +99,8 @@ namespace Halloumi.Notez.Engine.Generator
                     clip.Phrase.Elements.RemoveAll(x => clip.Phrase.Elements.IndexOf(x) >= halfLength);
                     clip.Phrase.PhraseLength /= 2M;
                 }
-                if (initialLength != clip.Phrase.PhraseLength)
-                    Console.WriteLine($"{clip.Name} reduced from {initialLength} to {clip.Phrase.PhraseLength}");
+                //if (initialLength != clip.Phrase.PhraseLength)
+                //    Console.WriteLine($"{clip.Name} reduced from {initialLength} to {clip.Phrase.PhraseLength}");
             }
 
             Clips.RemoveAll(x => !ValidLength(x.Phrase.PhraseLength));

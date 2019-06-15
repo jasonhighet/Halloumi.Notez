@@ -12,7 +12,7 @@ namespace Halloumi.Notez.Engine.Generator
         public static void FindPatterns(Phrase phrase)
         {
             var sequenceLength = phrase.Elements.Count;
-            Console.WriteLine("Sequence Length " + sequenceLength);
+            //Console.WriteLine("Sequence Length " + sequenceLength);
 
             var patterns = new Dictionary<string, Dictionary<string, Tuple<int, int>>>();
 
@@ -48,14 +48,16 @@ namespace Halloumi.Notez.Engine.Generator
 
             RemoverOverlaps(patterns);
 
-            foreach (var pattern in patterns)
-            {
-                Console.WriteLine(pattern.Key);
-                foreach (var window in pattern.Value.OrderBy(x => x.Value.Item1).ThenBy(x => x.Value.Item2))
-                {
-                    Console.WriteLine("\t" + window.Value.Item1 + " to " + window.Value.Item2);
-                }
-            }
+            Console.WriteLine(phrase.Description + " has " + patterns.SelectMany(x=>x.Value).Count() + " patterns");
+
+            //foreach (var pattern in patterns)
+            //{
+            //    Console.WriteLine(pattern.Key);
+            //    foreach (var window in pattern.Value.OrderBy(x => x.Value.Item1).ThenBy(x => x.Value.Item2))
+            //    {
+            //        Console.WriteLine("\t" + window.Value.Item1 + " to " + window.Value.Item2);
+            //    }
+            //}
         }
 
         private static void RemoverOverlaps(Dictionary<string, Dictionary<string, Tuple<int, int>>> patterns)

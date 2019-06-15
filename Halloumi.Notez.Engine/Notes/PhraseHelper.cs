@@ -33,6 +33,38 @@ namespace Halloumi.Notez.Engine.Notes
             phrase.Elements.AddRange(newElements);
         }
 
+        public static void MergeChords(Phrase phrase)
+        {
+            var chords = phrase
+                .Elements.GroupBy(x => x.Position)
+                .Where(x => x.Count() > 1)
+                .ToList();
+
+            if (chords.Count == 0)
+                return;
+
+            var elementsToRemove = new List<PhraseElement>();
+            foreach (var chord in chords)
+            {
+                var baseElement = chord.OrderBy(x => x.Note).FirstOrDefault();
+                baseElement.ChordNotes = new List<int>();
+                foreach (var element in chord)
+                {
+                    baseElement.ChordNotes.Add(element.Note);
+
+                    if (element == baseElement)
+                        continue;
+                    
+                    elementsToRemove.Add(element);
+                }
+            }
+
+            foreach (var element in elementsToRemove)
+            {
+                phrase.Elements.Remove(element);
+            }
+        }
+
         public static bool IsPhraseDuplicated(Phrase phrase)
         {
             if (phrase.Elements.Count % 2 != 0)

@@ -11,8 +11,11 @@ namespace Halloumi.Notez.Engine.Notes
         public int Note { get; set; }
         public decimal Duration { get; set; }
         public decimal Position { get; set; }
-
         public decimal OffPosition => Position + Duration - 1;
+
+        public List<int> ChordNotes { get; set; }
+
+        public bool IsChord => ChordNotes != null && ChordNotes.Count > 0;
 
         public PhraseElement Clone()
         {
