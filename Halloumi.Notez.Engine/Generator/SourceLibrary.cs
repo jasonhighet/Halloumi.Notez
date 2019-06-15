@@ -34,20 +34,14 @@ namespace Halloumi.Notez.Engine.Generator
         private void TransposeClips()
         {
             var wrongOctaveClips = new List<Clip>();
-            var lowestNote = NoteHelper.NoteToNumber("C2");
-            var highestNote = NoteHelper.NoteToNumber("C4");
+            var lowestNote = NoteHelper.NoteToNumber("C0");
+            var highestNote = NoteHelper.NoteToNumber("C5");
             foreach (var clip in InstrumentClips())
             {
                 var lowNote = clip.Phrase.Elements.Min(x => x.Note);
                 var highNote = clip.Phrase.Elements.Max(x => x.Note);
 
-                if (lowNote >= NoteHelper.NoteToNumber("C3") && lowNote < NoteHelper.NoteToNumber("C4"))
-                {
-                    NoteHelper.ShiftNotesDirect(clip.Phrase, 1, Interval.Octave, Direction.Down);
-                    lowNote = clip.Phrase.Elements.Min(x => x.Note);
-                    highNote = clip.Phrase.Elements.Max(x => x.Note);
-                }
-                if (lowNote >= NoteHelper.NoteToNumber("C1") && lowNote < NoteHelper.NoteToNumber("C2"))
+                while (lowNote < lowestNote)
                 {
                     NoteHelper.ShiftNotesDirect(clip.Phrase, 1, Interval.Octave, Direction.Up);
                     lowNote = clip.Phrase.Elements.Min(x => x.Note);
