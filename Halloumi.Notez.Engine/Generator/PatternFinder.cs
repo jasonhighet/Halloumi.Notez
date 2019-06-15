@@ -106,7 +106,10 @@ namespace Halloumi.Notez.Engine.Generator
             for (int i = windowStart; i <= windowEnd; i++)
             {
                 if (key != "") key += ",";
-                key += phrase.Elements[i].Note + "_" + phrase.Elements[i].Duration;
+                key += phrase.Elements[i].Note 
+                    + "_" + phrase.Elements[i].Duration 
+                    + "_" + phrase.Elements[i].IsChord
+                    + "_" + phrase.Elements[i].RepeatDuration;
             }
             return key;
         }
@@ -124,7 +127,9 @@ namespace Halloumi.Notez.Engine.Generator
                 var compareElement = phrase.Elements[compareWindowIndex];
 
                 var isMatch = sourceElement.Duration == compareElement.Duration
-                    && sourceElement.Note == compareElement.Note;
+                    && sourceElement.Note == compareElement.Note
+                    && sourceElement.IsChord == compareElement.IsChord
+                    && sourceElement.RepeatDuration == compareElement.RepeatDuration;
 
                 if (!isMatch)
                     return false;

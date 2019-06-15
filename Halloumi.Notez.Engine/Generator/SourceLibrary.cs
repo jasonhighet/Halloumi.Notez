@@ -20,6 +20,7 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateScales();
             MashToScale();
             MergeChords();
+            MergeRepeatedNotes();
             CalculateLengths();
             TransposeClips();
 
@@ -27,6 +28,15 @@ namespace Halloumi.Notez.Engine.Generator
             foreach (var clip in InstrumentClips())
             {
                 PatternFinder.FindPatterns(clip.Phrase);
+            }
+
+        }
+
+        private void MergeRepeatedNotes()
+        {
+            foreach (var clip in InstrumentClips())
+            {
+                PhraseHelper.MergeRepeatedNotes(clip.Phrase);
             }
 
         }

@@ -11,11 +11,15 @@ namespace Halloumi.Notez.Engine.Notes
         public int Note { get; set; }
         public decimal Duration { get; set; }
         public decimal Position { get; set; }
-        public decimal OffPosition => Position + Duration - 1;
-
         public List<int> ChordNotes { get; set; }
 
+        public decimal OffPosition => Position + Duration - 1;
         public bool IsChord => ChordNotes != null && ChordNotes.Count > 0;
+
+
+        public bool HasRepeatingNotes => RepeatDuration != 0;
+        public decimal RepeatDuration { get; set; }
+        public decimal RepeatCount => RepeatDuration == 0 ? 0 : Duration / RepeatDuration;
 
         public PhraseElement Clone()
         {
@@ -23,7 +27,9 @@ namespace Halloumi.Notez.Engine.Notes
             {
                 Note = Note,
                 Duration = Duration,
-                Position = Position
+                Position = Position,
+                ChordNotes = ChordNotes,
+                RepeatDuration = RepeatDuration
             };
         }
 

@@ -65,6 +65,46 @@ namespace Halloumi.Notez.Engine.Notes
             }
         }
 
+        public static void MergeRepeatedNotes(Phrase phrase)
+        {
+            if (phrase.Elements.Count <= 1)
+                return;
+
+            var elementsToRemove = new List<PhraseElement>();
+            for (int currentIndex = 0; currentIndex < phrase.Elements.Count - 1; currentIndex++)
+            {
+                var current = phrase.Elements[currentIndex];
+                var currentRepeatDuration = current.Duration;
+
+                var compareIndex = currentIndex + 1;
+                var compare = phrase.Elements[compareIndex];
+
+                while (compare.Note == current.Note && compare.Duration == currentRepeatDuration && compare.IsChord == current.IsChord)
+                {
+                    elementsToRemove.Add(compare);
+                    current.Duration += currentRepeatDuration;
+                    current.RepeatDuration = currentRepeatDuration;
+
+                    compareIndex++;
+
+                    if (compareIndex >= phrase.Elements.Count - 1)
+                    {
+                        currentIndex = phrase.Elements.Count;
+                        break;
+                    }
+                    compare = phrase.Elements[compareIndex];
+                }
+
+                currentIndex = compareIndex - 1;
+            }
+
+            foreach (var element in elementsToRemove)
+            {
+                phrase.Elements.Remove(element);
+            }
+
+        }
+
         public static bool IsPhraseDuplicated(Phrase phrase)
         {
             if (phrase.Elements.Count % 2 != 0)

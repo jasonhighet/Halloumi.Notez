@@ -69,7 +69,7 @@ namespace Halloumi.Notez.Engine.Midi
 
                 var offNotes = manager.Events
                     .Where(x => x.Event is NoteOffEvent)
-                    .Select(x => new Tuple<decimal, int>((decimal) x.Time / 24,
+                    .Select(x => new Tuple<decimal, int>(x.Time / 24M,
                         ((NoteOffEvent) x.Event).NoteNumber - NoteOffset))
                     .ToList();
 
@@ -80,7 +80,7 @@ namespace Halloumi.Notez.Engine.Midi
                     if (offNote == null) throw new ApplicationException("No off note found");
                     element.Duration = offNote.Item1 - element.Position;
 
-                    element.Duration = Math.Round(element.Duration * 2, MidpointRounding.AwayFromZero) / 2;
+                   // element.Duration = Math.Round(element.Duration * 2, MidpointRounding.AwayFromZero) / 2;
                 }
             }
 
