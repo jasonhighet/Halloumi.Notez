@@ -21,6 +21,7 @@ namespace Halloumi.Notez.Engine.Generator
             MashToScale();
             MergeChords();
             CalculateLengths();
+            TransposeClips();
 
 
             foreach (var clip in InstrumentClips())
@@ -28,6 +29,48 @@ namespace Halloumi.Notez.Engine.Generator
                 PatternFinder.FindPatterns(clip.Phrase);
             }
 
+        }
+
+        private void TransposeClips()
+        {
+            var wrongOctaveClips = new List<Clip>();
+            var lowestNote = NoteHelper.NoteToNumber("C2");
+            var highestNote = NoteHelper.NoteToNumber("C4");
+            foreach (var clip in InstrumentClips())
+            {
+                var lowNote = clip.Phrase.Elements.Min(x => x.Note);
+                var highNote = clip.Phrase.Elements.Max(x => x.Note);
+
+                if (lowNote >= NoteHelper.NoteToNumber("C3") && lowNote < NoteHelper.NoteToNumber("C4"))
+                {
+                    NoteHelper.ShiftNotesDirect(clip.Phrase, 1, Interval.Octave, Direction.Down);
+                    lowNote = clip.Phrase.Elements.Min(x => x.Note);
+                    highNote = clip.Phrase.Elements.Max(x => x.Note);
+                }
+                if (lowNote >= NoteHelper.NoteToNumber("C1") && lowNote < NoteHelper.NoteToNumber("C2"))
+                {
+                    NoteHelper.ShiftNotesDirect(clip.Phrase, 1, Interval.Octave, Direction.Up);
+                    lowNote = clip.Phrase.Elements.Min(x => x.Note);
+                    highNote = clip.Phrase.Elements.Max(x => x.Note);
+                }
+
+                if (lowNote < lowestNote || highNote > highestNote)
+                {
+                    Console.WriteLine("Clip "
+                        + clip.Name
+                        + " (" + NoteHelper.NumberToNote(lowNote)
+                        + "-" + NoteHelper.NumberToNote(highNote)
+                        + ") is outside the correct note range ("
+                        + NoteHelper.NumberToNote(lowestNote)
+                        + "-" + NoteHelper.NumberToNote(highestNote)
+                        + ").");
+                    wrongOctaveClips.Add(clip);
+                }
+            }
+            foreach (var clip in wrongOctaveClips)
+            {
+                Clips.Remove(clip);
+            }
         }
 
         private void MergeChords()
