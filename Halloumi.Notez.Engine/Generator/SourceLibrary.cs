@@ -22,14 +22,79 @@ namespace Halloumi.Notez.Engine.Generator
             MergeChords();
             MergeRepeatedNotes();
             CalculateLengths();
-            TransposeClips();
+            //TransposeClips();
+            FindPatterns();
+
+            var sections = InstrumentClips().Select(x => x.Section).Distinct();
+            foreach (var section in sections)
+            {
+                var clips = InstrumentClips().Where(x => x.Section == section).ToList();
+
+                var bass = clips.Where(x => x.Name.EndsWith(" 3")).FirstOrDefault();
+
+                var mainGuitar = clips.Where(x => !x.Name.EndsWith(" 3"))
+                    .OrderBy(x => GetAverageNote(x.Phrase))
+                    .ThenByDescending(x => x.Phrase.Elements.Sum(y => y.Duration))
+                    .ThenBy(x => x.Phrase.Elements.Count)
+                    .ThenBy(x => x.Name.Substring(x.Name.Length - 1, 1))
+                    .FirstOrDefault();
+
+                var altGuitar = clips.Except(new List<Clip> { bass, mainGuitar }).FirstOrDefault();
+
+                var bassDiff = RoundToNearestMultiple(GetAverageNote(bass.Phrase) - GetAverageNote(mainGuitar.Phrase), 12);
+                var altDiff = RoundToNearestMultiple(GetAverageNote(altGuitar.Phrase) - GetAverageNote(mainGuitar.Phrase), 12);
+
+                Console.Write(section.PadRight(30));
+                Console.Write(bassDiff);
+                Console.Write("\t");
+                Console.Write(altDiff);
+
+                //foreach (var avgNote in avgNotes)
+                //{
+                //    Console.Write(avgNote.Name
+                //        + ":" + NoteHelper.NumberToNote((int)avgNote.AvgNote)
+                //        + ":" + avgNote.NoteCount
+                //        + "\t");
+                //}
+                Console.WriteLine("");
 
 
+                //var avgNotes = clips.Select(x => new
+                //{
+                //    Name = x.Name.Substring(x.Name.Length - 1, 1),
+                //    AvgNote = GetAverageNote(x),
+                //    NoteCount = x.Phrase.Elements.Sum(y => y.HasRepeatingNotes ? y.RepeatCount : 1)
+                //}).ToList();
+
+
+                //Console.Write(section.PadRight(30));
+                //foreach (var avgNote in avgNotes)
+                //{
+                //    Console.Write(avgNote.Name
+                //        + ":" + NoteHelper.NumberToNote((int)avgNote.AvgNote)
+                //        + ":" + avgNote.NoteCount
+                //        + "\t");
+                //}
+                //Console.WriteLine("");
+            }
+
+        }
+        private static int RoundToNearestMultiple(int value, int factor)
+        {
+            return (int)Math.Round((value / (double)factor), MidpointRounding.AwayFromZero) * factor;
+        }
+
+        private static int GetAverageNote(Phrase phrase)
+        {
+            return (int)Math.Round((phrase.Elements.Average(y => y.Note) + phrase.Elements.Min(y => y.Note)) / 2);
+        }
+
+        private void FindPatterns()
+        {
             foreach (var clip in InstrumentClips())
             {
                 PatternFinder.FindPatterns(clip.Phrase);
             }
-
         }
 
         private void MergeRepeatedNotes()

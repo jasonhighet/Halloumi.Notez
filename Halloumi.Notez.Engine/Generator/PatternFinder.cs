@@ -48,7 +48,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             RemoverOverlaps(patterns);
 
-            Console.WriteLine(phrase.Description + " has " + patterns.SelectMany(x=>x.Value).Count() + " patterns");
+            //Console.WriteLine(phrase.Description + " has " + patterns.SelectMany(x=>x.Value).Count() + " patterns");
 
             //foreach (var pattern in patterns)
             //{
