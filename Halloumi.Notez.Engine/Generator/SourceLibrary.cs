@@ -4,9 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Halloumi.Notez.Engine.Generator
 {
@@ -22,15 +20,16 @@ namespace Halloumi.Notez.Engine.Generator
             MergeChords();
             MergeRepeatedNotes();
             CalculateLengths();
-            //TransposeClips();
             FindPatterns();
 
             var sections = InstrumentClips().Select(x => x.Section).Distinct();
             foreach (var section in sections)
             {
+                Console.WriteLine(section);
+
                 var clips = InstrumentClips().Where(x => x.Section == section).ToList();
 
-                var bass = clips.Where(x => x.Name.EndsWith(" 3")).FirstOrDefault();
+                var bassGuitar = clips.FirstOrDefault(x => x.Name.EndsWith(" 3"));
 
                 var mainGuitar = clips.Where(x => !x.Name.EndsWith(" 3"))
                     .OrderBy(x => GetAverageNote(x.Phrase))
@@ -39,15 +38,97 @@ namespace Halloumi.Notez.Engine.Generator
                     .ThenBy(x => x.Name.Substring(x.Name.Length - 1, 1))
                     .FirstOrDefault();
 
-                var altGuitar = clips.Except(new List<Clip> { bass, mainGuitar }).FirstOrDefault();
+                var altGuitar = clips.Except(new List<Clip> { bassGuitar, mainGuitar }).FirstOrDefault();
 
-                var bassDiff = RoundToNearestMultiple(GetAverageNote(bass.Phrase) - GetAverageNote(mainGuitar.Phrase), 12);
+                if (bassGuitar == null || mainGuitar == null || altGuitar == null)
+                    throw new ApplicationException("missing clips");
+
+                var bassDiff = RoundToNearestMultiple(GetAverageNote(bassGuitar.Phrase) - GetAverageNote(mainGuitar.Phrase), 12);
                 var altDiff = RoundToNearestMultiple(GetAverageNote(altGuitar.Phrase) - GetAverageNote(mainGuitar.Phrase), 12);
 
-                Console.Write(section.PadRight(30));
-                Console.Write(bassDiff);
-                Console.Write("\t");
-                Console.Write(altDiff);
+                var phrases = new List<Phrase>
+                {
+                    mainGuitar.Phrase.Clone(),
+
+                    NoteHelper.ShiftNotes(altGuitar.Phrase, altDiff * -1, Interval.Step, altDiff < 0 ? Direction.Up : Direction.Down),
+                    NoteHelper.ShiftNotes(bassGuitar.Phrase, bassDiff * -1, Interval.Step, bassDiff < 0 ? Direction.Up : Direction.Down),
+                };
+
+                var length = phrases.Max(x => x.PhraseLength);
+                foreach (var phrase in phrases)
+                {
+                    foreach (var element in phrase.Elements)
+                    {
+                        element.ChordNotes.Clear();
+                        element.RepeatDuration = 0;
+                    }
+                    PhraseHelper.MergeRepeatedNotes(phrase);
+                    foreach (var element in phrase.Elements)
+                    {
+                        element.RepeatDuration = 0;
+                    }
+                    while (phrase.PhraseLength < length)
+                    {
+                        PhraseHelper.DuplicatePhrase(phrase);
+                    }
+                }
+
+                var basePhrase = new Phrase { PhraseLength = length };
+                var notePositions = phrases.SelectMany(x => x.Elements).GroupBy(x => x.Position).OrderBy(x => x.Key);
+
+                var nextPostion = 0M;
+                foreach (var position in notePositions)
+                {
+                    if (position.Key < nextPostion)
+                        continue;
+
+                    var distinctNotes = position.GroupBy(x => new { x.Note, x.Duration })
+                        .Select(x => new
+                        {
+                            x.Key.Note,
+                            x.Key.Duration,
+                            Count = x.Count()
+                        })
+                        .OrderByDescending(x => x.Count);
+
+                    var mostCommonNote = distinctNotes
+                        .OrderByDescending(x => x.Count)
+                        .ThenByDescending(x => x.Duration)
+                        .ThenBy(x => x.Note)
+                        .Take(1)
+                        .Select(x => new PhraseElement() { Duration = x.Duration, Note = x.Note, Position = position.Key })
+                        .FirstOrDefault();
+
+                    if (mostCommonNote == null)
+                        throw new ApplicationException("null note");
+
+                    basePhrase.Elements.Add(mostCommonNote);
+                    nextPostion = position.Key + mostCommonNote.Duration;
+                }
+
+
+                if (basePhrase.Elements[0] != null && basePhrase.Elements[0].Position != 0)
+                    basePhrase.Elements[0].Position = 0;
+
+                PhraseHelper.MergeNotes(basePhrase);
+                PhraseHelper.UpdateDurationsFromPositions(basePhrase, basePhrase.PhraseLength);
+
+
+
+                foreach (var element in basePhrase.Elements)
+                {
+                    Console.WriteLine($"{NoteHelper.NumberToNote(element.Note)},{Math.Round(element.Duration, 2)}".PadRight(8));
+                }
+                Console.WriteLine();
+
+
+
+
+                // for each note
+                //      pick lowest/average
+                //      if not over lapping last note, add
+                // join
+
 
                 //foreach (var avgNote in avgNotes)
                 //{
@@ -106,41 +187,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         }
 
-        private void TransposeClips()
-        {
-            var wrongOctaveClips = new List<Clip>();
-            var lowestNote = NoteHelper.NoteToNumber("C0");
-            var highestNote = NoteHelper.NoteToNumber("C5");
-            foreach (var clip in InstrumentClips())
-            {
-                var lowNote = clip.Phrase.Elements.Min(x => x.Note);
-                var highNote = clip.Phrase.Elements.Max(x => x.Note);
 
-                while (lowNote < lowestNote)
-                {
-                    NoteHelper.ShiftNotesDirect(clip.Phrase, 1, Interval.Octave, Direction.Up);
-                    lowNote = clip.Phrase.Elements.Min(x => x.Note);
-                    highNote = clip.Phrase.Elements.Max(x => x.Note);
-                }
-
-                if (lowNote < lowestNote || highNote > highestNote)
-                {
-                    Console.WriteLine("Clip "
-                        + clip.Name
-                        + " (" + NoteHelper.NumberToNote(lowNote)
-                        + "-" + NoteHelper.NumberToNote(highNote)
-                        + ") is outside the correct note range ("
-                        + NoteHelper.NumberToNote(lowestNote)
-                        + "-" + NoteHelper.NumberToNote(highestNote)
-                        + ").");
-                    wrongOctaveClips.Add(clip);
-                }
-            }
-            foreach (var clip in wrongOctaveClips)
-            {
-                Clips.Remove(clip);
-            }
-        }
 
         private void MergeChords()
         {
@@ -150,16 +197,6 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
-        private string GetElementKey(PhraseElement element)
-        {
-            return $"{element.Note}_{element.Duration}";
-        }
-
-        private class PatternMatch
-        {
-            public List<PhraseElement> Pattern { get; set; }
-            public List<int> StartIndexes { get; set; }
-        }
 
         private void CalculateLengths()
         {
@@ -204,15 +241,12 @@ namespace Halloumi.Notez.Engine.Generator
             var validClips = Clips.Where(x => ValidLength(x.Phrase.PhraseLength)).ToList();
             foreach (var clip in validClips)
             {
-                var initialLength = clip.Phrase.PhraseLength;
                 while (PhraseHelper.IsPhraseDuplicated(clip.Phrase))
                 {
                     var halfLength = clip.Phrase.Elements.Count / 2;
                     clip.Phrase.Elements.RemoveAll(x => clip.Phrase.Elements.IndexOf(x) >= halfLength);
                     clip.Phrase.PhraseLength /= 2M;
                 }
-                //if (initialLength != clip.Phrase.PhraseLength)
-                //    Console.WriteLine($"{clip.Name} reduced from {initialLength} to {clip.Phrase.PhraseLength}");
             }
 
             Clips.RemoveAll(x => !ValidLength(x.Phrase.PhraseLength));

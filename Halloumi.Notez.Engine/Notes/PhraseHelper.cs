@@ -47,6 +47,8 @@ namespace Halloumi.Notez.Engine.Notes
             foreach (var chord in chords)
             {
                 var baseElement = chord.OrderBy(x => x.Note).FirstOrDefault();
+                if (baseElement == null) continue;
+
                 baseElement.ChordNotes = new List<int>();
                 foreach (var element in chord)
                 {
@@ -71,7 +73,7 @@ namespace Halloumi.Notez.Engine.Notes
                 return;
 
             var elementsToRemove = new List<PhraseElement>();
-            for (int currentIndex = 0; currentIndex < phrase.Elements.Count - 1; currentIndex++)
+            for (var currentIndex = 0; currentIndex < phrase.Elements.Count - 1; currentIndex++)
             {
                 var current = phrase.Elements[currentIndex];
                 var currentRepeatDuration = current.Duration;
@@ -89,7 +91,6 @@ namespace Halloumi.Notez.Engine.Notes
 
                     if (compareIndex >= phrase.Elements.Count - 1)
                     {
-                        currentIndex = phrase.Elements.Count;
                         break;
                     }
                     compare = phrase.Elements[compareIndex];
@@ -104,6 +105,44 @@ namespace Halloumi.Notez.Engine.Notes
             }
 
         }
+
+        public static void MergeNotes(Phrase phrase)
+        {
+            if (phrase.Elements.Count <= 1)
+                return;
+
+            var elementsToRemove = new List<PhraseElement>();
+            for (var currentIndex = 0; currentIndex < phrase.Elements.Count - 1; currentIndex++)
+            {
+                var current = phrase.Elements[currentIndex];
+
+                var compareIndex = currentIndex + 1;
+                var compare = phrase.Elements[compareIndex];
+
+                while (compare.Note == current.Note && compare.IsChord == current.IsChord)
+                {
+                    elementsToRemove.Add(compare);
+                    current.Duration += compare.Duration;
+
+                    compareIndex++;
+
+                    if (compareIndex >= phrase.Elements.Count - 1)
+                    {
+                        break;
+                    }
+                    compare = phrase.Elements[compareIndex];
+                }
+
+                currentIndex = compareIndex - 1;
+            }
+
+            foreach (var element in elementsToRemove)
+            {
+                phrase.Elements.Remove(element);
+            }
+
+        }
+
 
         public static bool IsPhraseDuplicated(Phrase phrase)
         {

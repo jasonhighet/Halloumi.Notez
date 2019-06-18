@@ -8,6 +8,11 @@ namespace Halloumi.Notez.Engine.Notes
 {
     public class PhraseElement
     {
+        public PhraseElement()
+        {
+            ChordNotes = new List<int>();
+        }
+
         public int Note { get; set; }
         public decimal Duration { get; set; }
         public decimal Position { get; set; }
@@ -28,7 +33,7 @@ namespace Halloumi.Notez.Engine.Notes
                 Note = Note,
                 Duration = Duration,
                 Position = Position,
-                ChordNotes = ChordNotes,
+                ChordNotes = new List<int>(ChordNotes),
                 RepeatDuration = RepeatDuration
             };
         }

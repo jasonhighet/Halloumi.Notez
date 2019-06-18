@@ -61,13 +61,16 @@ namespace Halloumi.Notez.Engine.Notes
             return Math.Abs(diffForward) < Math.Abs(diffBack) ? diffForward : diffBack;
         }
 
-        public static int ShiftNote(int note, int amount, Interval interval, Direction direction)
+        public static int ShiftNote(int note, int amount, Interval interval, Direction direction = Direction.Up)
         {
             return note + (amount * (int)direction * (int)interval);
         }
 
-        public static Phrase ShiftNotes(Phrase phrase, int amount, Interval step, Direction direction)
+        public static Phrase ShiftNotes(Phrase phrase, int amount, Interval step, Direction direction = Direction.Up)
         {
+            if (amount == 0)
+                return phrase.Clone();
+
             var shiftedPhrase = phrase.Clone();
 
             foreach (var element in shiftedPhrase.Elements)
@@ -78,7 +81,7 @@ namespace Halloumi.Notez.Engine.Notes
             return shiftedPhrase;
         }
 
-        public static void ShiftNotesDirect(Phrase phrase, int amount, Interval step, Direction direction)
+        public static void ShiftNotesDirect(Phrase phrase, int amount, Interval step, Direction direction = Direction.Up)
         {
             foreach (var element in phrase.Elements)
             {
