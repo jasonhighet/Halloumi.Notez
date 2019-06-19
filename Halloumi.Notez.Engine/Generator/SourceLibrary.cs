@@ -155,7 +155,17 @@ namespace Halloumi.Notez.Engine.Generator
         {
             foreach (var clip in Clips.Where(x=>x.ClipType == ClipType.BasePhrase))
             {
-                PatternFinder.FindPatterns(clip.Phrase);
+                var patterns = PatternFinder.FindPatterns(clip.Phrase);
+                var tempoPatterns = PatternFinder.FindPatterns(clip.Phrase, true);
+
+                Console.WriteLine(clip.Phrase.Description
+                                      + " has "
+                                      + clip.Phrase.PhraseLength
+                                      + " notes and "
+                                      + patterns.Count + " patterns and "
+                                      + tempoPatterns.Count + " tempo patterns");
+
+                
             }
         }
 
@@ -167,8 +177,7 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
         }
-
-
+        
 
         private void MergeChords()
         {
@@ -177,8 +186,7 @@ namespace Halloumi.Notez.Engine.Generator
                 PhraseHelper.MergeChords(clip.Phrase);
             }
         }
-
-
+        
         private void CalculateLengths()
         {
             var sections = Clips
