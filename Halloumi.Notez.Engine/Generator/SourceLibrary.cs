@@ -10,6 +10,8 @@ namespace Halloumi.Notez.Engine.Generator
 {
     public class SourceLibrary
     {
+        private const string BaseScale = "C Harmonic Minor";
+
         private List<Clip> Clips { get; set; }
 
         public void LoadLibrary(string folder)
@@ -64,66 +66,9 @@ namespace Halloumi.Notez.Engine.Generator
                     NoteHelper.ShiftNotes(bassGuitar.Phrase, bassDiff * -1, Interval.Step, bassDiff < 0 ? Direction.Up : Direction.Down),
                 };
 
-                var length = phrases.Max(x => x.PhraseLength);
-                foreach (var phrase in phrases)
-                {
-                    foreach (var element in phrase.Elements)
-                    {
-                        element.ChordNotes.Clear();
-                        element.RepeatDuration = 0;
-                    }
-                    PhraseHelper.MergeRepeatedNotes(phrase);
-                    foreach (var element in phrase.Elements)
-                    {
-                        element.RepeatDuration = 0;
-                    }
-                    while (phrase.PhraseLength < length)
-                    {
-                        PhraseHelper.DuplicatePhrase(phrase);
-                    }
-                }
-
-                var basePhrase = new Phrase { PhraseLength = length, Description = section };
-
-                var positions = phrases.SelectMany(x => x.Elements)
-                    .Select(x => x.Position)
-                    .Distinct()
-                    .OrderBy(x => x)
-                    .ToList();
-
-                foreach (var position in positions)
-                {
-                    var distinctNotes = phrases
-                        .Select(phrase => phrase.Elements.Where(x => x.Position <= position).OrderByDescending(x => x.Position).FirstOrDefault())
-                        .Where(element => element != null)
-                        .GroupBy(x => new { x.Note, x.Duration })
-                        .Select(x => new
-                        {
-                            x.Key.Note,
-                            x.Key.Duration,
-                            Count = x.Count()
-                        })
-                        .OrderByDescending(x => x.Count);
-
-
-                    var mostCommonNote = distinctNotes
-                        .OrderByDescending(x => x.Count)
-                        .ThenByDescending(x => x.Duration)
-                        .ThenBy(x => x.Note)
-                        .Take(1)
-                        .Select(x => new PhraseElement() { Duration = 0.1M, Note = x.Note, Position = position })
-                        .FirstOrDefault();
-
-                    if (mostCommonNote == null)
-                        throw new ApplicationException("null note");
-
-                    basePhrase.Elements.Add(mostCommonNote);
-                }
-
-                if (basePhrase.Elements[0] != null && basePhrase.Elements[0].Position != 0)
-                    basePhrase.Elements[0].Position = 0;
-
-                PhraseHelper.UpdateDurationsFromPositions(basePhrase, basePhrase.PhraseLength);
+                var basePhrase = MergePhrases(phrases);
+                basePhrase.Description = section;
+                basePhrase.Bpm = 200M;
 
                 var clip = new Clip
                 {
@@ -137,8 +82,77 @@ namespace Halloumi.Notez.Engine.Generator
                     Song = mainGuitar.Song
                 };
 
+                MidiHelper.SaveToMidi(ScaleHelper.TransposeToScale(basePhrase, BaseScale, clip.Scale) , 
+                    @"C:\Users\jason\Desktop\metalmidi\test\" + section + ".mid", 
+                    MidiInstrument.DistortedGuitar);
+
                 Clips.Add(clip);
             }
+        }
+
+        private static Phrase MergePhrases(List<Phrase> phrases)
+        {
+            var length = phrases.Max(x => x.PhraseLength);
+            foreach (var phrase in phrases)
+            {
+                foreach (var element in phrase.Elements)
+                {
+                    element.ChordNotes.Clear();
+                    element.RepeatDuration = 0;
+                }
+                PhraseHelper.MergeRepeatedNotes(phrase);
+                foreach (var element in phrase.Elements)
+                {
+                    element.RepeatDuration = 0;
+                }
+                while (phrase.PhraseLength < length)
+                {
+                    PhraseHelper.DuplicatePhrase(phrase);
+                }
+            }
+
+            var mergedPhrase = new Phrase { PhraseLength = length };
+
+            var positions = phrases.SelectMany(x => x.Elements)
+                .Select(x => x.Position)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            foreach (var position in positions)
+            {
+                var distinctNotes = phrases
+                    .Select(phrase => phrase.Elements.Where(x => x.Position <= position).OrderByDescending(x => x.Position).FirstOrDefault())
+                    .Where(element => element != null)
+                    .GroupBy(x => new { x.Note, x.Duration })
+                    .Select(x => new
+                    {
+                        x.Key.Note,
+                        x.Key.Duration,
+                        Count = x.Count()
+                    })
+                    .OrderByDescending(x => x.Count);
+
+
+                var mostCommonNote = distinctNotes
+                    .OrderByDescending(x => x.Count)
+                    .ThenByDescending(x => x.Duration)
+                    .ThenBy(x => x.Note)
+                    .Take(1)
+                    .Select(x => new PhraseElement() { Duration = 0.1M, Note = x.Note, Position = position })
+                    .FirstOrDefault();
+
+                if (mostCommonNote == null)
+                    throw new ApplicationException("null note");
+
+                mergedPhrase.Elements.Add(mostCommonNote);
+            }
+
+            if (mergedPhrase.Elements[0] != null && mergedPhrase.Elements[0].Position != 0)
+                mergedPhrase.Elements[0].Position = 0;
+
+            PhraseHelper.UpdateDurationsFromPositions(mergedPhrase, mergedPhrase.PhraseLength);
+            return mergedPhrase;
         }
 
         private static int RoundToNearestMultiple(int value, int factor)
@@ -240,6 +254,11 @@ namespace Halloumi.Notez.Engine.Generator
 
             Clips.RemoveAll(x => !ValidLength(x.Phrase.PhraseLength));
 
+            //var triplet = Clips.Where(x => x.File.EndsWith("ATG-Blinded2 3.mid")).FirstOrDefault();
+            //var minSize = triplet.Phrase.Elements.Min(x => x.Duration);
+
+            var triplets = Clips.Where(x => x.Phrase.Elements.Min(y => y.Duration) - 1.166666M < 0.01M).ToList();
+
         }
 
         private static bool ValidLength(decimal length)
@@ -263,7 +282,7 @@ namespace Halloumi.Notez.Engine.Generator
                     clip.Phrase = ScaleHelper.MashNotesToScale(clip.Phrase, clip.Scale);
                     Console.WriteLine(clip.Name.PadRight(20) + clip.Scale + ((clip.ScaleMatchIncomplete) ? $"({clip.ScaleMatch.DistanceFromScale})" : ""));
                 }
-                clip.Phrase = ScaleHelper.TransposeToScale(clip.Phrase, clip.Scale, "C Harmonic Minor");
+                clip.Phrase = ScaleHelper.TransposeToScale(clip.Phrase, clip.Scale, BaseScale);
             }
         }
 
