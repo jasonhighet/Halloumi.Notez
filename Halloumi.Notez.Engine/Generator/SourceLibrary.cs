@@ -20,13 +20,16 @@ namespace Halloumi.Notez.Engine.Generator
             MergeChords();
             MergeRepeatedNotes();
             CalculateLengths();
-            FindPatterns();
+            CalculateBasePhrases();
 
-            var sections = InstrumentClips().Select(x => x.Section).Distinct();
+            FindPatterns();
+        }
+
+        private void CalculateBasePhrases()
+        {
+            var sections = InstrumentClips().Select(x => x.Section).Distinct().ToList();
             foreach (var section in sections)
             {
-                Console.WriteLine(section);
-
                 var clips = InstrumentClips().Where(x => x.Section == section).ToList();
 
                 var bassGuitar = clips.FirstOrDefault(x => x.Name.EndsWith(" 3"));
@@ -43,8 +46,15 @@ namespace Halloumi.Notez.Engine.Generator
                 if (bassGuitar == null || mainGuitar == null || altGuitar == null)
                     throw new ApplicationException("missing clips");
 
+                mainGuitar.ClipType = ClipType.MainGuitar;
+                altGuitar.ClipType = ClipType.AltGuitar;
+
                 var bassDiff = RoundToNearestMultiple(GetAverageNote(bassGuitar.Phrase) - GetAverageNote(mainGuitar.Phrase), 12);
                 var altDiff = RoundToNearestMultiple(GetAverageNote(altGuitar.Phrase) - GetAverageNote(mainGuitar.Phrase), 12);
+
+                mainGuitar.BaseIntervalDiff = 0;
+                altGuitar.BaseIntervalDiff = altDiff;
+                bassGuitar.BaseIntervalDiff = bassDiff;
 
                 var phrases = new List<Phrase>
                 {
@@ -73,16 +83,20 @@ namespace Halloumi.Notez.Engine.Generator
                     }
                 }
 
-                var basePhrase = new Phrase { PhraseLength = length };
-                var notePositions = phrases.SelectMany(x => x.Elements).GroupBy(x => x.Position).OrderBy(x => x.Key);
+                var basePhrase = new Phrase { PhraseLength = length, Description = section };
 
-                var nextPostion = 0M;
-                foreach (var position in notePositions)
+                var positions = phrases.SelectMany(x => x.Elements)
+                    .Select(x => x.Position)
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToList();
+
+                foreach (var position in positions)
                 {
-                    if (position.Key < nextPostion)
-                        continue;
-
-                    var distinctNotes = position.GroupBy(x => new { x.Note, x.Duration })
+                    var distinctNotes = phrases
+                        .Select(phrase => phrase.Elements.Where(x => x.Position <= position).OrderByDescending(x => x.Position).FirstOrDefault())
+                        .Where(element => element != null)
+                        .GroupBy(x => new { x.Note, x.Duration })
                         .Select(x => new
                         {
                             x.Key.Note,
@@ -91,75 +105,42 @@ namespace Halloumi.Notez.Engine.Generator
                         })
                         .OrderByDescending(x => x.Count);
 
+
                     var mostCommonNote = distinctNotes
                         .OrderByDescending(x => x.Count)
                         .ThenByDescending(x => x.Duration)
                         .ThenBy(x => x.Note)
                         .Take(1)
-                        .Select(x => new PhraseElement() { Duration = x.Duration, Note = x.Note, Position = position.Key })
+                        .Select(x => new PhraseElement() { Duration = 0.1M, Note = x.Note, Position = position })
                         .FirstOrDefault();
 
                     if (mostCommonNote == null)
                         throw new ApplicationException("null note");
 
                     basePhrase.Elements.Add(mostCommonNote);
-                    nextPostion = position.Key + mostCommonNote.Duration;
                 }
-
 
                 if (basePhrase.Elements[0] != null && basePhrase.Elements[0].Position != 0)
                     basePhrase.Elements[0].Position = 0;
 
-                PhraseHelper.MergeNotes(basePhrase);
                 PhraseHelper.UpdateDurationsFromPositions(basePhrase, basePhrase.PhraseLength);
 
-
-
-                foreach (var element in basePhrase.Elements)
+                var clip = new Clip
                 {
-                    Console.WriteLine($"{NoteHelper.NumberToNote(element.Note)},{Math.Round(element.Duration, 2)}".PadRight(8));
-                }
-                Console.WriteLine();
+                    Phrase = basePhrase,
+                    Artist = mainGuitar.Artist,
+                    ClipType = ClipType.BasePhrase,
+                    BaseIntervalDiff = 0,
+                    Name = section,
+                    Scale = mainGuitar.Scale,
+                    Section = mainGuitar.Section,
+                    Song = mainGuitar.Song
+                };
 
-
-
-
-                // for each note
-                //      pick lowest/average
-                //      if not over lapping last note, add
-                // join
-
-
-                //foreach (var avgNote in avgNotes)
-                //{
-                //    Console.Write(avgNote.Name
-                //        + ":" + NoteHelper.NumberToNote((int)avgNote.AvgNote)
-                //        + ":" + avgNote.NoteCount
-                //        + "\t");
-                //}
-                Console.WriteLine("");
-
-
-                //var avgNotes = clips.Select(x => new
-                //{
-                //    Name = x.Name.Substring(x.Name.Length - 1, 1),
-                //    AvgNote = GetAverageNote(x),
-                //    NoteCount = x.Phrase.Elements.Sum(y => y.HasRepeatingNotes ? y.RepeatCount : 1)
-                //}).ToList();
-
-
-                //Console.Write(section.PadRight(30));
-                //foreach (var avgNote in avgNotes)
-                //{
-                //    Console.Write(avgNote.Name
-                //        + ":" + NoteHelper.NumberToNote((int)avgNote.AvgNote)
-                //        + ":" + avgNote.NoteCount
-                //        + "\t");
-                //}
-                //Console.WriteLine("");
+                Clips.Add(clip);
             }
-
         }
+
         private static int RoundToNearestMultiple(int value, int factor)
         {
             return (int)Math.Round((value / (double)factor), MidpointRounding.AwayFromZero) * factor;
@@ -172,7 +153,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void FindPatterns()
         {
-            foreach (var clip in InstrumentClips())
+            foreach (var clip in Clips.Where(x=>x.ClipType == ClipType.BasePhrase))
             {
                 PatternFinder.FindPatterns(clip.Phrase);
             }
@@ -280,7 +261,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private IEnumerable<Clip> InstrumentClips()
         {
-            return Clips.Where(x => !x.File.EndsWith(" 4.mid"));
+            return Clips.Where(x => x.ClipType != ClipType.Drums && x.ClipType != ClipType.BasePhrase);
         }
 
 
@@ -386,8 +367,19 @@ namespace Halloumi.Notez.Engine.Generator
                     Section = (Path.GetFileNameWithoutExtension(x) + "").Split(' ')[0],
                     Artist = (Path.GetFileNameWithoutExtension(x) + "").Split('-')[0],
                     Phrase = MidiHelper.ReadMidi(x),
+                    ClipType = GetClipType(x)
                 })
                 .ToList();
+        }
+
+        private static ClipType GetClipType(string filename)
+        {
+            if(filename.EndsWith(" 4.mid"))
+                return ClipType.Drums;
+            if (filename.EndsWith(" 3.mid"))
+                return ClipType.BassGuitar;
+
+            return filename.EndsWith(" 2.mid") ? ClipType.AltGuitar : ClipType.MainGuitar;
         }
 
         private static int GetSectionRank(SectionCounts section, string scaleName)
@@ -422,6 +414,19 @@ namespace Halloumi.Notez.Engine.Generator
             public string Scale { get; set; }
             public bool ScaleMatchIncomplete { get; set; }
             public ScaleHelper.ScaleMatch ScaleMatch { get; set; }
+            public int BaseIntervalDiff { get; set; }
+
+            public ClipType ClipType { get; set; }
+
+        }
+
+        private enum ClipType
+        {
+            MainGuitar,
+            AltGuitar,
+            BassGuitar,
+            Drums,
+            BasePhrase
         }
     }
 }

@@ -12,8 +12,7 @@ namespace Halloumi.Notez.Engine.Generator
         public static void FindPatterns(Phrase phrase)
         {
             var sequenceLength = phrase.Elements.Count;
-            //Console.WriteLine("Sequence Length " + sequenceLength);
-
+            
             var patterns = new Dictionary<string, Dictionary<string, Tuple<int, int>>>();
 
             for (var windowSize = sequenceLength / 2; windowSize >= 1; windowSize--)
@@ -26,41 +25,35 @@ namespace Halloumi.Notez.Engine.Generator
                     for (var compareWindowStart = windowStart + windowSize; compareWindowStart + windowSize <= sequenceLength; compareWindowStart++)
                     {
                         var compareWindowEnd = compareWindowStart + windowSize - 1;
-                        if (Compare(phrase, windowStart, windowEnd, compareWindowStart, compareWindowEnd))
-                        {
-                            var patternKey = GetPatternKey(phrase, windowStart, windowEnd);
-                            var windowKey = $"{windowStart},{windowEnd}";
-                            var compareWindowKey = $"{compareWindowStart},{compareWindowEnd}";
+                        if (!Compare(phrase, windowStart, windowEnd, compareWindowStart)) continue;
 
-                            if (!patterns.ContainsKey(patternKey))
-                                patterns.Add(patternKey, new Dictionary<string, Tuple<int, int>>());
+                        var patternKey = GetPatternKey(phrase, windowStart, windowEnd);
+                        var windowKey = $"{windowStart},{windowEnd}";
+                        var compareWindowKey = $"{compareWindowStart},{compareWindowEnd}";
 
-                            var pattern = patterns[patternKey];
-                            if (!pattern.ContainsKey(windowKey))
-                                pattern.Add(windowKey, new Tuple<int, int>(windowStart, windowEnd));
+                        if (!patterns.ContainsKey(patternKey))
+                            patterns.Add(patternKey, new Dictionary<string, Tuple<int, int>>());
 
-                            if (!pattern.ContainsKey(compareWindowKey))
-                                pattern.Add(compareWindowKey, new Tuple<int, int>(compareWindowStart, compareWindowEnd));
-                        }
+                        var pattern = patterns[patternKey];
+                        if (!pattern.ContainsKey(windowKey))
+                            pattern.Add(windowKey, new Tuple<int, int>(windowStart, windowEnd));
+
+                        if (!pattern.ContainsKey(compareWindowKey))
+                            pattern.Add(compareWindowKey, new Tuple<int, int>(compareWindowStart, compareWindowEnd));
                     }
                 }
             }
 
             RemoverOverlaps(patterns);
 
-            //Console.WriteLine(phrase.Description + " has " + patterns.SelectMany(x=>x.Value).Count() + " patterns");
-
-            //foreach (var pattern in patterns)
-            //{
-            //    Console.WriteLine(pattern.Key);
-            //    foreach (var window in pattern.Value.OrderBy(x => x.Value.Item1).ThenBy(x => x.Value.Item2))
-            //    {
-            //        Console.WriteLine("\t" + window.Value.Item1 + " to " + window.Value.Item2);
-            //    }
-            //}
+            Console.WriteLine(phrase.Description 
+                + " has "
+                + sequenceLength
+                + " notes and "
+                + patterns.SelectMany(x => x.Value).Count() + " patterns");
         }
 
-        private static void RemoverOverlaps(Dictionary<string, Dictionary<string, Tuple<int, int>>> patterns)
+        private static void RemoverOverlaps(IDictionary<string, Dictionary<string, Tuple<int, int>>> patterns)
         {
             foreach (var pattern in patterns)
             {              
@@ -73,12 +66,11 @@ namespace Halloumi.Notez.Engine.Generator
                         var currentWindow = windows[currentWindowIndex];
                         var compareWindow = windows[compareWindowIndex];
 
-                        bool overlap = currentWindow.Value.Item1 <= compareWindow.Value.Item2 && compareWindow.Value.Item1 <= currentWindow.Value.Item2;
-                        if (overlap)
-                        {
-                            overlaps.Add(currentWindow.Key);
-                            overlaps.Add(compareWindow.Key);
-                        }
+                        var overlap = currentWindow.Value.Item1 <= compareWindow.Value.Item2 && compareWindow.Value.Item1 <= currentWindow.Value.Item2;
+                        if (!overlap) continue;
+
+                        overlaps.Add(currentWindow.Key);
+                        overlaps.Add(compareWindow.Key);
                     }
 
                     foreach (var overlap in overlaps.Distinct())
@@ -88,12 +80,8 @@ namespace Halloumi.Notez.Engine.Generator
                 }
             }
 
-            var emptyPatterns = new List<string>();
-            foreach (var pattern in patterns)
-            {
-                if (pattern.Value.Count == 0)
-                    emptyPatterns.Add(pattern.Key);
-            }
+            var emptyPatterns = (from pattern in patterns where pattern.Value.Count == 0 select pattern.Key).ToList();
+
             foreach (var emptyPattern in emptyPatterns)
             {
                 patterns.Remove(emptyPattern);
@@ -103,7 +91,7 @@ namespace Halloumi.Notez.Engine.Generator
         private static string GetPatternKey(Phrase phrase, int windowStart, int windowEnd)
         {
             var key = "";
-            for (int i = windowStart; i <= windowEnd; i++)
+            for (var i = windowStart; i <= windowEnd; i++)
             {
                 if (key != "") key += ",";
                 key += phrase.Elements[i].Note 
@@ -114,7 +102,7 @@ namespace Halloumi.Notez.Engine.Generator
             return key;
         }
 
-        private static bool Compare(Phrase phrase, int windowStart, int windowEnd, int compareWindowStart, int compareWindowEnd)
+        private static bool Compare(Phrase phrase, int windowStart, int windowEnd, int compareWindowStart)
         {
             var windowLength = windowEnd - windowStart + 1;
 
