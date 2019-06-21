@@ -24,7 +24,18 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
 
+            for (var i = 0; i < 30; i++)
+            {
+                GenerateRiff("riff" + i);
+            }
 
+            
+
+            //FindPatterns();
+        }
+
+        private void GenerateRiff(string name)
+        {
             var random = new Random(DateTime.Now.Millisecond);
             var clips = Clips
                 .Where(x => x.ClipType == ClipType.BasePhrase)
@@ -39,7 +50,7 @@ namespace Halloumi.Notez.Engine.Generator
                 .Where(x => x != inititialClip)
                 .OrderBy(x => (x.Phrase.Elements.Min(y => y.Duration) - minDuration) * -1)
                 .ThenBy(x => random.Next())
-                .Take(2)
+                .Take(3)
                 .ToList());
 
             var bassClip = Clips.FirstOrDefault(x => x.ClipType == ClipType.BassGuitar && x.Section == inititialClip.Section);
@@ -47,13 +58,11 @@ namespace Halloumi.Notez.Engine.Generator
                 throw new ApplicationException("No bass clip");
 
 
-            var newPharse = MergePhrases(clips.Select(x => x.Phrase).ToList());
-            newPharse.Bpm = 200;
+            var mergedPhrase = MergePhrases(clips.Select(x => x.Phrase).ToList());
+            mergedPhrase.Phrase.Bpm = 200;
 
-            NoteHelper.ShiftNotes(newPharse, bassClip.BaseIntervalDiff, Interval.Step);
-            MidiHelper.SaveToMidi(newPharse, "newphrase.mid", MidiInstrument.ElectricBassFinger);
-
-            //FindPatterns();
+            NoteHelper.ShiftNotes(mergedPhrase.Phrase, bassClip.BaseIntervalDiff, Interval.Step);
+            MidiHelper.SaveToMidi(mergedPhrase.Phrase, name + ".mid", MidiInstrument.ElectricBassFinger);
         }
 
         private void CalculateBasePhrases()
@@ -95,7 +104,7 @@ namespace Halloumi.Notez.Engine.Generator
                     NoteHelper.ShiftNotes(bassGuitar.Phrase, bassDiff * -1, Interval.Step, bassDiff < 0 ? Direction.Up : Direction.Down),
                 };
 
-                var basePhrase = MergePhrases(phrases);
+                var basePhrase = MergePhrases(phrases).Phrase;
                 basePhrase.Description = section;
                 basePhrase.Bpm = 200M;
                 PhraseHelper.DuplicatePhrase(basePhrase);
@@ -118,10 +127,16 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
-        private static Phrase MergePhrases(IReadOnlyCollection<Phrase> phrases)
+        private static MergedPhrase MergePhrases(List<Phrase> sourcePhrases)
         {
-            var length = phrases.Max(x => x.PhraseLength);
-            foreach (var phrase in phrases)
+            var mergedPhrase = new MergedPhrase()
+            {
+                SourcePhrase = sourcePhrases,
+                SourceIndexes = new List<Tuple<string, decimal, decimal>>()
+            };
+
+            var length = sourcePhrases.Max(x => x.PhraseLength);
+            foreach (var phrase in sourcePhrases)
             {
                 foreach (var element in phrase.Elements)
                 {
@@ -139,9 +154,9 @@ namespace Halloumi.Notez.Engine.Generator
                 }
             }
 
-            var mergedPhrase = new Phrase { PhraseLength = length };
+            var newPhrase =  new Phrase { PhraseLength = length };
 
-            var positions = phrases.SelectMany(x => x.Elements)
+            var positions = sourcePhrases.SelectMany(x => x.Elements)
                 .Select(x => x.Position)
                 .Distinct()
                 .OrderBy(x => x)
@@ -149,9 +164,14 @@ namespace Halloumi.Notez.Engine.Generator
 
             foreach (var position in positions)
             {
-                var distinctNotes = phrases
-                    .Select(phrase => phrase.Elements.Where(x => x.Position <= position).OrderByDescending(x => x.Position).FirstOrDefault())
+                var distinctElements = sourcePhrases
+                    .Select(phrase => phrase.Elements.Where(x => x.Position <= position)
+                        .OrderByDescending(x => x.Position)
+                        .FirstOrDefault())
                     .Where(element => element != null)
+                    .ToList();
+
+                var distinctNotes = distinctElements
                     .GroupBy(x => new { x.Note, x.Duration })
                     .Select(x => new
                     {
@@ -159,28 +179,45 @@ namespace Halloumi.Notez.Engine.Generator
                         x.Key.Duration,
                         Count = x.Count()
                     })
-                    .OrderByDescending(x => x.Count);
+                    .OrderByDescending(x => x.Count)
+                    .ToList();
 
-
-                var mostCommonNote = distinctNotes
+                var newElement = distinctNotes
                     .OrderByDescending(x => x.Count)
                     .ThenByDescending(x => x.Duration)
                     .ThenBy(x => x.Note)
                     .Take(1)
-                    .Select(x => new PhraseElement() { Duration = 0.1M, Note = x.Note, Position = position })
+                    .Select(x => new PhraseElement() { Duration = x.Duration, Note = x.Note, Position = position })
                     .FirstOrDefault();
 
-                if (mostCommonNote == null)
-                    throw new ApplicationException("null note");
+                if(newElement == null)
+                    throw new ApplicationException("no new element");
 
-                mergedPhrase.Elements.Add(mostCommonNote);
+                var sourceElement = distinctElements
+                    .FirstOrDefault(x => x.Note == newElement.Note && x.Duration == newElement.Duration);
+
+                if (sourceElement == null)
+                    throw new ApplicationException("no source element");
+
+                foreach (var phrase in sourcePhrases)
+                {
+                    if(phrase.Elements.Contains(sourceElement))
+                        mergedPhrase.SourceIndexes.Add(new Tuple<string, decimal, decimal>(phrase.Description, position, sourceElement.Position));
+                }
+
+                newElement.Duration = 0.1M;
+                newPhrase.Elements.Add(newElement);
             }
 
-            if (mergedPhrase.Elements[0] != null && mergedPhrase.Elements[0].Position != 0)
-                mergedPhrase.Elements[0].Position = 0;
+            if (newPhrase.Elements[0] != null && newPhrase.Elements[0].Position != 0)
+                newPhrase.Elements[0].Position = 0;
 
-            PhraseHelper.UpdateDurationsFromPositions(mergedPhrase, mergedPhrase.PhraseLength);
+            PhraseHelper.UpdateDurationsFromPositions(newPhrase, newPhrase.PhraseLength);
+
+            mergedPhrase.Phrase = newPhrase;
+
             return mergedPhrase;
+
         }
 
         private static int RoundToNearestMultiple(int value, int factor)
@@ -281,11 +318,6 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
             Clips.RemoveAll(x => !ValidLength(x.Phrase.PhraseLength));
-
-            //var triplet = Clips.Where(x => x.File.EndsWith("ATG-Blinded2 3.mid")).FirstOrDefault();
-            //var minSize = triplet.Phrase.Elements.Min(x => x.Duration);
-
-            //var triplets = Clips.Where(x => x.Phrase.Elements.Min(y => y.Duration) - 1.166666M < 0.01M).ToList();
         }
 
         private static bool ValidLength(decimal length)
@@ -473,6 +505,13 @@ namespace Halloumi.Notez.Engine.Generator
             public ClipType ClipType { get; set; }
 
         }
+
+        private class MergedPhrase
+        {
+            public Phrase Phrase { get; set; }
+            public List<Phrase> SourcePhrase { get; set; }
+            public List<Tuple<string, decimal, decimal>> SourceIndexes { get; set; }
+    }
 
         private enum ClipType
         {
