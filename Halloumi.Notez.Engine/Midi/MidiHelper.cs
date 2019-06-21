@@ -79,8 +79,6 @@ namespace Halloumi.Notez.Engine.Midi
                         .FirstOrDefault(x => x.Item1 > element.Position && x.Item2 == element.Note);
                     if (offNote == null) throw new ApplicationException("No off note found");
                     element.Duration = offNote.Item1 - element.Position;
-
-                   // element.Duration = Math.Round(element.Duration * 2, MidpointRounding.AwayFromZero) / 2;
                 }
             }
 

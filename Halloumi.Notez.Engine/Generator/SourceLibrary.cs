@@ -24,7 +24,20 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
 
-            FindPatterns();
+
+            var random = new Random(DateTime.Now.Millisecond);
+            var clips = Clips
+                .Where(x => x.ClipType == ClipType.BasePhrase)
+                .OrderBy(x => random.Next())
+                .Take(3)
+                .Select(x => x.Phrase)
+                .ToList();
+
+            var newPharse = MergePhrases(clips);
+            newPharse.Bpm = 200;
+            MidiHelper.SaveToMidi(newPharse, "newphrase.mid", MidiInstrument.ElectricBassFinger);
+
+            //FindPatterns();
         }
 
         private void CalculateBasePhrases()
@@ -69,6 +82,9 @@ namespace Halloumi.Notez.Engine.Generator
                 var basePhrase = MergePhrases(phrases);
                 basePhrase.Description = section;
                 basePhrase.Bpm = 200M;
+                PhraseHelper.DuplicatePhrase(basePhrase);
+                PhraseHelper.DuplicatePhrase(basePhrase);
+                PhraseHelper.DuplicatePhrase(basePhrase);
 
                 var clip = new Clip
                 {
@@ -82,15 +98,11 @@ namespace Halloumi.Notez.Engine.Generator
                     Song = mainGuitar.Song
                 };
 
-                MidiHelper.SaveToMidi(ScaleHelper.TransposeToScale(basePhrase, BaseScale, clip.Scale) , 
-                    @"C:\Users\jason\Desktop\metalmidi\test\" + section + ".mid", 
-                    MidiInstrument.DistortedGuitar);
-
                 Clips.Add(clip);
             }
         }
 
-        private static Phrase MergePhrases(List<Phrase> phrases)
+        private static Phrase MergePhrases(IReadOnlyCollection<Phrase> phrases)
         {
             var length = phrases.Max(x => x.PhraseLength);
             foreach (var phrase in phrases)
@@ -257,8 +269,7 @@ namespace Halloumi.Notez.Engine.Generator
             //var triplet = Clips.Where(x => x.File.EndsWith("ATG-Blinded2 3.mid")).FirstOrDefault();
             //var minSize = triplet.Phrase.Elements.Min(x => x.Duration);
 
-            var triplets = Clips.Where(x => x.Phrase.Elements.Min(y => y.Duration) - 1.166666M < 0.01M).ToList();
-
+            //var triplets = Clips.Where(x => x.Phrase.Elements.Min(y => y.Duration) - 1.166666M < 0.01M).ToList();
         }
 
         private static bool ValidLength(decimal length)

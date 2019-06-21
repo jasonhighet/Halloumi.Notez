@@ -25,7 +25,7 @@ namespace Halloumi.Notez.Engine.Notes
         {
             return new Phrase()
             {
-                Elements = Elements.Select(x => x.Clone()).OrderBy(x=>x.Position).ToList(),
+                Elements = Elements.Select(x => x.Clone()).OrderBy(x=>x.Position).ThenBy(x=>x.Note).ToList(),
                 PhraseLength = PhraseLength,
                 Description = Description,
                 Bpm = Bpm
