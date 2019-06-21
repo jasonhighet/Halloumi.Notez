@@ -29,12 +29,28 @@ namespace Halloumi.Notez.Engine.Generator
             var clips = Clips
                 .Where(x => x.ClipType == ClipType.BasePhrase)
                 .OrderBy(x => random.Next())
-                .Take(3)
-                .Select(x => x.Phrase)
+                .Take(1)
                 .ToList();
 
-            var newPharse = MergePhrases(clips);
+            var inititialClip = clips[0];
+            var minDuration = inititialClip.Phrase.Elements.Min(x => x.Duration);
+
+            clips.AddRange(Clips.Where(x => x.ClipType == ClipType.BasePhrase)
+                .Where(x => x != inititialClip)
+                .OrderBy(x => (x.Phrase.Elements.Min(y => y.Duration) - minDuration) * -1)
+                .ThenBy(x => random.Next())
+                .Take(2)
+                .ToList());
+
+            var bassClip = Clips.FirstOrDefault(x => x.ClipType == ClipType.BassGuitar && x.Section == inititialClip.Section);
+            if (bassClip == null)
+                throw new ApplicationException("No bass clip");
+
+
+            var newPharse = MergePhrases(clips.Select(x => x.Phrase).ToList());
             newPharse.Bpm = 200;
+
+            NoteHelper.ShiftNotes(newPharse, bassClip.BaseIntervalDiff, Interval.Step);
             MidiHelper.SaveToMidi(newPharse, "newphrase.mid", MidiInstrument.ElectricBassFinger);
 
             //FindPatterns();
@@ -179,7 +195,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void FindPatterns()
         {
-            foreach (var clip in Clips.Where(x=>x.ClipType == ClipType.BasePhrase))
+            foreach (var clip in Clips.Where(x => x.ClipType == ClipType.BasePhrase))
             {
                 var patterns = PatternFinder.FindPatterns(clip.Phrase);
                 var tempoPatterns = PatternFinder.FindPatterns(clip.Phrase, true);
@@ -191,7 +207,7 @@ namespace Halloumi.Notez.Engine.Generator
                                       + patterns.Count + " patterns and "
                                       + tempoPatterns.Count + " tempo patterns");
 
-                
+
             }
         }
 
@@ -203,7 +219,7 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
         }
-        
+
 
         private void MergeChords()
         {
@@ -212,7 +228,7 @@ namespace Halloumi.Notez.Engine.Generator
                 PhraseHelper.MergeChords(clip.Phrase);
             }
         }
-        
+
         private void CalculateLengths()
         {
             var sections = Clips
@@ -412,7 +428,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private static ClipType GetClipType(string filename)
         {
-            if(filename.EndsWith(" 4.mid"))
+            if (filename.EndsWith(" 4.mid"))
                 return ClipType.Drums;
             if (filename.EndsWith(" 3.mid"))
                 return ClipType.BassGuitar;
