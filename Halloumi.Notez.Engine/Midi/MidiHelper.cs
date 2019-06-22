@@ -28,15 +28,41 @@ namespace Halloumi.Notez.Engine.Midi
         private static MidiBuilder BuildMidi(Phrase phrase, MidiInstrument instrument)
         {
             phrase = phrase.Clone();
-            PhraseHelper.UnmergeChords(phrase);
-           // PhraseHelper.UnmergeRepeatedNotes(phrase);
+            
+            
+            PhraseHelper.UnmergeRepeatedNotes(phrase);
+            PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
+            //PhraseHelper.UnmergeChords(phrase);
+
 
             var midiBuilder = new MidiBuilder(phrase.Description, phrase.Bpm, instrument);
 
-            foreach (var element in phrase.Elements)
+            var positions = phrase.Elements.Select(x => x.Position)
+                .Union(phrase.Elements.Select(x => x.Position + x.Duration))
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            foreach (var position in positions)
             {
-                midiBuilder.AddNote(element.Note, element.Duration);
+                var notesOff = phrase.Elements.Where(x => x.Position + x.Duration == position).ToList();
+                foreach (var noteOff in notesOff)
+                {
+                    midiBuilder.AddNoteOff(noteOff.Note, noteOff.Duration);
+                }
+
+                var notesOn = phrase.Elements.Where(x => x.Position == position).ToList();
+                foreach (var noteOn in notesOn)
+                {
+                    midiBuilder.AddNoteOn(noteOn.Note);
+                }
+
             }
+
+                //foreach (var element in phrase.Elements)
+                //{
+                //    midiBuilder.AddNote(element.Note, element.Duration);
+                //}
 
             return midiBuilder;
         }

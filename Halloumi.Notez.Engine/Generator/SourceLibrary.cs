@@ -24,7 +24,7 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
 
-            for (var i = 0; i < 1; i++)
+            for (var i = 0; i < 31; i++)
             {
                 GenerateRiff("riff" + i);
             }
@@ -48,6 +48,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             clips.AddRange(Clips.Where(x => x.ClipType == ClipType.BasePhrase)
                 .Where(x => x != inititialClip)
+                .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
                 .OrderBy(x => random.Next())
                 .Take(3)
                 .ToList());
@@ -55,10 +56,14 @@ namespace Halloumi.Notez.Engine.Generator
             var mergedPhrase = MergePhrases(clips.Select(x => x.Phrase).ToList());
             mergedPhrase.Phrase.Bpm = 200;
 
+            if (!ValidLength(mergedPhrase.Phrase.PhraseLength))
+                throw new ApplicationException("invalid lenght");
+
+
             var bassPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.BassGuitar);
             var mainGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.MainGuitar);
             var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.AltGuitar);
-            
+
             MidiHelper.SaveToMidi(mainGuitarPhrase, name + " 1.mid", MidiInstrument.DistortedGuitar);
             MidiHelper.SaveToMidi(altGuitarPhrase, name + " 2.mid", MidiInstrument.OverdrivenGuitar);
             MidiHelper.SaveToMidi(bassPhrase, name + " 3.mid", MidiInstrument.ElectricBassFinger);
@@ -102,7 +107,7 @@ namespace Halloumi.Notez.Engine.Generator
 
                 if (sourceElement.Position < nextPosition && lastElement != null)
                     lastElement.Duration = sourceElement.Position - lastElement.Position;
-                
+
                 if (sourceElement.Position + sourceElement.Duration > mergedPhrase.Phrase.PhraseLength)
                     sourceElement.Duration = mergedPhrase.Phrase.PhraseLength - sourceElement.Position;
 

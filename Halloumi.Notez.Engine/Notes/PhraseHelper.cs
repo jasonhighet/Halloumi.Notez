@@ -146,7 +146,7 @@ namespace Halloumi.Notez.Engine.Notes
 
             foreach (var repeatedNote in repeatedNotes)
             {
-                var duration = repeatedNote.Duration;
+                var duration = repeatedNote.RepeatDuration;
                 for (int i = 1; i < repeatedNote.RepeatCount; i++)
                 {
                     var newElement = repeatedNote.Clone();

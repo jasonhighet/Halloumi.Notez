@@ -33,9 +33,13 @@ namespace Halloumi.Notez.Engine.Midi
 
         public void AddNote(int note, decimal lengthInThirtySecondNotes)
         {
-            const int noteOffset = 24;
+            AddNoteOn(note);
+            AddNoteOff(note, lengthInThirtySecondNotes);
+        }
 
-            var noteLength = Convert.ToInt64(24 * lengthInThirtySecondNotes);
+        public void AddNoteOn(int note)
+        {
+            const int noteOffset = 24;
             var noteNumber = (SevenBitNumber)(note + noteOffset);
 
             _trackChunk.Events.Add(new NoteOnEvent
@@ -45,6 +49,13 @@ namespace Halloumi.Notez.Engine.Midi
                 NoteNumber = noteNumber,
                 Channel = (FourBitNumber)0
             });
+        }
+        public void AddNoteOff(int note, decimal lengthInThirtySecondNotes)
+        {
+            const int noteOffset = 24;
+
+            var noteLength = Convert.ToInt64(24 * lengthInThirtySecondNotes);
+            var noteNumber = (SevenBitNumber)(note + noteOffset);
 
             _trackChunk.Events.Add(new NoteOffEvent
             {
