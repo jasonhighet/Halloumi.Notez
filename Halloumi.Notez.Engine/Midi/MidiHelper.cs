@@ -27,6 +27,9 @@ namespace Halloumi.Notez.Engine.Midi
 
         private static MidiBuilder BuildMidi(Phrase phrase, MidiInstrument instrument)
         {
+            phrase = phrase.Clone();
+            PhraseHelper.UnmergeChords(phrase);
+           // PhraseHelper.UnmergeRepeatedNotes(phrase);
 
             var midiBuilder = new MidiBuilder(phrase.Description, phrase.Bpm, instrument);
 

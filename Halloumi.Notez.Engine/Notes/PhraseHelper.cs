@@ -14,7 +14,7 @@ namespace Halloumi.Notez.Engine.Notes
             phrase.Elements.RemoveAll(x => x.Position >= newLength);
 
             var lastElement = phrase.Elements.LastOrDefault();
-            if(lastElement == null)
+            if (lastElement == null)
                 return;
 
             lastElement.Duration = newLength - lastElement.Position;
@@ -56,7 +56,7 @@ namespace Halloumi.Notez.Engine.Notes
 
                     if (element == baseElement)
                         continue;
-                    
+
                     elementsToRemove.Add(element);
                 }
             }
@@ -65,6 +65,35 @@ namespace Halloumi.Notez.Engine.Notes
             {
                 phrase.Elements.Remove(element);
             }
+        }
+
+        public static void UnmergeChords(Phrase phrase)
+        {
+            var chords = phrase
+                .Elements
+                .Where(x => x.IsChord)
+                .ToList();
+
+            if (chords.Count == 0)
+                return;
+
+            foreach (var chord in chords)
+            {
+                foreach (var note in chord.ChordNotes)
+                {
+                    if (note == chord.Note)
+                        continue;
+
+                    var newElement = chord.Clone();
+                    newElement.ChordNotes.Clear();
+                    newElement.Note = chord.Note;
+
+                    phrase.Elements.Add(newElement);
+                }
+                chord.ChordNotes.Clear();
+            }
+
+            phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ThenBy(x => x.Note).ToList();
         }
 
         public static void MergeRepeatedNotes(Phrase phrase)
@@ -103,7 +132,34 @@ namespace Halloumi.Notez.Engine.Notes
             {
                 phrase.Elements.Remove(element);
             }
+        }
 
+        public static void UnmergeRepeatedNotes(Phrase phrase)
+        {
+            var repeatedNotes = phrase
+                .Elements
+                .Where(x => x.HasRepeatingNotes)
+                .ToList();
+
+            if (repeatedNotes.Count == 0)
+                return;
+
+            foreach (var repeatedNote in repeatedNotes)
+            {
+                var duration = repeatedNote.Duration;
+                for (int i = 1; i < repeatedNote.RepeatCount; i++)
+                {
+                    var newElement = repeatedNote.Clone();
+                    newElement.RepeatDuration = 0;
+                    newElement.Duration = duration;
+                    newElement.Position = repeatedNote.Position + (i * duration);
+                    phrase.Elements.Add(newElement);
+                }
+                repeatedNote.RepeatDuration = 0;
+                repeatedNote.Duration = duration;
+            }
+
+            phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ThenBy(x => x.Note).ToList();
         }
 
         public static void MergeNotes(Phrase phrase)
@@ -193,7 +249,7 @@ namespace Halloumi.Notez.Engine.Notes
                 var nextPosition = (i < phrase.Elements.Count - 1) ? phrase.Elements[i + 1].Position : phraseLength;
                 element.Duration = nextPosition - element.Position;
 
-                if(element.Duration <= 0)
+                if (element.Duration <= 0)
                     throw new ApplicationException("Update duration has gone rogue");
             }
         }

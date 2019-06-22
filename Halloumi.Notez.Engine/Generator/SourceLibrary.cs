@@ -24,19 +24,19 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
 
-            for (var i = 0; i < 30; i++)
+            for (var i = 0; i < 1; i++)
             {
                 GenerateRiff("riff" + i);
             }
 
-            
+
 
             //FindPatterns();
         }
 
         private void GenerateRiff(string name)
         {
-            var random = new Random(DateTime.Now.Millisecond);
+            var random = new Random();
             var clips = Clips
                 .Where(x => x.ClipType == ClipType.BasePhrase)
                 .OrderBy(x => random.Next())
@@ -48,21 +48,74 @@ namespace Halloumi.Notez.Engine.Generator
 
             clips.AddRange(Clips.Where(x => x.ClipType == ClipType.BasePhrase)
                 .Where(x => x != inititialClip)
-                .OrderBy(x => (x.Phrase.Elements.Min(y => y.Duration) - minDuration) * -1)
-                .ThenBy(x => random.Next())
+                .OrderBy(x => random.Next())
                 .Take(3)
                 .ToList());
-
-            var bassClip = Clips.FirstOrDefault(x => x.ClipType == ClipType.BassGuitar && x.Section == inititialClip.Section);
-            if (bassClip == null)
-                throw new ApplicationException("No bass clip");
-
 
             var mergedPhrase = MergePhrases(clips.Select(x => x.Phrase).ToList());
             mergedPhrase.Phrase.Bpm = 200;
 
-            NoteHelper.ShiftNotes(mergedPhrase.Phrase, bassClip.BaseIntervalDiff, Interval.Step);
-            MidiHelper.SaveToMidi(mergedPhrase.Phrase, name + ".mid", MidiInstrument.ElectricBassFinger);
+            var bassPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.BassGuitar);
+            var mainGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.MainGuitar);
+            var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.AltGuitar);
+            
+            MidiHelper.SaveToMidi(mainGuitarPhrase, name + " 1.mid", MidiInstrument.DistortedGuitar);
+            MidiHelper.SaveToMidi(altGuitarPhrase, name + " 2.mid", MidiInstrument.OverdrivenGuitar);
+            MidiHelper.SaveToMidi(bassPhrase, name + " 3.mid", MidiInstrument.ElectricBassFinger);
+        }
+
+        private Phrase GeneratePhraseFromBasePhrase(MergedPhrase mergedPhrase, List<Clip> sourceClips, ClipType clipType)
+        {
+            var instrumentClips = new List<Clip>();
+            var instrumentPhrases = new List<Phrase>();
+
+            foreach (var clip in sourceClips)
+            {
+                var instrumentClip = Clips.FirstOrDefault(x => x.ClipType == clipType && x.Section == clip.Section);
+                if (instrumentClip == null)
+                    throw new ApplicationException("No instrument clip");
+
+                instrumentClips.Add(instrumentClip);
+                instrumentPhrases.Add(instrumentClip.Phrase.Clone());
+                instrumentPhrases.Last().Description = instrumentClip.Section;
+                NoteHelper.ShiftNotesDirect(instrumentPhrases.Last(), instrumentClip.BaseIntervalDiff * -1, Interval.Step);
+            }
+
+
+            EnsureLengthsAreEqual(instrumentPhrases, mergedPhrase.Phrase.PhraseLength);
+
+            var instrumentPhrase = mergedPhrase.Phrase.Clone();
+            instrumentPhrase.Elements.Clear();
+
+            var nextPosition = 0M;
+            PhraseElement lastElement = null;
+            foreach (var sourceIndex in mergedPhrase.SourceIndexes)
+            {
+                var sourcePhrase = instrumentPhrases.FirstOrDefault(x => x.Description == sourceIndex.Item1);
+                var sourceElement = sourcePhrase.Elements.FirstOrDefault(x => x.Position == sourceIndex.Item3);
+
+                if (sourceElement == null)
+                    continue;
+
+                sourceElement = sourceElement.Clone();
+                sourceElement.Position = sourceIndex.Item2;
+
+                if (sourceElement.Position < nextPosition && lastElement != null)
+                    lastElement.Duration = sourceElement.Position - lastElement.Position;
+                
+                if (sourceElement.Position + sourceElement.Duration > mergedPhrase.Phrase.PhraseLength)
+                    sourceElement.Duration = mergedPhrase.Phrase.PhraseLength - sourceElement.Position;
+
+                instrumentPhrase.Elements.Add(sourceElement);
+
+                nextPosition = sourceElement.Position + sourceElement.Duration;
+                lastElement = sourceElement;
+            }
+            var intervalDiff = instrumentClips[0].BaseIntervalDiff;
+            NoteHelper.ShiftNotesDirect(instrumentPhrase, intervalDiff, Interval.Step);
+
+
+            return instrumentPhrase;
         }
 
         private void CalculateBasePhrases()
@@ -107,9 +160,7 @@ namespace Halloumi.Notez.Engine.Generator
                 var basePhrase = MergePhrases(phrases).Phrase;
                 basePhrase.Description = section;
                 basePhrase.Bpm = 200M;
-                PhraseHelper.DuplicatePhrase(basePhrase);
-                PhraseHelper.DuplicatePhrase(basePhrase);
-                PhraseHelper.DuplicatePhrase(basePhrase);
+
 
                 var clip = new Clip
                 {
@@ -127,11 +178,23 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
+        private static void EnsureLengthsAreEqual(List<Phrase> sourcePhrases, decimal length = 0)
+        {
+            if (length == 0) length = sourcePhrases.Max(x => x.PhraseLength);
+            foreach (var phrase in sourcePhrases)
+            {
+                while (phrase.PhraseLength < length)
+                {
+                    PhraseHelper.DuplicatePhrase(phrase);
+                }
+            }
+        }
+
         private static MergedPhrase MergePhrases(List<Phrase> sourcePhrases)
         {
             var mergedPhrase = new MergedPhrase()
             {
-                SourcePhrase = sourcePhrases,
+                SourcePhrases = sourcePhrases,
                 SourceIndexes = new List<Tuple<string, decimal, decimal>>()
             };
 
@@ -154,7 +217,7 @@ namespace Halloumi.Notez.Engine.Generator
                 }
             }
 
-            var newPhrase =  new Phrase { PhraseLength = length };
+            var newPhrase = new Phrase { PhraseLength = length };
 
             var positions = sourcePhrases.SelectMany(x => x.Elements)
                 .Select(x => x.Position)
@@ -190,7 +253,7 @@ namespace Halloumi.Notez.Engine.Generator
                     .Select(x => new PhraseElement() { Duration = x.Duration, Note = x.Note, Position = position })
                     .FirstOrDefault();
 
-                if(newElement == null)
+                if (newElement == null)
                     throw new ApplicationException("no new element");
 
                 var sourceElement = distinctElements
@@ -201,7 +264,7 @@ namespace Halloumi.Notez.Engine.Generator
 
                 foreach (var phrase in sourcePhrases)
                 {
-                    if(phrase.Elements.Contains(sourceElement))
+                    if (phrase.Elements.Contains(sourceElement))
                         mergedPhrase.SourceIndexes.Add(new Tuple<string, decimal, decimal>(phrase.Description, position, sourceElement.Position));
                 }
 
@@ -509,9 +572,9 @@ namespace Halloumi.Notez.Engine.Generator
         private class MergedPhrase
         {
             public Phrase Phrase { get; set; }
-            public List<Phrase> SourcePhrase { get; set; }
+            public List<Phrase> SourcePhrases { get; set; }
             public List<Tuple<string, decimal, decimal>> SourceIndexes { get; set; }
-    }
+        }
 
         private enum ClipType
         {
