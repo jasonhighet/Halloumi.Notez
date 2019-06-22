@@ -19,10 +19,10 @@ namespace Halloumi.Notez.TestHarness
             var folder = @".\TestMidi\Death\thrash\";
             var sourceLibrary = new SourceLibrary();
             sourceLibrary.LoadLibrary(folder);
-            //var phrase = MidiHelper.ReadMidi(@"C: \Users\jason\Documents\GitHub\Halloumi.Notez\Halloumi.Notez.Engine\TestMidi\death\thrash\ATG-Blinded1 1.mid");
-            //PatternFinder.FindPatterns(phrase);
 
-            Console.ReadLine();
+            //var phrase = MidiHelper.ReadMidi(@"C: \Users\jason\Documents\GitHub\Halloumi.Notez\Halloumi.Notez.Engine\TestMidi\death\thrash\ATG-Blinded2 1.mid");
+            //PatternFinder.FindPatterns(phrase);
+            //Console.ReadLine();
         }
 
 

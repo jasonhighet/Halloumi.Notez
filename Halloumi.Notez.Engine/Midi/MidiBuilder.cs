@@ -11,19 +11,24 @@ namespace Halloumi.Notez.Engine.Midi
 {
     public class MidiBuilder
     {
-        private readonly TrackChunk _trackChunk;
+        private readonly List<TrackChunk> _trackChunks;
 
         private readonly TrackChunk _bpmChunk;
 
-        public MidiBuilder(string name = "Riff", decimal bpm = 120, MidiInstrument instrument = MidiInstrument.AcousticGrandPiano)
+        public MidiBuilder(List<Tuple<string, MidiInstrument>> tracks, decimal bpm = 120)
         {
             _bpmChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
+            _trackChunks = new List<TrackChunk>();
 
-            _trackChunk = new TrackChunk();
-            _trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(instrument)));
-            _trackChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
-
-            AddTimeSignatureEvent();
+            foreach (var track in tracks)
+            {
+                var trackChunk = new TrackChunk();
+                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(track.Item2)));
+                trackChunk.Events.Add(new SequenceTrackNameEvent(track.Item1 + "\0"));
+                AddTimeSignatureEvent(trackChunk);
+                _trackChunks.Add(trackChunk);
+            }
+            
         }
 
         private long GetBpmAsMicroseconds(decimal bpm)
@@ -31,18 +36,19 @@ namespace Halloumi.Notez.Engine.Midi
             return Convert.ToInt64( (1 / (bpm / 60)) * 1000000);
         }
 
-        public void AddNote(int note, decimal lengthInThirtySecondNotes)
+        public void AddNote(int trackIndex, int note, decimal lengthInThirtySecondNotes)
         {
-            AddNoteOn(note);
-            AddNoteOff(note, lengthInThirtySecondNotes);
+            AddNoteOn(trackIndex, note);
+            AddNoteOff(trackIndex, note, lengthInThirtySecondNotes);
         }
 
-        public void AddNoteOn(int note)
+        public void AddNoteOn(int trackIndex, int note)
         {
             const int noteOffset = 24;
             var noteNumber = (SevenBitNumber)(note + noteOffset);
 
-            _trackChunk.Events.Add(new NoteOnEvent
+            var trackChunk = _trackChunks[trackIndex];
+            trackChunk.Events.Add(new NoteOnEvent
             {
                 DeltaTime = 0,
                 Velocity = (SevenBitNumber)100,
@@ -50,14 +56,15 @@ namespace Halloumi.Notez.Engine.Midi
                 Channel = (FourBitNumber)0
             });
         }
-        public void AddNoteOff(int note, decimal lengthInThirtySecondNotes)
+        public void AddNoteOff(int trackIndex, int note, decimal lengthInThirtySecondNotes)
         {
             const int noteOffset = 24;
 
             var noteLength = Convert.ToInt64(24 * lengthInThirtySecondNotes);
             var noteNumber = (SevenBitNumber)(note + noteOffset);
 
-            _trackChunk.Events.Add(new NoteOffEvent
+            var trackChunk = _trackChunks[trackIndex];
+            trackChunk.Events.Add(new NoteOffEvent
             {
                 DeltaTime = noteLength,
                 Velocity = (SevenBitNumber)64,
@@ -68,20 +75,27 @@ namespace Halloumi.Notez.Engine.Midi
 
         public void SaveToFile(string filepath)
         {
-            var newMidi = new MidiFile(new List<MidiChunk> { _bpmChunk, _trackChunk });
-            newMidi.Write(filepath, true, MidiFileFormat.SingleTrack);
+            var chunks = new List<MidiChunk> { _bpmChunk };
+            chunks.AddRange(_trackChunks);
+            var format = _trackChunks.Count == 1 ? MidiFileFormat.SingleTrack : MidiFileFormat.MultiTrack;
+
+            var newMidi = new MidiFile(chunks);
+            newMidi.Write(filepath, true, format);
         }
 
         public void SaveToCsvFile(string filepath)
         {
-            var newMidi = new MidiFile(new List<MidiChunk> { _bpmChunk, _trackChunk });
+            var chunks = new List<MidiChunk> { _bpmChunk };
+            chunks.AddRange(_trackChunks);
+
+            var newMidi = new MidiFile(chunks);
             var csvConverter = new CsvConverter();
             csvConverter.ConvertMidiFileToCsv(newMidi, filepath, true);
         }
 
-        private void AddTimeSignatureEvent()
+        private void AddTimeSignatureEvent(TrackChunk trackChunk)
         {
-            _trackChunk.Events.Add(new TimeSignatureEvent
+            trackChunk.Events.Add(new TimeSignatureEvent
             {
                 ClocksPerClick = 36,
                 Denominator = 4,

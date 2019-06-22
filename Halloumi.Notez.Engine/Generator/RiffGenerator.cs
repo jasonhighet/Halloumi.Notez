@@ -22,7 +22,9 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 var phrase = generator.GeneratePhrase();
                 string midiPath = GetFileName(i, phrase);
-                MidiHelper.SaveToMidi(phrase, midiPath, MidiInstrument.OverdrivenGuitar);
+                phrase.Instrument = MidiInstrument.OverdrivenGuitar;
+
+                MidiHelper.SaveToMidi(new List<Phrase> { phrase }, midiPath);
             }
         }
 

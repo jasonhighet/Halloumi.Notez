@@ -86,7 +86,7 @@ namespace Halloumi.Notez.Engine.Notes
 
                     var newElement = chord.Clone();
                     newElement.ChordNotes.Clear();
-                    newElement.Note = chord.Note;
+                    newElement.Note = note;
 
                     phrase.Elements.Add(newElement);
                 }

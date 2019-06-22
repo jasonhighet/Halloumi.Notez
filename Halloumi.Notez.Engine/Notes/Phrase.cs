@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Halloumi.Notez.Engine.Midi;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ namespace Halloumi.Notez.Engine.Notes
         public Phrase()
         {
             Elements = new List<PhraseElement>();
+            Instrument = MidiInstrument.AcousticGrandPiano;
         }
 
         public List<PhraseElement> Elements { get; set; }
@@ -21,6 +23,8 @@ namespace Halloumi.Notez.Engine.Notes
 
         public string Description { get; internal set; }
 
+        public MidiInstrument Instrument { get; set; }
+
         public Phrase Clone()
         {
             return new Phrase()
@@ -28,7 +32,8 @@ namespace Halloumi.Notez.Engine.Notes
                 Elements = Elements.Select(x => x.Clone()).OrderBy(x=>x.Position).ThenBy(x=>x.Note).ToList(),
                 PhraseLength = PhraseLength,
                 Description = Description,
-                Bpm = Bpm
+                Bpm = Bpm,
+                Instrument = Instrument
             };
         }
     }

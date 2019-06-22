@@ -13,57 +13,57 @@ namespace Halloumi.Notez.Engine.Midi
     {
         private const int NoteOffset = 24;
 
-        public static void SaveToMidi(Phrase phrase, string filepath, MidiInstrument instrument = MidiInstrument.AcousticGrandPiano)
+        public static void SaveToMidi(List<Phrase> phrases, string filepath)
         {
-            var builder = BuildMidi(phrase, instrument);
+            var builder = BuildMidi(phrases);
             builder.SaveToFile(filepath);
         }
 
-        public static void SaveToCsv(Phrase phrase, string filepath)
+        public static void SaveToCsv(List<Phrase> phrases, string filepath)
         {
-            var builder = BuildMidi(phrase, MidiInstrument.AcousticGrandPiano);
+            var builder = BuildMidi(phrases);
             builder.SaveToCsvFile(filepath);
         }
 
-        private static MidiBuilder BuildMidi(Phrase phrase, MidiInstrument instrument)
+        private static MidiBuilder BuildMidi(List<Phrase> phrases)
         {
-            phrase = phrase.Clone();
-            
-            
-            PhraseHelper.UnmergeRepeatedNotes(phrase);
-            PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
-            //PhraseHelper.UnmergeChords(phrase);
+            var tracks = phrases.Select(x => new Tuple<string, MidiInstrument>(x.Description, x.Instrument)).ToList();
 
+            var midiBuilder = new MidiBuilder(tracks, phrases[0].Bpm);
 
-            var midiBuilder = new MidiBuilder(phrase.Description, phrase.Bpm, instrument);
-
-            var positions = phrase.Elements.Select(x => x.Position)
-                .Union(phrase.Elements.Select(x => x.Position + x.Duration))
-                .Distinct()
-                .OrderBy(x => x)
-                .ToList();
-
-            foreach (var position in positions)
+            foreach (var sourcePhrase in phrases)
             {
-                var notesOff = phrase.Elements.Where(x => x.Position + x.Duration == position).ToList();
-                foreach (var noteOff in notesOff)
-                {
-                    midiBuilder.AddNoteOff(noteOff.Note, noteOff.Duration);
-                }
+                var index = phrases.IndexOf(sourcePhrase);
+                var phrase = sourcePhrase.Clone();
 
-                var notesOn = phrase.Elements.Where(x => x.Position == position).ToList();
-                foreach (var noteOn in notesOn)
-                {
-                    midiBuilder.AddNoteOn(noteOn.Note);
-                }
 
+                PhraseHelper.UnmergeRepeatedNotes(phrase);
+                PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
+                PhraseHelper.UnmergeChords(phrase);
+
+                var positions = phrase.Elements.Select(x => x.Position)
+                    .Union(phrase.Elements.Select(x => x.Position + x.Duration))
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToList();
+
+                foreach (var position in positions)
+                {
+                    var notesOff = phrase.Elements.Where(x => x.Position + x.Duration == position).ToList();
+                    foreach (var noteOff in notesOff)
+                    {
+                        var delta = notesOff.First() == noteOff ? noteOff.Duration : 0M;
+                        midiBuilder.AddNoteOff(index, noteOff.Note, delta);
+                    }
+
+                    var notesOn = phrase.Elements.Where(x => x.Position == position).ToList();
+                    foreach (var noteOn in notesOn)
+                    {
+                        midiBuilder.AddNoteOn(index, noteOn.Note);
+                    }
+
+                }
             }
-
-                //foreach (var element in phrase.Elements)
-                //{
-                //    midiBuilder.AddNote(element.Note, element.Duration);
-                //}
-
             return midiBuilder;
         }
 

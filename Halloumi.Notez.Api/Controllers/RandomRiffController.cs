@@ -1,6 +1,7 @@
 ﻿using Halloumi.Notez.Engine;
 using Halloumi.Notez.Engine.Generator;
 using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +25,7 @@ namespace Halloumi.Notez.Api.Controllers
 
             var generator = new PhraseGenerator();
             var phrase = generator.GeneratePhrase();
-            MidiHelper.SaveToMidi(phrase, midiPath, MidiInstrument.OverdrivenGuitar);
+            MidiHelper.SaveToMidi(new List<Phrase> { phrase }, midiPath);
  
             var stream = new FileStream(midiPath, FileMode.Open, FileAccess.Read);
             var result = new HttpResponseMessage(HttpStatusCode.OK)

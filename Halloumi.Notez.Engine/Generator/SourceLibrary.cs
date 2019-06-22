@@ -53,6 +53,15 @@ namespace Halloumi.Notez.Engine.Generator
                 .Take(3)
                 .ToList());
 
+            var missing = 4 - clips.Count;
+            if (missing > 0)
+                clips.AddRange(Clips.Where(x => x.ClipType == ClipType.BasePhrase)
+                    .Where(x => x != inititialClip)
+                    .Where(x => x.Phrase.Elements.Min(y => y.Duration) > minDuration)
+                    .OrderBy(x => random.Next())
+                    .Take(missing)
+                    .ToList());
+
             var mergedPhrase = MergePhrases(clips.Select(x => x.Phrase).ToList());
             mergedPhrase.Phrase.Bpm = 200;
 
@@ -64,9 +73,15 @@ namespace Halloumi.Notez.Engine.Generator
             var mainGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.MainGuitar);
             var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, clips, ClipType.AltGuitar);
 
-            MidiHelper.SaveToMidi(mainGuitarPhrase, name + " 1.mid", MidiInstrument.DistortedGuitar);
-            MidiHelper.SaveToMidi(altGuitarPhrase, name + " 2.mid", MidiInstrument.OverdrivenGuitar);
-            MidiHelper.SaveToMidi(bassPhrase, name + " 3.mid", MidiInstrument.ElectricBassFinger);
+            bassPhrase.Instrument = MidiInstrument.ElectricBassFinger;
+            bassPhrase.Description = "BassGuitar";
+            mainGuitarPhrase.Instrument = MidiInstrument.DistortedGuitar;
+            mainGuitarPhrase.Description = "MainGuitar";
+            altGuitarPhrase.Instrument = MidiInstrument.OverdrivenGuitar;
+            altGuitarPhrase.Description = "AltGuitar";
+
+            var phrases = new List<Phrase> { mainGuitarPhrase, altGuitarPhrase, bassPhrase };
+            MidiHelper.SaveToMidi(phrases, name + ".mid");
         }
 
         private Phrase GeneratePhraseFromBasePhrase(MergedPhrase mergedPhrase, List<Clip> sourceClips, ClipType clipType)
