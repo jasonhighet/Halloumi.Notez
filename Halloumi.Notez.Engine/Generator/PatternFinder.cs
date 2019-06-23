@@ -6,6 +6,12 @@ namespace Halloumi.Notez.Engine.Generator
 {
     public static class PatternFinder
     {
+        public enum PatternType
+        {
+            Perfect,
+            Tempo
+        }
+
         public class Window
         {
             public Window(int start, int end)
@@ -20,18 +26,19 @@ namespace Halloumi.Notez.Engine.Generator
 
         public class Pattern : Dictionary<string, Window>
         {
+            public PatternType PatternType { get; set; }
         }
 
         public class Patterns : Dictionary<string, Pattern>
         {
             public void AddPattern(string patternKey, int windowStart, int windowEnd, int compareWindowStart,
-                int compareWindowEnd)
+                int compareWindowEnd, PatternType patternType)
             {
                 var windowKey = $"{windowStart},{windowEnd}";
                 var compareWindowKey = $"{compareWindowStart},{compareWindowEnd}";
 
                 if (!ContainsKey(patternKey))
-                    Add(patternKey, new Pattern());
+                    Add(patternKey, new Pattern() { PatternType = patternType });
 
                 var pattern = this[patternKey];
                 if (!pattern.ContainsKey(windowKey))
@@ -43,14 +50,27 @@ namespace Halloumi.Notez.Engine.Generator
 
         }
 
-        public static Patterns FindPatterns(Phrase phrase, bool ignorePitch = false)
+        public static Patterns FindPatterns(Phrase phrase)
+        {
+            var patterns = FindPatterns(phrase, PatternType.Perfect);
+            var tempoPatterns = FindPatterns(phrase, PatternType.Tempo);
+
+            foreach (var pattern in tempoPatterns)
+            {
+                patterns.Add(pattern.Key, pattern.Value);
+            }
+            RemoverOverlaps(patterns);
+
+            return patterns;
+        }
+
+        public static Patterns FindPatterns(Phrase phrase, PatternType patternType)
         {
             var elements = phrase.Clone().Elements;
             var sequenceLength = elements.Count;
 
-            if (ignorePitch)
+            if (patternType == PatternType.Tempo)
                 elements.ForEach(x => x.Note = 1);
-
 
             var patterns = new Patterns();
 
@@ -66,8 +86,8 @@ namespace Halloumi.Notez.Engine.Generator
                         var compareWindowEnd = compareWindowStart + windowSize - 1;
                         if (!Compare(elements, windowStart, windowEnd, compareWindowStart)) continue;
 
-                        var patternKey = GetPatternKey(elements, windowStart, windowEnd);
-                        patterns.AddPattern(patternKey, windowStart, windowEnd, compareWindowStart, compareWindowEnd);
+                        var patternKey = GetPatternKey(elements, windowStart, windowEnd, patternType);
+                        patterns.AddPattern(patternKey, windowStart, windowEnd, compareWindowStart, compareWindowEnd, patternType);
                     }
                 }
             }
@@ -112,16 +132,15 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
-        private static string GetPatternKey(IReadOnlyList<PhraseElement> elements, int windowStart, int windowEnd)
+        private static string GetPatternKey(IReadOnlyList<PhraseElement> elements, int windowStart, int windowEnd, PatternType patternType)
         {
-            var key = "";
+            var key = patternType.ToString();
             for (var i = windowStart; i <= windowEnd; i++)
             {
-                if (key != "") key += ",";
-                key += elements[i].Note
-                       + "_" + elements[i].Duration;
-                //+ "_" + elements[i].IsChord
-                //+ "_" + elements[i].RepeatDuration;
+                key += "," 
+                    + elements[i].Note
+                    + "_" 
+                    + elements[i].Duration;
             }
             return key;
         }
