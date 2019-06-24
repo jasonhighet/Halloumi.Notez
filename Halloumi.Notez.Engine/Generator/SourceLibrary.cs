@@ -26,12 +26,13 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
 
-            GenerateRandomRiff("");
+            
 
-            //for (var i = 0; i < 31; i++)
-            //{
-            //    GenerateRiff("riff" + i);
-            //}
+            for (var i = 0; i < 310; i++)
+            {
+                //GenerateRiff("riff" + i);
+                GenerateRandomRiff("riff" + i);
+            }
         }
 
         private void GenerateRandomRiff(string filename)
@@ -40,6 +41,7 @@ namespace Halloumi.Notez.Engine.Generator
             var sourcePhrases = sourceClips.Select(x => x.Phrase).ToList();
 
             var patterns = PatternFinder.FindPatterns(sourcePhrases);
+            Console.WriteLine(patterns.Count);
 
             var positions = sourceClips.Select(x => x.Phrase).SelectMany(x => x.Elements)
                 .Select(x => x.Position)

@@ -1,4 +1,5 @@
 ﻿using Halloumi.Notez.Engine.Notes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -60,11 +61,12 @@ namespace Halloumi.Notez.Engine.Generator
 
                 foreach (var pattern in phrasePatterns)
                 {
-                    if(!patterns.ContainsKey(pattern.Key))
+                    if (!patterns.ContainsKey(pattern.Key))
                         patterns.Add(pattern.Key, pattern.Value);
                 }
             }
             RemoverOverlaps(patterns);
+            RemoveContainedPatterns(patterns);
 
             return patterns;
         }
@@ -79,6 +81,7 @@ namespace Halloumi.Notez.Engine.Generator
                 patterns.Add(pattern.Key, pattern.Value);
             }
             RemoverOverlaps(patterns);
+            RemoveContainedPatterns(patterns);
 
             return patterns;
         }
@@ -112,6 +115,7 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
             RemoverOverlaps(patterns);
+            RemoveContainedPatterns(patterns);
 
             return patterns;
         }
@@ -151,14 +155,63 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
+        private static void RemoveContainedPatterns(Patterns patterns)
+        {
+            var patternsToRemove = new List<string>();
+            foreach (var pattern in patterns.OrderBy(x => GetWindowLength(x.Value)).ThenByDescending(x => x.Value.PatternType))
+            {
+                var otherPatterns = patterns
+                    .Where(x => x.Key != pattern.Key && GetWindowLength(x.Value) >= GetWindowLength(pattern.Value))
+                    .OrderBy(x => GetWindowLength(x.Value))
+                    .ToList();
+                foreach (var otherPattern in otherPatterns)
+                {
+                    if (pattern.Value.PatternType == PatternType.Perfect
+                        && otherPattern.Value.PatternType == PatternType.Tempo)
+                        continue;
+
+                    if (IsPatternWholyLocatedInsideOtherPattern(pattern.Value, otherPattern.Value))
+                    {
+                        //Console.WriteLine(pattern.Key + " inside " + otherPattern.Key);
+                        patternsToRemove.Add(pattern.Key);
+                    }
+                }
+            }
+            patternsToRemove.Distinct().ToList().ForEach(x => patterns.Remove(x));
+        }
+
+        private static bool IsPatternWholyLocatedInsideOtherPattern(Pattern pattern, Pattern otherPattern)
+        {
+            foreach (var window in pattern)
+            {
+                var windowContained = false;
+                foreach (var compareWindow in otherPattern)
+                {
+                    if (window.Value.Start >= compareWindow.Value.Start && window.Value.End <= compareWindow.Value.End)
+                    {
+                        windowContained = true;
+                        break;
+                    }
+                }
+                if (!windowContained)
+                    return false;
+            }
+            return true;
+        }
+
+        private static int GetWindowLength(Pattern pattern)
+        {
+            return pattern.First().Value.End - pattern.First().Value.Start;
+        }
+
         private static string GetPatternKey(IReadOnlyList<PhraseElement> elements, int windowStart, int windowEnd, PatternType patternType)
         {
             var key = patternType.ToString();
             for (var i = windowStart; i <= windowEnd; i++)
             {
-                key += "," 
+                key += ","
                     + elements[i].Note
-                    + "_" 
+                    + "_"
                     + elements[i].Duration;
             }
             return key;
@@ -178,8 +231,8 @@ namespace Halloumi.Notez.Engine.Generator
 
                 var isMatch = sourceElement.Duration == compareElement.Duration
                               && sourceElement.Note == compareElement.Note;
-                    //&& sourceElement.IsChord == compareElement.IsChord
-                    //&& sourceElement.RepeatDuration == compareElement.RepeatDuration;
+                //&& sourceElement.IsChord == compareElement.IsChord
+                //&& sourceElement.RepeatDuration == compareElement.RepeatDuration;
 
                 if (!isMatch)
                     return false;
