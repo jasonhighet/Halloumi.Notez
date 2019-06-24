@@ -50,6 +50,25 @@ namespace Halloumi.Notez.Engine.Generator
 
         }
 
+        public static Patterns FindPatterns(List<Phrase> phrases)
+        {
+            var patterns = new Patterns();
+
+            foreach (var phrase in phrases)
+            {
+                var phrasePatterns = FindPatterns(phrase);
+
+                foreach (var pattern in phrasePatterns)
+                {
+                    if(!patterns.ContainsKey(pattern.Key))
+                        patterns.Add(pattern.Key, pattern.Value);
+                }
+            }
+            RemoverOverlaps(patterns);
+
+            return patterns;
+        }
+
         public static Patterns FindPatterns(Phrase phrase)
         {
             var patterns = FindPatterns(phrase, PatternType.Perfect);

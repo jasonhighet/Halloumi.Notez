@@ -36,8 +36,10 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateRandomRiff(string filename)
         {
-            var sourceClips = LoadSourceClips(3);
-            FindPatterns(sourceClips);
+            var sourceClips = LoadSourceBasePhraseClips(3);
+            var sourcePhrases = sourceClips.Select(x => x.Phrase).ToList();
+
+            var patterns = PatternFinder.FindPatterns(sourcePhrases);
 
             var positions = sourceClips.Select(x => x.Phrase).SelectMany(x => x.Elements)
                 .Select(x => x.Position)
@@ -71,7 +73,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateRiff(string filename)
         {
-            var sourceClips = LoadSourceClips(4);
+            var sourceClips = LoadSourceBasePhraseClips(4);
 
             var mergedPhrase = MergePhrases(sourceClips.Select(x => x.Phrase).ToList());
             mergedPhrase.Phrase.Bpm = 200;
@@ -96,7 +98,7 @@ namespace Halloumi.Notez.Engine.Generator
             MidiHelper.SaveToMidi(phrases, filename + ".mid");
         }
 
-        private List<Clip> LoadSourceClips(int count)
+        private List<Clip> LoadSourceBasePhraseClips(int count)
         {
             var clips = Clips
                 .Where(x => x.ClipType == ClipType.BasePhrase)
@@ -153,7 +155,7 @@ namespace Halloumi.Notez.Engine.Generator
             foreach (var sourceIndex in mergedPhrase.SourceIndexes)
             {
                 var sourcePhrase = instrumentPhrases.FirstOrDefault(x => x.Description == sourceIndex.Item1);
-                var sourceElement = sourcePhrase.Elements.FirstOrDefault(x => x.Position == sourceIndex.Item3);
+                var sourceElement = sourcePhrase?.Elements.FirstOrDefault(x => x.Position == sourceIndex.Item3);
 
                 if (sourceElement == null)
                     continue;
@@ -171,6 +173,7 @@ namespace Halloumi.Notez.Engine.Generator
 
                 nextPosition = sourceElement.Position + sourceElement.Duration;
                 lastElement = sourceElement;
+                
             }
             var intervalDiff = instrumentClips[0].BaseIntervalDiff;
             NoteHelper.ShiftNotesDirect(instrumentPhrase, intervalDiff, Interval.Step);
@@ -354,24 +357,13 @@ namespace Halloumi.Notez.Engine.Generator
             return (int)Math.Round((phrase.Elements.Average(y => y.Note) + phrase.Elements.Min(y => y.Note)) / 2);
         }
 
-        private void FindPatterns(List<Clip> clips)
-        {
-            var allPatterns = new List<PatternFinder.Patterns>();
-            foreach (var clip in clips.Where(x => x.ClipType == ClipType.BasePhrase))
-            {
-                clip.Patterns = PatternFinder.FindPatterns(clip.Phrase);
-            }
-        }
-
         private void MergeRepeatedNotes()
         {
             foreach (var clip in InstrumentClips())
             {
                 PhraseHelper.MergeRepeatedNotes(clip.Phrase);
             }
-
         }
-
 
         private void MergeChords()
         {
