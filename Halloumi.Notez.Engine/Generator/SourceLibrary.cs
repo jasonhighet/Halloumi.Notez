@@ -28,7 +28,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             
 
-            for (var i = 0; i < 310; i++)
+            for (var i = 0; i < 31; i++)
             {
                 //GenerateRiff("riff" + i);
                 GenerateRandomRiff("riff" + i);
@@ -37,8 +37,15 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateRandomRiff(string filename)
         {
-            var sourceClips = LoadSourceBasePhraseClips(4);
+            var sourceClips = LoadSourceBasePhraseClips(3);
             var sourcePhrases = sourceClips.Select(x => x.Phrase).ToList();
+
+            EnsureLengthsAreEqual(sourcePhrases);
+            foreach (var sourcePhrase in sourcePhrases)
+            {
+                PhraseHelper.MergeRepeatedNotes(sourcePhrase);
+                PhraseHelper.MergeChords(sourcePhrase);
+            }
 
             var patterns = PatternFinder.FindPatterns(sourcePhrases);
             Console.WriteLine(patterns.Count);
@@ -49,10 +56,23 @@ namespace Halloumi.Notez.Engine.Generator
                 .OrderBy(x => x)
                 .ToList();
 
-            // randomize patterns - merge, remove overlap, take 33% or 100
-
+            var nextPosition = 0M;
+            var newPhrase = new Phrase() { Bpm = sourcePhrases[0].Bpm, PhraseLength = sourcePhrases[0].PhraseLength };
             foreach (var position in positions)
             {
+                //if (position < nextPosition)
+                //    continue;
+
+                var elements = sourcePhrases
+                    .Select(y => y.Elements.Where(x => x.Position <= position).OrderByDescending(x => x.Position).FirstOrDefault())
+                    .Where(x => x != null)
+                    .ToList();
+
+                var element = elements.OrderBy(x => _random.Next()).First().Clone();
+                element.Position = position;
+
+                newPhrase.Elements.Add(element);
+
                 // if position < next postition
                 //  continue
                 // if position filled
@@ -66,11 +86,22 @@ namespace Halloumi.Notez.Engine.Generator
 
                 // set next position
                 // apply patterns
+
+                nextPosition = position + element.Duration; 
             }
 
             // find bass phrase (random of source), apply to new phrase
             // find alt phrase (random of source), apply to new phrase
             // find main phrase (random of source), apply to new phrase
+
+            var bassPhrase = newPhrase.Clone();
+            var mainGuitarPhrase = newPhrase.Clone();
+            var altGuitarPhrase = newPhrase.Clone();
+
+            NoteHelper.ShiftNotes(bassPhrase, -12, Interval.Step);
+            NoteHelper.ShiftNotes(altGuitarPhrase, 12, Interval.Step);
+
+            SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
         }
 
         private void GenerateRiff(string filename)

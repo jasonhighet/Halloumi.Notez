@@ -65,10 +65,6 @@ namespace Halloumi.Notez.Engine.Generator
                         patterns.Add(pattern.Key, pattern.Value);
                 }
             }
-            RemoverOverlapsWithinEachPattern(patterns);
-            //RemoveContainedPatterns(patterns);
-            RemoveOverlappingPatterns(patterns);
-
             return patterns;
         }
 
@@ -82,7 +78,6 @@ namespace Halloumi.Notez.Engine.Generator
                 patterns.Add(pattern.Key, pattern.Value);
             }
             RemoverOverlapsWithinEachPattern(patterns);
-           // RemoveContainedPatterns(patterns);
             RemoveOverlappingPatterns(patterns);
 
             return patterns;
@@ -117,7 +112,6 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
             RemoverOverlapsWithinEachPattern(patterns);
-           // RemoveContainedPatterns(patterns);
             RemoveOverlappingPatterns(patterns);
 
             return patterns;
@@ -157,15 +151,21 @@ namespace Halloumi.Notez.Engine.Generator
                 patterns.Remove(emptyPattern);
             }
         }
-
-        private static void RemoveContainedPatterns(Patterns patterns)
+        private static void RemoveOverlappingPatterns(Patterns patterns)
         {
             var patternsToRemove = new List<string>();
-            foreach (var pattern in patterns.OrderBy(x => GetWindowLength(x.Value)).ThenByDescending(x => x.Value.PatternType))
+            foreach (var pattern in patterns
+                .OrderBy(x => GetPatternTotalLength(x.Value))
+                .ThenBy(x => GetPatternWindowLength(x.Value))
+                .ThenByDescending(x => x.Value.PatternType))
             {
+                if (patternsToRemove.Contains(pattern.Key))
+                    continue;
+
                 var otherPatterns = patterns
-                    .Where(x => x.Key != pattern.Key && GetWindowLength(x.Value) >= GetWindowLength(pattern.Value))
-                    .OrderBy(x => GetWindowLength(x.Value))
+                    .Where(x => x.Key != pattern.Key && GetPatternWindowLength(x.Value) >= GetPatternWindowLength(pattern.Value))
+                    .OrderBy(x => GetPatternTotalLength(x.Value))
+                    .ThenBy(x => GetPatternWindowLength(x.Value))
                     .ToList();
                 foreach (var otherPattern in otherPatterns)
                 {
@@ -173,35 +173,26 @@ namespace Halloumi.Notez.Engine.Generator
                         && otherPattern.Value.PatternType == PatternType.Tempo)
                         continue;
 
-                    if (IsPatternWholyLocatedInsideOtherPattern(pattern.Value, otherPattern.Value))
-                    {
-                        //Console.WriteLine(pattern.Key + " inside " + otherPattern.Key);
-                        patternsToRemove.Add(pattern.Key);
-                    }
-                }
-            }
-            patternsToRemove.Distinct().ToList().ForEach(x => patterns.Remove(x));
-        }
-
-        private static void RemoveOverlappingPatterns(Patterns patterns)
-        {
-            var patternsToRemove = new List<string>();
-            foreach (var pattern in patterns.OrderBy(x => GetWindowLength(x.Value)).ThenByDescending(x => x.Value.PatternType))
-            {
-                var otherPatterns = patterns
-                    .Where(x => x.Key != pattern.Key && GetWindowLength(x.Value) >= GetWindowLength(pattern.Value))
-                    .OrderBy(x => GetWindowLength(x.Value))
-                    .ToList();
-                foreach (var otherPattern in otherPatterns)
-                {
-                    if (pattern.Value.PatternType == PatternType.Perfect
-                        && otherPattern.Value.PatternType == PatternType.Tempo)
+                    if (patternsToRemove.Contains(otherPattern.Key))
                         continue;
 
                     if (IsPatternOverlappingOtherPattern(pattern.Value, otherPattern.Value))
                     {
+                        var comparePatterns = new List<KeyValuePair<string, Pattern>>()
+                            {
+                                pattern,
+                                otherPattern
+                            }
+                            .OrderBy(x => x.Value.PatternType)
+                            .ThenBy(x => GetPatternTotalLength(x.Value))
+                            .ThenBy(x => GetPatternWindowLength(x.Value))
+                            .ToList();
+
+                        var patternToRemove = comparePatterns.First();
+
+                        if (!patternsToRemove.Contains(patternToRemove.Key))
+                            patternsToRemove.Add(patternToRemove.Key);
                         //Console.WriteLine(pattern.Key + " inside " + otherPattern.Key);
-                        patternsToRemove.Add(pattern.Key);
                     }
                 }
             }
@@ -246,10 +237,16 @@ namespace Halloumi.Notez.Engine.Generator
             return true;
         }
 
-        private static int GetWindowLength(Pattern pattern)
+        private static int GetPatternWindowLength(Pattern pattern)
         {
             return pattern.First().Value.End - pattern.First().Value.Start;
         }
+
+        private static int GetPatternTotalLength(Pattern pattern)
+        {
+            return GetPatternWindowLength(pattern) * pattern.Count();
+        }
+
 
         private static string GetPatternKey(IReadOnlyList<PhraseElement> elements, int windowStart, int windowEnd, PatternType patternType)
         {
