@@ -65,8 +65,9 @@ namespace Halloumi.Notez.Engine.Generator
                         patterns.Add(pattern.Key, pattern.Value);
                 }
             }
-            RemoverOverlaps(patterns);
-            RemoveContainedPatterns(patterns);
+            RemoverOverlapsWithinEachPattern(patterns);
+            //RemoveContainedPatterns(patterns);
+            RemoveOverlappingPatterns(patterns);
 
             return patterns;
         }
@@ -80,8 +81,9 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 patterns.Add(pattern.Key, pattern.Value);
             }
-            RemoverOverlaps(patterns);
-            RemoveContainedPatterns(patterns);
+            RemoverOverlapsWithinEachPattern(patterns);
+           // RemoveContainedPatterns(patterns);
+            RemoveOverlappingPatterns(patterns);
 
             return patterns;
         }
@@ -114,13 +116,14 @@ namespace Halloumi.Notez.Engine.Generator
                 }
             }
 
-            RemoverOverlaps(patterns);
-            RemoveContainedPatterns(patterns);
+            RemoverOverlapsWithinEachPattern(patterns);
+           // RemoveContainedPatterns(patterns);
+            RemoveOverlappingPatterns(patterns);
 
             return patterns;
         }
 
-        private static void RemoverOverlaps(Patterns patterns)
+        private static void RemoverOverlapsWithinEachPattern(Patterns patterns)
         {
             foreach (var pattern in patterns)
             {
@@ -180,14 +183,58 @@ namespace Halloumi.Notez.Engine.Generator
             patternsToRemove.Distinct().ToList().ForEach(x => patterns.Remove(x));
         }
 
+        private static void RemoveOverlappingPatterns(Patterns patterns)
+        {
+            var patternsToRemove = new List<string>();
+            foreach (var pattern in patterns.OrderBy(x => GetWindowLength(x.Value)).ThenByDescending(x => x.Value.PatternType))
+            {
+                var otherPatterns = patterns
+                    .Where(x => x.Key != pattern.Key && GetWindowLength(x.Value) >= GetWindowLength(pattern.Value))
+                    .OrderBy(x => GetWindowLength(x.Value))
+                    .ToList();
+                foreach (var otherPattern in otherPatterns)
+                {
+                    if (pattern.Value.PatternType == PatternType.Perfect
+                        && otherPattern.Value.PatternType == PatternType.Tempo)
+                        continue;
+
+                    if (IsPatternOverlappingOtherPattern(pattern.Value, otherPattern.Value))
+                    {
+                        //Console.WriteLine(pattern.Key + " inside " + otherPattern.Key);
+                        patternsToRemove.Add(pattern.Key);
+                    }
+                }
+            }
+            patternsToRemove.Distinct().ToList().ForEach(x => patterns.Remove(x));
+        }
+
+        private static bool IsPatternOverlappingOtherPattern(Pattern pattern, Pattern otherPattern)
+        {
+            foreach (var currentWindow in pattern)
+            {
+                var windowOverlapping = false;
+                foreach (var compareWindow in otherPattern)
+                {
+                    if (currentWindow.Value.Start <= compareWindow.Value.End && compareWindow.Value.Start <= currentWindow.Value.End)
+                    {
+                        windowOverlapping = true;
+                        break;
+                    }
+                }
+                if (!windowOverlapping)
+                    return false;
+            }
+            return true;
+        }
+
         private static bool IsPatternWholyLocatedInsideOtherPattern(Pattern pattern, Pattern otherPattern)
         {
-            foreach (var window in pattern)
+            foreach (var currentWindow in pattern)
             {
                 var windowContained = false;
                 foreach (var compareWindow in otherPattern)
                 {
-                    if (window.Value.Start >= compareWindow.Value.Start && window.Value.End <= compareWindow.Value.End)
+                    if (currentWindow.Value.Start >= compareWindow.Value.Start && currentWindow.Value.End <= compareWindow.Value.End)
                     {
                         windowContained = true;
                         break;

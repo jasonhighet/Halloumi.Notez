@@ -37,7 +37,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateRandomRiff(string filename)
         {
-            var sourceClips = LoadSourceBasePhraseClips(3);
+            var sourceClips = LoadSourceBasePhraseClips(4);
             var sourcePhrases = sourceClips.Select(x => x.Phrase).ToList();
 
             var patterns = PatternFinder.FindPatterns(sourcePhrases);
