@@ -43,12 +43,12 @@ namespace Halloumi.Notez.Engine.Generator
             EnsureLengthsAreEqual(sourcePhrases);
             foreach (var sourcePhrase in sourcePhrases)
             {
-                PhraseHelper.MergeRepeatedNotes(sourcePhrase);
+                PhraseHelper.UnmergeRepeatedNotes(sourcePhrase);
                 PhraseHelper.MergeChords(sourcePhrase);
             }
 
-            var patterns = PatternFinder.FindPatterns(sourcePhrases);
-            Console.WriteLine(patterns.Count);
+            //var patterns = PatternFinder.FindPatterns(sourcePhrases);
+            //Console.WriteLine(patterns.Count);
 
             var positions = sourceClips.Select(x => x.Phrase).SelectMany(x => x.Elements)
                 .Select(x => x.Position)
@@ -56,20 +56,33 @@ namespace Halloumi.Notez.Engine.Generator
                 .OrderBy(x => x)
                 .ToList();
 
+            var chain = GenerateChain(sourcePhrases);
+
             var nextPosition = 0M;
+            PhraseElement previousElement = null;
             var newPhrase = new Phrase() { Bpm = sourcePhrases[0].Bpm, PhraseLength = sourcePhrases[0].PhraseLength };
             foreach (var position in positions)
             {
-                //if (position < nextPosition)
-                //    continue;
+                if (position < nextPosition)
+                    continue;
 
-                var elements = sourcePhrases
-                    .Select(y => y.Elements.Where(x => x.Position <= position).OrderByDescending(x => x.Position).FirstOrDefault())
-                    .Where(x => x != null)
-                    .ToList();
+                var element = new PhraseElement() {Position = position};
 
-                var element = elements.OrderBy(x => _random.Next()).First().Clone();
-                element.Position = position;
+                if (previousElement == null)
+                {
+                    element.Note = chain.Item1.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key;
+                    element.Duration = chain.Item2.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key;
+                }
+                else
+                {
+                    element.Note = chain.Item1.ContainsKey(previousElement.Note)
+                        ? chain.Item1.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key 
+                        : chain.Item1[previousElement.Note].OrderBy(x => _random.Next()).FirstOrDefault();
+
+                    element.Duration = chain.Item2.ContainsKey(previousElement.Duration)
+                        ? chain.Item2.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key 
+                        : chain.Item2[previousElement.Duration].OrderBy(x => _random.Next()).FirstOrDefault();
+                }
 
                 newPhrase.Elements.Add(element);
 
@@ -87,7 +100,8 @@ namespace Halloumi.Notez.Engine.Generator
                 // set next position
                 // apply patterns
 
-                nextPosition = position + element.Duration; 
+                nextPosition = position + element.Duration;
+                previousElement = element;
             }
 
             // find bass phrase (random of source), apply to new phrase
@@ -102,6 +116,36 @@ namespace Halloumi.Notez.Engine.Generator
             NoteHelper.ShiftNotes(altGuitarPhrase, 12, Interval.Step);
 
             SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
+        }
+
+        private static Tuple<Dictionary<int, List<int>>, Dictionary<decimal, List<decimal>>> GenerateChain(IEnumerable<Phrase> sourcePhrases)
+        {
+            var notes = new Dictionary<int, List<int>>();
+            var durations = new Dictionary<decimal, List<decimal>>();
+
+            foreach (var sourcePhrase in sourcePhrases)
+            {
+                foreach (var element in sourcePhrase.Elements)
+                {
+                    var index = sourcePhrase.Elements.IndexOf(element);
+                    var nextElement = sourcePhrase
+                        .Elements
+                        .FirstOrDefault(x => sourcePhrase.Elements.IndexOf(x) == index + 1);
+
+                    if(nextElement == null)
+                        continue;
+                    
+                    if(!notes.ContainsKey(element.Note))
+                        notes.Add(element.Note, new List<int>());
+                    notes[element.Note].Add(nextElement.Note);
+
+                    if (!durations.ContainsKey(element.Duration))
+                        durations.Add(element.Duration, new List<decimal>());
+                    durations[element.Duration].Add(nextElement.Duration);
+                }
+            }
+
+            return new Tuple<Dictionary<int, List<int>>, Dictionary<decimal, List<decimal>>>(notes, durations);
         }
 
         private void GenerateRiff(string filename)
