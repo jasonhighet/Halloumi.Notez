@@ -30,14 +30,14 @@ namespace Halloumi.Notez.Engine.Generator
 
             for (var i = 0; i < 31; i++)
             {
-                //GenerateRiff("riff" + i);
-                GenerateRandomRiff("riff" + i);
+                GenerateRiff("riff" + i);
+                //GenerateRandomRiff("riff" + i);
             }
         }
 
         private void GenerateRandomRiff(string filename)
         {
-            var sourceClips = LoadSourceBasePhraseClips(3);
+            var sourceClips = LoadSourceBasePhraseClips(2);
             var sourcePhrases = sourceClips.Select(x => x.Phrase).ToList();
 
             EnsureLengthsAreEqual(sourcePhrases);
@@ -50,59 +50,125 @@ namespace Halloumi.Notez.Engine.Generator
             //var patterns = PatternFinder.FindPatterns(sourcePhrases);
             //Console.WriteLine(patterns.Count);
 
-            var positions = sourceClips.Select(x => x.Phrase).SelectMany(x => x.Elements)
-                .Select(x => x.Position)
-                .Distinct()
-                .OrderBy(x => x)
+            var probabilities = GenerateProbabilities(sourcePhrases);
+            decimal phraseLength = sourcePhrases[0].PhraseLength;
+
+            var newPhrase = GenratePhraseBasic(probabilities, phraseLength);
+            var patterns = PatternFinder.FindPatterns(sourcePhrases.OrderBy(x => _random.Next()).FirstOrDefault())
+                .OrderByDescending(x => x.Value.PatternType)
+                .ThenBy(x => x.Value.WindowSize)
+                .ThenBy(x => x.Value.ToList().FirstOrDefault().Value.Start)
                 .ToList();
 
-            var chain = GenerateChain(sourcePhrases);
-
-            var nextPosition = 0M;
-            PhraseElement previousElement = null;
-            var newPhrase = new Phrase() { Bpm = sourcePhrases[0].Bpm, PhraseLength = sourcePhrases[0].PhraseLength };
-            foreach (var position in positions)
+            foreach (var pattern in patterns)
             {
-                if (position < nextPosition)
-                    continue;
-
-                var element = new PhraseElement() {Position = position};
-
-                if (previousElement == null)
+                var sectionStartPositions = new List<decimal>();
+                foreach (var window in pattern.Value.Select(x => x.Value))
                 {
-                    element.Note = chain.Item1.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key;
-                    element.Duration = chain.Item2.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key;
+                    sectionStartPositions.Add(window.Start);
+                    sectionStartPositions.Add(window.End + 1);
                 }
-                else
+                foreach (var position in sectionStartPositions)
                 {
-                    element.Note = chain.Item1.ContainsKey(previousElement.Note)
-                        ? chain.Item1.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key 
-                        : chain.Item1[previousElement.Note].OrderBy(x => _random.Next()).FirstOrDefault();
+                    var element = newPhrase.Elements.FirstOrDefault(x => x.Position == position);
+                    if (element != null) continue;
 
-                    element.Duration = chain.Item2.ContainsKey(previousElement.Duration)
-                        ? chain.Item2.ToList().OrderBy(x => _random.Next()).FirstOrDefault().Key 
-                        : chain.Item2[previousElement.Duration].OrderBy(x => _random.Next()).FirstOrDefault();
+                    element = GetNewRandomElement(position, probabilities);
+                    if (element != null)
+                        newPhrase.Elements.Add(element);
                 }
-
-                newPhrase.Elements.Add(element);
-
-                // if position < next postition
-                //  continue
-                // if position filled
-                //  set next position
-                //  contine
-
-                // calculate note
-                // calculate length
-                // calculate ischord
-                // calculate repeating
-
-                // set next position
-                // apply patterns
-
-                nextPosition = position + element.Duration;
-                previousElement = element;
             }
+
+            foreach (var pattern in patterns)
+            {
+                var firstWindow = pattern.Value.OrderBy(x=> _random.Next()).FirstOrDefault().Value;
+                foreach (var window in pattern.Value.Select(x => x.Value))
+                {
+                    if (window == firstWindow)
+                        continue;
+
+                    newPhrase.Elements.RemoveAll(x => x.Position >= window.Start && x.Position <= window.End);
+
+                    var repeatingElements = newPhrase.Elements.Where(x => x.Position >= firstWindow.Start && x.Position <= firstWindow.End)
+                        .Select(x => x.Clone())
+                        .ToList();
+
+                    foreach (var element in repeatingElements)
+                    {
+                        element.Position = element.Position - firstWindow.Start + window.Start;
+                        if (pattern.Value.PatternType == PatternFinder.PatternType.Perfect) continue;
+
+                        var probability = probabilities.NoteProbabilities.FirstOrDefault(x => x.Position == element.Position);
+                        if (probability != null)
+                            element.Note = GetRandomNote(probability.Notes);
+                    }
+
+                    newPhrase.Elements.AddRange(repeatingElements);
+
+                }
+            }
+
+            newPhrase.Elements = newPhrase.Elements.OrderBy(x => x.Position).ToList();
+            newPhrase.Elements.RemoveAll(x => x.Position >= phraseLength);
+
+            PhraseHelper.UpdateDurationsFromPositions(newPhrase, phraseLength);
+            newPhrase.Bpm = 200M;
+
+
+
+            //var chain = GenerateChain(sourcePhrases);
+
+            //var nextPosition = 0M;
+            //PhraseElement previousElement = null;
+            //var newPhrase = new Phrase() { Bpm = sourcePhrases[0].Bpm, PhraseLength = sourcePhrases[0].PhraseLength };
+            //foreach (var position in positions)
+            //{
+            //    if (position < nextPosition)
+            //        continue;
+
+            //    var element = new PhraseElement() {Position = position};
+
+            //    var existingElement = sourcePhrases
+            //                            .Select(x => x.Elements.Where(y => y.Position <= position).OrderByDescending(y => y.Position).FirstOrDefault())
+            //                            .Where(x => x != null)
+            //                            .OrderBy(x => _random.Next())
+            //                            .FirstOrDefault();
+
+            //    if (previousElement == null)
+            //    {
+            //        element.Note = existingElement.Note;
+            //        element.Duration = existingElement.Duration;
+            //    }
+            //    else
+            //    {
+            //        element.Note = chain.Item1.ContainsKey(previousElement.Note)
+            //            ? chain.Item1[previousElement.Note].OrderBy(x => _random.Next()).FirstOrDefault()
+            //            : existingElement.Note;
+
+            //        element.Duration = chain.Item2.ContainsKey(previousElement.Duration)
+            //            ? chain.Item2[previousElement.Duration].OrderBy(x => _random.Next()).FirstOrDefault()
+            //            : existingElement.Duration;
+            //    }
+
+            //    newPhrase.Elements.Add(element);
+
+            //    // if position < next postition
+            //    //  continue
+            //    // if position filled
+            //    //  set next position
+            //    //  contine
+
+            //    // calculate note
+            //    // calculate length
+            //    // calculate ischord
+            //    // calculate repeating
+
+            //    // set next position
+            //    // apply patterns
+
+            //    nextPosition = position + element.Duration;
+            //    previousElement = element;
+            //}
 
             // find bass phrase (random of source), apply to new phrase
             // find alt phrase (random of source), apply to new phrase
@@ -117,6 +183,90 @@ namespace Halloumi.Notez.Engine.Generator
 
             SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
         }
+
+        private Phrase GenratePhraseBasic(PhraseProbabilities probabilities, decimal phraseLength)
+        {
+            int noteCount = _random.Next(probabilities.MinNotes, probabilities.MaxNotes + 1);
+            var phrase = new Phrase() { PhraseLength = phraseLength };
+
+            var selectedNotes =
+            (from onoffProbability in probabilities.NoteProbabilities
+             let noteOn = GetRandomBool(onoffProbability.OnOffChance)
+             where noteOn
+             select onoffProbability).ToList();
+
+            while (selectedNotes.Count > noteCount)
+            {
+                var leastPopularNote = selectedNotes.OrderBy(x => x.OnOffChance).FirstOrDefault();
+                selectedNotes.Remove(leastPopularNote);
+            }
+            while (selectedNotes.Count < noteCount)
+            {
+                var mostPopularNote = probabilities.NoteProbabilities.Except(selectedNotes)
+                    .OrderByDescending(x => x.OnOffChance)
+                    .FirstOrDefault();
+                selectedNotes.Add(mostPopularNote);
+            }
+
+            selectedNotes = selectedNotes.Where(x => x != null).ToList();
+
+            selectedNotes = selectedNotes.OrderBy(x => x.Position).ToList();
+
+            foreach (var note in selectedNotes)
+            {
+                var randomNote = GetRandomNote(note.Notes);
+
+                phrase.Elements.Add(new PhraseElement
+                {
+                    Position = note.Position,
+                    Duration = 1,
+                    Note = randomNote
+                });
+            }
+            phrase.Elements.RemoveAll(x => x.Position >= phraseLength);
+
+            PhraseHelper.UpdateDurationsFromPositions(phrase, phraseLength);
+            return phrase;
+        }
+
+        private int GetRandomNote(Dictionary<int, int> noteNumbers)
+        {
+            var numbers = new List<int>();
+            foreach (var noteNumber in noteNumbers)
+            {
+                for (var i = 0; i < noteNumber.Value; i++)
+                {
+                    numbers.Add(noteNumber.Key);
+                }
+            }
+
+            var randomIndex = _random.Next(0, numbers.Count);
+
+            return numbers[randomIndex];
+        }
+
+        private bool GetRandomBool(double chanceOfTrue)
+        {
+            var randomNumber = _random.NextDouble();
+            return randomNumber <= chanceOfTrue;
+        }
+
+        private PhraseElement GetNewRandomElement(decimal position, PhraseProbabilities probabilities)
+        {
+            var probability = probabilities.NoteProbabilities.FirstOrDefault(x => x.Position == position);
+            if (probability == null)
+                return null;
+
+            var randomNote = GetRandomNote(probability.Notes);
+
+            return new PhraseElement
+            {
+                Position = position,
+                Duration = 1,
+                Note = randomNote
+            };
+        }
+
 
         private static Tuple<Dictionary<int, List<int>>, Dictionary<decimal, List<decimal>>> GenerateChain(IEnumerable<Phrase> sourcePhrases)
         {
@@ -148,9 +298,47 @@ namespace Halloumi.Notez.Engine.Generator
             return new Tuple<Dictionary<int, List<int>>, Dictionary<decimal, List<decimal>>>(notes, durations);
         }
 
+        private PhraseProbabilities GenerateProbabilities(IReadOnlyCollection<Phrase> sourcePhrases)
+        {
+            var probabilities = new PhraseProbabilities();
+
+            var allNotes = sourcePhrases.SelectMany(x => x.Elements).GroupBy(x => new
+            {
+                x.Position,
+                x.Note
+            })
+                .Select(x => new
+                {
+                    x.Key.Position,
+                    x.Key.Note,
+                    Count = x.Count()
+                })
+                .OrderBy(x => x.Position)
+                .ThenBy(x => x.Note)
+                .ToList();
+
+            probabilities.NoteProbabilities = allNotes
+                .Select(x => x.Position)
+                .Distinct()
+                .OrderBy(x => x)
+                .Select(x => new NoteProbability()
+                {
+                    Position = x,
+                    OnOffChance = allNotes.Where(y => y.Position == x).Sum(y => y.Count) / Convert.ToDouble(sourcePhrases.Count),
+                    Notes = allNotes.Where(y => y.Position == x).ToDictionary(y => y.Note, y => y.Count)
+                })
+                .ToList();
+
+
+            probabilities.MinNotes = sourcePhrases.Select(x => x.Elements.Count).Min();
+            probabilities.MaxNotes = sourcePhrases.Select(x => x.Elements.Count).Max();
+            return probabilities;
+
+        }
+
         private void GenerateRiff(string filename)
         {
-            var sourceClips = LoadSourceBasePhraseClips(4);
+            var sourceClips = LoadSourceBasePhraseClips(5);
 
             var mergedPhrase = MergePhrases(sourceClips.Select(x => x.Phrase).ToList());
             mergedPhrase.Phrase.Bpm = 200;
@@ -704,6 +892,22 @@ namespace Halloumi.Notez.Engine.Generator
             BassGuitar,
             Drums,
             BasePhrase
+        }
+
+        public class PhraseProbabilities
+        {
+            public List<NoteProbability> NoteProbabilities { get; set; }
+            public int MinNotes { get; set; }
+            public int MaxNotes { get; set; }
+        }
+
+        public class NoteProbability
+        {
+            public decimal Position { get; set; }
+
+            public double OnOffChance { get; set; }
+
+            public Dictionary<int, int> Notes { get; set; }
         }
     }
 }

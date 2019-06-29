@@ -28,6 +28,18 @@ namespace Halloumi.Notez.Engine.Generator
         public class Pattern : Dictionary<string, Window>
         {
             public PatternType PatternType { get; set; }
+
+            public decimal WindowSize
+            {
+                get
+                {
+                    if (this.ToList().Count == 0)
+                        return 0M;
+
+                    var firstWindow = this.ToList().FirstOrDefault().Value;
+                    return firstWindow.End - firstWindow.Start;
+                }
+            }
         }
 
         public class Patterns : Dictionary<string, Pattern>
@@ -77,8 +89,8 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 patterns.Add(pattern.Key, pattern.Value);
             }
-            RemoverOverlapsWithinEachPattern(patterns);
-            RemoveOverlappingPatterns(patterns);
+            //RemoverOverlapsWithinEachPattern(patterns);
+           // RemoveOverlappingPatterns(patterns);
 
             return patterns;
         }
@@ -111,8 +123,8 @@ namespace Halloumi.Notez.Engine.Generator
                 }
             }
 
-            RemoverOverlapsWithinEachPattern(patterns);
-            RemoveOverlappingPatterns(patterns);
+            //RemoverOverlapsWithinEachPattern(patterns);
+          //  RemoveOverlappingPatterns(patterns);
 
             return patterns;
         }
