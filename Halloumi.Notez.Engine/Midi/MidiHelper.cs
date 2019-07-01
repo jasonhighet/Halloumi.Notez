@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Melanchall.DryWetMidi.Smf.Interaction;
 using Melanchall.DryWetMidi.Tools;
 using Halloumi.Notez.Engine.Notes;
@@ -15,21 +16,23 @@ namespace Halloumi.Notez.Engine.Midi
 
         public static void SaveToMidi(List<Phrase> phrases, string filepath)
         {
-            var builder = BuildMidi(phrases);
+            var name = Path.GetFileNameWithoutExtension(filepath);
+            var builder = BuildMidi(phrases, name);
             builder.SaveToFile(filepath);
         }
 
         public static void SaveToCsv(List<Phrase> phrases, string filepath)
         {
-            var builder = BuildMidi(phrases);
+            var name = Path.GetFileNameWithoutExtension(filepath);
+            var builder = BuildMidi(phrases, name);
             builder.SaveToCsvFile(filepath);
         }
 
-        private static MidiBuilder BuildMidi(List<Phrase> phrases)
+        private static MidiBuilder BuildMidi(IList<Phrase> phrases, string name)
         {
             var tracks = phrases.Select(x => new Tuple<string, MidiInstrument>(x.Description, x.Instrument)).ToList();
 
-            var midiBuilder = new MidiBuilder(tracks, phrases[0].Bpm);
+            var midiBuilder = new MidiBuilder(tracks, phrases[0].Bpm, name);
 
             foreach (var sourcePhrase in phrases)
             {

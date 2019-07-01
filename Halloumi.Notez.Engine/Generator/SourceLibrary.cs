@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 namespace Halloumi.Notez.Engine.Generator
@@ -27,21 +26,20 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
 
-            
+
 
             for (var i = 0; i < 31; i++)
             {
-                //GenerateRiff("riff" + i);
-                GenerateRandomRiff("riff" + i);
+                GenerateRiff("riff" + i);
+                //GenerateRandomRiff("riff" + i);
             }
         }
 
-        private void GenerateRandomRiff(string filename)
+        private List<Clip> GenerateRandomSection(IEnumerable<Clip> sourceBaseClips)
         {
             const decimal maxLength = 64M;
 
-            var sourceClips = LoadSourceBasePhraseClips(4);
-            var sourcePhrases = sourceClips.Select(x => x.Phrase.Clone()).ToList();
+            var sourcePhrases = sourceBaseClips.Select(x => x.Phrase.Clone()).ToList();
 
             var phraseLength = sourcePhrases[0].PhraseLength;
             if (phraseLength > maxLength)
@@ -68,21 +66,64 @@ namespace Halloumi.Notez.Engine.Generator
             // find alt phrase (random of source), apply to new phrase
             // find main phrase (random of source), apply to new phrase
 
-            var bassPhrase = newPhrase.Clone();
+            var bassGuitarPhrase = newPhrase.Clone();
             var mainGuitarPhrase = newPhrase.Clone();
             var altGuitarPhrase = newPhrase.Clone();
 
-            NoteHelper.ShiftNotes(bassPhrase, -12, Interval.Step);
+            NoteHelper.ShiftNotes(bassGuitarPhrase, -12, Interval.Step);
             NoteHelper.ShiftNotes(altGuitarPhrase, 12, Interval.Step);
 
-            PhraseHelper.DuplicatePhrase(mainGuitarPhrase, 3);
 
-            
+            var name = Guid.NewGuid().ToString();
+            var section = Guid.NewGuid().ToString();
+            var artist = Guid.NewGuid().ToString();
+
+            var baseClip = new Clip()
+            {
+                Phrase = newPhrase,
+                ClipType = ClipType.BasePhrase,
+                Section = section,
+                Artist = artist,
+                Name = name,
+            };
+
+            var mainGuitarClip = new Clip()
+            {
+                Phrase = mainGuitarPhrase,
+                ClipType = ClipType.MainGuitar,
+                Section = section,
+                Artist = artist,
+                Name = name,
+            };
+
+            var altGuitarClip = new Clip()
+            {
+                Phrase = altGuitarPhrase,
+                ClipType = ClipType.AltGuitar,
+                Section = section,
+                Artist = artist,
+                Name = name,
+                BaseIntervalDiff = 12
+            };
+
+            var bassGuitarClip = new Clip()
+            {
+                Phrase = bassGuitarPhrase,
+                ClipType = ClipType.BassGuitar,
+                Section = section,
+                Artist = artist,
+                Name = name,
+                BaseIntervalDiff = -12
+            };
 
 
-            MidiHelper.SaveToMidi(new List<Phrase>() { mainGuitarPhrase }, filename + ".mid");
-
-            //SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
+            return new List<Clip>()
+            {
+                baseClip,
+                mainGuitarClip,
+                altGuitarClip,
+                bassGuitarClip
+            };
         }
 
         private Phrase ApplyPatterns(IReadOnlyCollection<KeyValuePair<string, PatternFinder.Pattern>> patterns, Phrase sourcePhrase, PhraseProbabilities probabilities)
@@ -241,7 +282,7 @@ namespace Halloumi.Notez.Engine.Generator
             };
         }
 
-       
+
 
         private static PhraseProbabilities GenerateProbabilities(IReadOnlyCollection<Phrase> phrases)
         {
@@ -284,7 +325,7 @@ namespace Halloumi.Notez.Engine.Generator
                 .Select(x => x.Position)
                 .ToList();
 
-            if(chords.Count > 0)
+            if (chords.Count > 0)
                 Console.WriteLine(chords);
 
 
@@ -302,14 +343,25 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateRiff(string filename)
         {
-            var sourceClips = LoadSourceBasePhraseClips(5);
+            var sourceBaseClips = LoadSourceBasePhraseClips(4);
+            var randomSection = GenerateRandomSection(sourceBaseClips);
 
-            var mergedPhrase = MergePhrases(sourceClips.Select(x => x.Phrase).ToList());
-            mergedPhrase.Phrase.Bpm = 200;
+            sourceBaseClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.BasePhrase));
 
-            var bassPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceClips, ClipType.BassGuitar);
-            var mainGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceClips, ClipType.MainGuitar);
-            var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceClips, ClipType.AltGuitar);
+            var mergedPhrase = MergePhrases(sourceBaseClips.Select(x => x.Phrase).ToList());
+            mergedPhrase.Phrase.Bpm = 180;
+
+            var bassClips = Clips.Where(x => x.ClipType == ClipType.BassGuitar).ToList();
+            bassClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.BassGuitar));
+            var bassPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, bassClips);
+
+            var mainGuitarClips = Clips.Where(x => x.ClipType == ClipType.MainGuitar).ToList();
+            mainGuitarClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.MainGuitar));
+            var mainGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, mainGuitarClips);
+
+            var altGuitarClips = Clips.Where(x => x.ClipType == ClipType.AltGuitar).ToList();
+            altGuitarClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.AltGuitar));
+            var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, altGuitarClips);
 
             SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
         }
@@ -356,14 +408,14 @@ namespace Halloumi.Notez.Engine.Generator
             return clips;
         }
 
-        private Phrase GeneratePhraseFromBasePhrase(MergedPhrase mergedPhrase, List<Clip> sourceClips, ClipType clipType)
+        private Phrase GeneratePhraseFromBasePhrase(MergedPhrase mergedPhrase, IEnumerable<Clip> sourceBaseClips, IReadOnlyCollection<Clip> sourceInstrumentClips)
         {
             var instrumentClips = new List<Clip>();
             var instrumentPhrases = new List<Phrase>();
 
-            foreach (var clip in sourceClips)
+            foreach (var clip in sourceBaseClips)
             {
-                var instrumentClip = Clips.FirstOrDefault(x => x.ClipType == clipType && x.Section == clip.Section);
+                var instrumentClip = sourceInstrumentClips.FirstOrDefault(x => x.Section == clip.Section);
                 if (instrumentClip == null)
                     throw new ApplicationException("No instrument clip");
 
@@ -402,7 +454,7 @@ namespace Halloumi.Notez.Engine.Generator
 
                 nextPosition = sourceElement.Position + sourceElement.Duration;
                 lastElement = sourceElement;
-                
+
             }
             var intervalDiff = instrumentClips[0].BaseIntervalDiff;
             NoteHelper.ShiftNotesDirect(instrumentPhrase, intervalDiff, Interval.Step);
@@ -452,8 +504,6 @@ namespace Halloumi.Notez.Engine.Generator
 
                 var basePhrase = MergePhrases(phrases).Phrase;
                 basePhrase.Description = section;
-                basePhrase.Bpm = 200M;
-
 
                 var clip = new Clip
                 {

@@ -20,7 +20,7 @@ namespace Halloumi.Notez.TestHarness
             var sourceLibrary = new SourceLibrary();
             sourceLibrary.LoadLibrary(folder);
 
-            //var phrase = MidiHelper.ReadMidi(@"C: \Users\jason\Documents\GitHub\Halloumi.Notez\Halloumi.Notez.Engine\TestMidi\death\thrash\ATG-Blinded2 1.mid");
+            //var midi = MidiHelper.ReadMidi(@"riff0.mid");
             //PatternFinder.FindPatterns(phrase);
             Console.ReadLine();
         }

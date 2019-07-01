@@ -13,25 +13,31 @@ namespace Halloumi.Notez.Engine.Midi
     {
         private readonly List<TrackChunk> _trackChunks;
 
-        private readonly TrackChunk _bpmChunk;
+        private readonly TrackChunk _tempoChunk;
 
-        public MidiBuilder(List<Tuple<string, MidiInstrument>> tracks, decimal bpm = 120)
+        public MidiBuilder(IEnumerable<Tuple<string, MidiInstrument>> tracks, decimal bpm = 120, string name = "")
         {
-            _bpmChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
+            _tempoChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
+            AddTimeSignatureEvent(_tempoChunk);
+            if (name != "")
+            {
+                _tempoChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
+            }
+
+
             _trackChunks = new List<TrackChunk>();
 
             foreach (var track in tracks)
             {
                 var trackChunk = new TrackChunk();
-                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(track.Item2)));
                 trackChunk.Events.Add(new SequenceTrackNameEvent(track.Item1 + "\0"));
-                AddTimeSignatureEvent(trackChunk);
+                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(track.Item2)));
                 _trackChunks.Add(trackChunk);
             }
             
         }
 
-        private long GetBpmAsMicroseconds(decimal bpm)
+        private static long GetBpmAsMicroseconds(decimal bpm)
         {
             return Convert.ToInt64( (1 / (bpm / 60)) * 1000000);
         }
@@ -44,16 +50,21 @@ namespace Halloumi.Notez.Engine.Midi
 
         public void AddNoteOn(int trackIndex, int note)
         {
+
+
             const int noteOffset = 24;
             var noteNumber = (SevenBitNumber)(note + noteOffset);
 
             var trackChunk = _trackChunks[trackIndex];
+
+            trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(trackIndex + 30)));
+
             trackChunk.Events.Add(new NoteOnEvent
             {
                 DeltaTime = 0,
                 Velocity = (SevenBitNumber)100,
                 NoteNumber = noteNumber,
-                Channel = (FourBitNumber)0
+                Channel = (FourBitNumber)trackIndex
             });
         }
         public void AddNoteOff(int trackIndex, int note, decimal lengthInThirtySecondNotes)
@@ -69,13 +80,13 @@ namespace Halloumi.Notez.Engine.Midi
                 DeltaTime = noteLength,
                 Velocity = (SevenBitNumber)64,
                 NoteNumber = noteNumber,
-                Channel = (FourBitNumber)0
+                Channel = (FourBitNumber)trackIndex
             });
         }
 
         public void SaveToFile(string filepath)
         {
-            var chunks = new List<MidiChunk> { _bpmChunk };
+            var chunks = new List<MidiChunk> { _tempoChunk };
             chunks.AddRange(_trackChunks);
             var format = _trackChunks.Count == 1 ? MidiFileFormat.SingleTrack : MidiFileFormat.MultiTrack;
 
@@ -85,9 +96,8 @@ namespace Halloumi.Notez.Engine.Midi
 
         public void SaveToCsvFile(string filepath)
         {
-            var chunks = new List<MidiChunk> { _bpmChunk };
+            var chunks = new List<MidiChunk> { _tempoChunk };
             chunks.AddRange(_trackChunks);
-
             var newMidi = new MidiFile(chunks);
             var csvConverter = new CsvConverter();
             csvConverter.ConvertMidiFileToCsv(newMidi, filepath, true);
