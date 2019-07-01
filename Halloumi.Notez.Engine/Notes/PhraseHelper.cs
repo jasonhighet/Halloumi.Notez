@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Halloumi.Notez.Engine.Notes
 {
@@ -20,17 +18,36 @@ namespace Halloumi.Notez.Engine.Notes
             lastElement.Duration = newLength - lastElement.Position;
         }
 
-        public static void DuplicatePhrase(Phrase phrase)
+        public static void DuplicatePhrase(Phrase phrase, int count = 1)
         {
-            var newLength = phrase.PhraseLength * 2;
-            var newElements = phrase.Elements.Select(x => x.Clone()).ToList();
-            foreach (var newElement in newElements)
+            for (var i = 0; i < count; i++)
             {
-                newElement.Position += phrase.PhraseLength;
-            }
+                var newLength = phrase.PhraseLength * 2;
+                var newElements = phrase.Elements.Select(x => x.Clone()).ToList();
+                foreach (var newElement in newElements)
+                {
+                    newElement.Position += phrase.PhraseLength;
+                }
 
-            phrase.PhraseLength = newLength;
-            phrase.Elements.AddRange(newElements);
+                phrase.PhraseLength = newLength;
+                phrase.Elements.AddRange(newElements);
+            }
+        }
+
+        public static void EnsureLengthsAreEqual(IReadOnlyCollection<Phrase> phrases, decimal length = 0)
+        {
+            if (length == 0) length = phrases.Max(x => x.PhraseLength);
+            foreach (var phrase in phrases)
+            {
+                while (phrase.PhraseLength < length)
+                {
+                    DuplicatePhrase(phrase);
+                }
+                if (phrase.PhraseLength > length)
+                {
+                    TrimPhrase(phrase, length);
+                }
+            }
         }
 
         public static void MergeChords(Phrase phrase)
@@ -252,6 +269,22 @@ namespace Halloumi.Notez.Engine.Notes
                 if (element.Duration <= 0)
                     throw new ApplicationException("Update duration has gone rogue");
             }
+        }
+
+        public static Phrase Join(Phrase newPhrase1, Phrase newPhrase2)
+        {
+            var newPhrase = newPhrase1.Clone();
+            newPhrase.PhraseLength = newPhrase1.PhraseLength + newPhrase2.PhraseLength;
+
+            foreach (var element in newPhrase2.Elements)
+            {
+                var newElement = element.Clone();
+                newElement.Position += newPhrase1.PhraseLength;
+                newPhrase.Elements.Add(newElement);
+            }
+
+            return newPhrase;
+
         }
     }
 }

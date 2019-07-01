@@ -89,8 +89,8 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 patterns.Add(pattern.Key, pattern.Value);
             }
-            //RemoverOverlapsWithinEachPattern(patterns);
-           // RemoveOverlappingPatterns(patterns);
+            RemoverOverlapsWithinEachPattern(patterns);
+           RemoveOverlappingPatterns(patterns);
 
             return patterns;
         }
@@ -123,8 +123,8 @@ namespace Halloumi.Notez.Engine.Generator
                 }
             }
 
-            //RemoverOverlapsWithinEachPattern(patterns);
-          //  RemoveOverlappingPatterns(patterns);
+            RemoverOverlapsWithinEachPattern(patterns);
+            RemoveOverlappingPatterns(patterns);
 
             return patterns;
         }

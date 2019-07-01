@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 namespace Halloumi.Notez.Engine.Generator
@@ -30,35 +31,64 @@ namespace Halloumi.Notez.Engine.Generator
 
             for (var i = 0; i < 31; i++)
             {
-                GenerateRiff("riff" + i);
-                //GenerateRandomRiff("riff" + i);
+                //GenerateRiff("riff" + i);
+                GenerateRandomRiff("riff" + i);
             }
         }
 
         private void GenerateRandomRiff(string filename)
         {
-            var sourceClips = LoadSourceBasePhraseClips(2);
-            var sourcePhrases = sourceClips.Select(x => x.Phrase).ToList();
+            const decimal maxLength = 64M;
 
-            EnsureLengthsAreEqual(sourcePhrases);
-            foreach (var sourcePhrase in sourcePhrases)
-            {
-                PhraseHelper.UnmergeRepeatedNotes(sourcePhrase);
-                PhraseHelper.MergeChords(sourcePhrase);
-            }
+            var sourceClips = LoadSourceBasePhraseClips(4);
+            var sourcePhrases = sourceClips.Select(x => x.Phrase.Clone()).ToList();
 
-            //var patterns = PatternFinder.FindPatterns(sourcePhrases);
-            //Console.WriteLine(patterns.Count);
+            var phraseLength = sourcePhrases[0].PhraseLength;
+            if (phraseLength > maxLength)
+                phraseLength = maxLength;
 
+            PhraseHelper.EnsureLengthsAreEqual(sourcePhrases);
             var probabilities = GenerateProbabilities(sourcePhrases);
-            decimal phraseLength = sourcePhrases[0].PhraseLength;
+            PhraseHelper.EnsureLengthsAreEqual(sourcePhrases, phraseLength);
 
-            var newPhrase = GenratePhraseBasic(probabilities, phraseLength);
+            var newPhrase = GenratePhraseBasic(probabilities, phraseLength / 2);
+            PhraseHelper.DuplicatePhrase(newPhrase);
+
+
             var patterns = PatternFinder.FindPatterns(sourcePhrases.OrderBy(x => _random.Next()).FirstOrDefault())
                 .OrderByDescending(x => x.Value.PatternType)
                 .ThenBy(x => x.Value.WindowSize)
                 .ThenBy(x => x.Value.ToList().FirstOrDefault().Value.Start)
                 .ToList();
+
+            newPhrase = ApplyPatterns(patterns, newPhrase, probabilities);
+            newPhrase.Bpm = 180;
+
+            // find bass phrase (random of source), apply to new phrase
+            // find alt phrase (random of source), apply to new phrase
+            // find main phrase (random of source), apply to new phrase
+
+            var bassPhrase = newPhrase.Clone();
+            var mainGuitarPhrase = newPhrase.Clone();
+            var altGuitarPhrase = newPhrase.Clone();
+
+            NoteHelper.ShiftNotes(bassPhrase, -12, Interval.Step);
+            NoteHelper.ShiftNotes(altGuitarPhrase, 12, Interval.Step);
+
+            PhraseHelper.DuplicatePhrase(mainGuitarPhrase, 3);
+
+            
+
+
+            MidiHelper.SaveToMidi(new List<Phrase>() { mainGuitarPhrase }, filename + ".mid");
+
+            //SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
+        }
+
+        private Phrase ApplyPatterns(IReadOnlyCollection<KeyValuePair<string, PatternFinder.Pattern>> patterns, Phrase sourcePhrase, PhraseProbabilities probabilities)
+        {
+            var phraseLength = sourcePhrase.PhraseLength;
+            var newPhrase = sourcePhrase.Clone();
 
             foreach (var pattern in patterns)
             {
@@ -81,7 +111,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             foreach (var pattern in patterns)
             {
-                var firstWindow = pattern.Value.OrderBy(x=> _random.Next()).FirstOrDefault().Value;
+                var firstWindow = pattern.Value.OrderBy(x => _random.Next()).FirstOrDefault().Value;
                 foreach (var window in pattern.Value.Select(x => x.Value))
                 {
                     if (window == firstWindow)
@@ -89,7 +119,8 @@ namespace Halloumi.Notez.Engine.Generator
 
                     newPhrase.Elements.RemoveAll(x => x.Position >= window.Start && x.Position <= window.End);
 
-                    var repeatingElements = newPhrase.Elements.Where(x => x.Position >= firstWindow.Start && x.Position <= firstWindow.End)
+                    var repeatingElements = newPhrase.Elements
+                        .Where(x => x.Position >= firstWindow.Start && x.Position <= firstWindow.End)
                         .Select(x => x.Clone())
                         .ToList();
 
@@ -104,7 +135,6 @@ namespace Halloumi.Notez.Engine.Generator
                     }
 
                     newPhrase.Elements.AddRange(repeatingElements);
-
                 }
             }
 
@@ -112,81 +142,13 @@ namespace Halloumi.Notez.Engine.Generator
             newPhrase.Elements.RemoveAll(x => x.Position >= phraseLength);
 
             PhraseHelper.UpdateDurationsFromPositions(newPhrase, phraseLength);
-            newPhrase.Bpm = 200M;
 
-
-
-            //var chain = GenerateChain(sourcePhrases);
-
-            //var nextPosition = 0M;
-            //PhraseElement previousElement = null;
-            //var newPhrase = new Phrase() { Bpm = sourcePhrases[0].Bpm, PhraseLength = sourcePhrases[0].PhraseLength };
-            //foreach (var position in positions)
-            //{
-            //    if (position < nextPosition)
-            //        continue;
-
-            //    var element = new PhraseElement() {Position = position};
-
-            //    var existingElement = sourcePhrases
-            //                            .Select(x => x.Elements.Where(y => y.Position <= position).OrderByDescending(y => y.Position).FirstOrDefault())
-            //                            .Where(x => x != null)
-            //                            .OrderBy(x => _random.Next())
-            //                            .FirstOrDefault();
-
-            //    if (previousElement == null)
-            //    {
-            //        element.Note = existingElement.Note;
-            //        element.Duration = existingElement.Duration;
-            //    }
-            //    else
-            //    {
-            //        element.Note = chain.Item1.ContainsKey(previousElement.Note)
-            //            ? chain.Item1[previousElement.Note].OrderBy(x => _random.Next()).FirstOrDefault()
-            //            : existingElement.Note;
-
-            //        element.Duration = chain.Item2.ContainsKey(previousElement.Duration)
-            //            ? chain.Item2[previousElement.Duration].OrderBy(x => _random.Next()).FirstOrDefault()
-            //            : existingElement.Duration;
-            //    }
-
-            //    newPhrase.Elements.Add(element);
-
-            //    // if position < next postition
-            //    //  continue
-            //    // if position filled
-            //    //  set next position
-            //    //  contine
-
-            //    // calculate note
-            //    // calculate length
-            //    // calculate ischord
-            //    // calculate repeating
-
-            //    // set next position
-            //    // apply patterns
-
-            //    nextPosition = position + element.Duration;
-            //    previousElement = element;
-            //}
-
-            // find bass phrase (random of source), apply to new phrase
-            // find alt phrase (random of source), apply to new phrase
-            // find main phrase (random of source), apply to new phrase
-
-            var bassPhrase = newPhrase.Clone();
-            var mainGuitarPhrase = newPhrase.Clone();
-            var altGuitarPhrase = newPhrase.Clone();
-
-            NoteHelper.ShiftNotes(bassPhrase, -12, Interval.Step);
-            NoteHelper.ShiftNotes(altGuitarPhrase, 12, Interval.Step);
-
-            SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
+            return newPhrase;
         }
 
         private Phrase GenratePhraseBasic(PhraseProbabilities probabilities, decimal phraseLength)
         {
-            int noteCount = _random.Next(probabilities.MinNotes, probabilities.MaxNotes + 1);
+            var noteCount = GetBellCurvedRandom(probabilities.MinNotes, probabilities.MaxNotes + 1);
             var phrase = new Phrase() { PhraseLength = phraseLength };
 
             var selectedNotes =
@@ -229,6 +191,18 @@ namespace Halloumi.Notez.Engine.Generator
             return phrase;
         }
 
+        private int GetBellCurvedRandom(int min, int maxInclusive)
+        {
+            var range = maxInclusive - min;
+            return min + Convert.ToInt32(Math.Round(range * GetBellCurvedRandom()));
+        }
+
+
+        private double GetBellCurvedRandom()
+        {
+            return (Math.Pow(2 * _random.NextDouble() - 1, 3) / 2) + .5;
+        }
+
         private int GetRandomNote(Dictionary<int, int> noteNumbers)
         {
             var numbers = new List<int>();
@@ -267,42 +241,13 @@ namespace Halloumi.Notez.Engine.Generator
             };
         }
 
+       
 
-        private static Tuple<Dictionary<int, List<int>>, Dictionary<decimal, List<decimal>>> GenerateChain(IEnumerable<Phrase> sourcePhrases)
-        {
-            var notes = new Dictionary<int, List<int>>();
-            var durations = new Dictionary<decimal, List<decimal>>();
-
-            foreach (var sourcePhrase in sourcePhrases)
-            {
-                foreach (var element in sourcePhrase.Elements)
-                {
-                    var index = sourcePhrase.Elements.IndexOf(element);
-                    var nextElement = sourcePhrase
-                        .Elements
-                        .FirstOrDefault(x => sourcePhrase.Elements.IndexOf(x) == index + 1);
-
-                    if(nextElement == null)
-                        continue;
-                    
-                    if(!notes.ContainsKey(element.Note))
-                        notes.Add(element.Note, new List<int>());
-                    notes[element.Note].Add(nextElement.Note);
-
-                    if (!durations.ContainsKey(element.Duration))
-                        durations.Add(element.Duration, new List<decimal>());
-                    durations[element.Duration].Add(nextElement.Duration);
-                }
-            }
-
-            return new Tuple<Dictionary<int, List<int>>, Dictionary<decimal, List<decimal>>>(notes, durations);
-        }
-
-        private PhraseProbabilities GenerateProbabilities(IReadOnlyCollection<Phrase> sourcePhrases)
+        private static PhraseProbabilities GenerateProbabilities(IReadOnlyCollection<Phrase> phrases)
         {
             var probabilities = new PhraseProbabilities();
 
-            var allNotes = sourcePhrases.SelectMany(x => x.Elements).GroupBy(x => new
+            var allNotes = phrases.SelectMany(x => x.Elements).GroupBy(x => new
             {
                 x.Position,
                 x.Note
@@ -324,14 +269,33 @@ namespace Halloumi.Notez.Engine.Generator
                 .Select(x => new NoteProbability()
                 {
                     Position = x,
-                    OnOffChance = allNotes.Where(y => y.Position == x).Sum(y => y.Count) / Convert.ToDouble(sourcePhrases.Count),
+                    OnOffChance = allNotes.Where(y => y.Position == x).Sum(y => y.Count) / Convert.ToDouble(phrases.Count),
                     Notes = allNotes.Where(y => y.Position == x).ToDictionary(y => y.Note, y => y.Count)
                 })
                 .ToList();
 
 
-            probabilities.MinNotes = sourcePhrases.Select(x => x.Elements.Count).Min();
-            probabilities.MaxNotes = sourcePhrases.Select(x => x.Elements.Count).Max();
+            probabilities.MinNotes = phrases.Select(x => x.Elements.Count).Min();
+            probabilities.MaxNotes = phrases.Select(x => x.Elements.Count).Max();
+
+
+            var chords = phrases.SelectMany(x => x.Elements)
+                .Where(x => x.IsChord)
+                .Select(x => x.Position)
+                .ToList();
+
+            if(chords.Count > 0)
+                Console.WriteLine(chords);
+
+
+            var repeatingNotes = phrases.SelectMany(x => x.Elements)
+                .Where(x => x.HasRepeatingNotes)
+                .Select(x => x.Position)
+                .ToList();
+
+            if (repeatingNotes.Count > 0)
+                Console.WriteLine(repeatingNotes);
+
             return probabilities;
 
         }
@@ -410,7 +374,7 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
 
-            EnsureLengthsAreEqual(instrumentPhrases, mergedPhrase.Phrase.PhraseLength);
+            PhraseHelper.EnsureLengthsAreEqual(instrumentPhrases, mergedPhrase.Phrase.PhraseLength);
 
             var instrumentPhrase = mergedPhrase.Phrase.Clone();
             instrumentPhrase.Elements.Clear();
@@ -504,18 +468,6 @@ namespace Halloumi.Notez.Engine.Generator
                 };
 
                 Clips.Add(clip);
-            }
-        }
-
-        private static void EnsureLengthsAreEqual(List<Phrase> sourcePhrases, decimal length = 0)
-        {
-            if (length == 0) length = sourcePhrases.Max(x => x.PhraseLength);
-            foreach (var phrase in sourcePhrases)
-            {
-                while (phrase.PhraseLength < length)
-                {
-                    PhraseHelper.DuplicatePhrase(phrase);
-                }
             }
         }
 
@@ -819,7 +771,6 @@ namespace Halloumi.Notez.Engine.Generator
                 .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
                 .Select(x => new Clip
                 {
-                    File = x,
                     Name = Path.GetFileNameWithoutExtension(x),
                     Song = Regex.Replace(Path.GetFileNameWithoutExtension(x) + "", @"[\d-]", string.Empty),
                     Section = (Path.GetFileNameWithoutExtension(x) + "").Split(' ')[0],
@@ -862,7 +813,6 @@ namespace Halloumi.Notez.Engine.Generator
 
         private class Clip
         {
-            public string File { get; set; }
             public string Name { get; set; }
             public string Song { get; set; }
             public string Artist { get; set; }
@@ -875,7 +825,6 @@ namespace Halloumi.Notez.Engine.Generator
             public int BaseIntervalDiff { get; set; }
 
             public ClipType ClipType { get; set; }
-            public PatternFinder.Patterns Patterns { get; internal set; }
         }
 
         private class MergedPhrase
@@ -899,7 +848,10 @@ namespace Halloumi.Notez.Engine.Generator
             public List<NoteProbability> NoteProbabilities { get; set; }
             public int MinNotes { get; set; }
             public int MaxNotes { get; set; }
+
+            public List<NoteProbability> ChordProbabilities { get; set; }
         }
+
 
         public class NoteProbability
         {
