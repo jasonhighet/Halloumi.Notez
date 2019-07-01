@@ -17,57 +17,15 @@ namespace Halloumi.Notez.Engine.Midi
         public static void SaveToMidi(List<Phrase> phrases, string filepath)
         {
             var name = Path.GetFileNameWithoutExtension(filepath);
-            var builder = BuildMidi(phrases, name);
+            var builder = new MidiBuilder(phrases, name);
             builder.SaveToFile(filepath);
         }
 
         public static void SaveToCsv(List<Phrase> phrases, string filepath)
         {
             var name = Path.GetFileNameWithoutExtension(filepath);
-            var builder = BuildMidi(phrases, name);
+            var builder = new MidiBuilder(phrases, name);
             builder.SaveToCsvFile(filepath);
-        }
-
-        private static MidiBuilder BuildMidi(IList<Phrase> phrases, string name)
-        {
-            var tracks = phrases.Select(x => new Tuple<string, MidiInstrument>(x.Description, x.Instrument)).ToList();
-
-            var midiBuilder = new MidiBuilder(tracks, phrases[0].Bpm, name);
-
-            foreach (var sourcePhrase in phrases)
-            {
-                var index = phrases.IndexOf(sourcePhrase);
-                var phrase = sourcePhrase.Clone();
-
-
-                PhraseHelper.UnmergeRepeatedNotes(phrase);
-                PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
-                PhraseHelper.UnmergeChords(phrase);
-
-                var positions = phrase.Elements.Select(x => x.Position)
-                    .Union(phrase.Elements.Select(x => x.Position + x.Duration))
-                    .Distinct()
-                    .OrderBy(x => x)
-                    .ToList();
-
-                foreach (var position in positions)
-                {
-                    var notesOff = phrase.Elements.Where(x => x.Position + x.Duration == position).ToList();
-                    foreach (var noteOff in notesOff)
-                    {
-                        var delta = notesOff.First() == noteOff ? noteOff.Duration : 0M;
-                        midiBuilder.AddNoteOff(index, noteOff.Note, delta);
-                    }
-
-                    var notesOn = phrase.Elements.Where(x => x.Position == position).ToList();
-                    foreach (var noteOn in notesOn)
-                    {
-                        midiBuilder.AddNoteOn(index, noteOn.Note);
-                    }
-
-                }
-            }
-            return midiBuilder;
         }
 
         public static void SaveMidiAsCsv(string filepath)

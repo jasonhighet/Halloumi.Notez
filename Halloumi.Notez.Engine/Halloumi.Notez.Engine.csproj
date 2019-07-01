@@ -47,6 +47,7 @@
     <Compile Include="Generator\PatternFinder.cs" />
     <Compile Include="Generator\SourceLibrary.cs" />
     <Compile Include="Midi\MidiBuilder.cs" />
+    <Compile Include="Midi\MidiDrumType.cs" />
     <Compile Include="Midi\MidiFileLibraryHelper.cs" />
     <Compile Include="Midi\MidiHelper.cs" />
     <Compile Include="Midi\MidiInstrument.cs" />

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Halloumi.Notez.Engine.Notes;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Smf;
 using Melanchall.DryWetMidi.Tools;
@@ -15,8 +16,10 @@ namespace Halloumi.Notez.Engine.Midi
 
         private readonly TrackChunk _tempoChunk;
 
-        public MidiBuilder(IEnumerable<Tuple<string, MidiInstrument>> tracks, decimal bpm = 120, string name = "")
+        public MidiBuilder(List<Phrase> phrases, string name = "")
         {
+            var bpm = phrases[0].Bpm;
+
             _tempoChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
             AddTimeSignatureEvent(_tempoChunk);
             if (name != "")
@@ -24,17 +27,51 @@ namespace Halloumi.Notez.Engine.Midi
                 _tempoChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
             }
 
-
             _trackChunks = new List<TrackChunk>();
 
-            foreach (var track in tracks)
+            foreach (var phrase in phrases)
             {
                 var trackChunk = new TrackChunk();
-                trackChunk.Events.Add(new SequenceTrackNameEvent(track.Item1 + "\0"));
-                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(track.Item2)));
+                trackChunk.Events.Add(new SequenceTrackNameEvent(phrase.Description + "\0"));
+                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument)));
                 _trackChunks.Add(trackChunk);
             }
-            
+
+            foreach (var sourcePhrase in phrases)
+            {
+                var index = phrases.IndexOf(sourcePhrase);
+                var phrase = sourcePhrase.Clone();
+
+                if (!phrase.IsDrums)
+                {
+                    PhraseHelper.UnmergeRepeatedNotes(phrase);
+                    PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
+                    PhraseHelper.UnmergeChords(phrase);
+                }
+
+                var positions = phrase.Elements.Select(x => x.Position)
+                    .Union(phrase.Elements.Select(x => x.Position + x.Duration))
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToList();
+
+                foreach (var position in positions)
+                {
+                    var notesOff = phrase.Elements.Where(x => x.Position + x.Duration == position).ToList();
+                    foreach (var noteOff in notesOff)
+                    {
+                        var delta = notesOff.First() == noteOff ? noteOff.Duration : 0M;
+                        AddNoteOff(index, noteOff.Note, delta, phrase);
+                    }
+
+                    var notesOn = phrase.Elements.Where(x => x.Position == position).ToList();
+                    foreach (var noteOn in notesOn)
+                    {
+                        AddNoteOn(index, noteOn.Note, phrase);
+                    }
+                }
+            }
+
         }
 
         private static long GetBpmAsMicroseconds(decimal bpm)
@@ -42,45 +79,47 @@ namespace Halloumi.Notez.Engine.Midi
             return Convert.ToInt64( (1 / (bpm / 60)) * 1000000);
         }
 
-        public void AddNote(int trackIndex, int note, decimal lengthInThirtySecondNotes)
+        //public void AddNote(int trackIndex, int note, decimal lengthInThirtySecondNotes)
+        //{
+        //    AddNoteOn(trackIndex, note);
+        //    AddNoteOff(trackIndex, note, lengthInThirtySecondNotes);
+        //}
+
+        private void AddNoteOn(int trackIndex, int note, Phrase phrase)
         {
-            AddNoteOn(trackIndex, note);
-            AddNoteOff(trackIndex, note, lengthInThirtySecondNotes);
-        }
-
-        public void AddNoteOn(int trackIndex, int note)
-        {
-
-
             const int noteOffset = 24;
             var noteNumber = (SevenBitNumber)(note + noteOffset);
 
+            var channel = phrase.IsDrums ? 10 : trackIndex;
             var trackChunk = _trackChunks[trackIndex];
 
-            trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(trackIndex + 30)));
-
+            if (!phrase.IsDrums)
+                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument)));
+            
             trackChunk.Events.Add(new NoteOnEvent
             {
                 DeltaTime = 0,
                 Velocity = (SevenBitNumber)100,
                 NoteNumber = noteNumber,
-                Channel = (FourBitNumber)trackIndex
+                Channel = (FourBitNumber)channel
             });
         }
-        public void AddNoteOff(int trackIndex, int note, decimal lengthInThirtySecondNotes)
+
+        private void AddNoteOff(int trackIndex, int note, decimal lengthInThirtySecondNotes, Phrase phrase)
         {
             const int noteOffset = 24;
 
             var noteLength = Convert.ToInt64(24 * lengthInThirtySecondNotes);
             var noteNumber = (SevenBitNumber)(note + noteOffset);
 
+            var channel = phrase.IsDrums ? 10 : trackIndex;
             var trackChunk = _trackChunks[trackIndex];
             trackChunk.Events.Add(new NoteOffEvent
             {
                 DeltaTime = noteLength,
                 Velocity = (SevenBitNumber)64,
                 NoteNumber = noteNumber,
-                Channel = (FourBitNumber)trackIndex
+                Channel = (FourBitNumber)channel
             });
         }
 

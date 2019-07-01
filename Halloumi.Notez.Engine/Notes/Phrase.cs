@@ -25,6 +25,8 @@ namespace Halloumi.Notez.Engine.Notes
 
         public MidiInstrument Instrument { get; set; }
 
+        public bool IsDrums { get; set; }
+
         public Phrase Clone()
         {
             return new Phrase()
@@ -33,7 +35,8 @@ namespace Halloumi.Notez.Engine.Notes
                 PhraseLength = PhraseLength,
                 Description = Description,
                 Bpm = Bpm,
-                Instrument = Instrument
+                Instrument = Instrument,
+                IsDrums = IsDrums
             };
         }
     }

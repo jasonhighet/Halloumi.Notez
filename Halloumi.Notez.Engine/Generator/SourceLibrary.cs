@@ -343,9 +343,12 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateRiff(string filename)
         {
-            var sourceBaseClips = LoadSourceBasePhraseClips(4);
-            var randomSection = GenerateRandomSection(sourceBaseClips);
+            var sourceBaseClips = LoadSourceBasePhraseClips(3);
 
+            var drums = sourceBaseClips.OrderByDescending(x => _random.Next()).FirstOrDefault();
+            var drumPhrase = Clips.FirstOrDefault(x => x.ClipType == ClipType.Drums && x.Artist == drums.Artist && x.Song == drums.Song && x.Section == drums.Section).Phrase;
+
+            var randomSection = GenerateRandomSection(sourceBaseClips);
             sourceBaseClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.BasePhrase));
 
             var mergedPhrase = MergePhrases(sourceBaseClips.Select(x => x.Phrase).ToList());
@@ -363,10 +366,12 @@ namespace Halloumi.Notez.Engine.Generator
             altGuitarClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.AltGuitar));
             var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, altGuitarClips);
 
-            SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase);
+            
+
+            SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase, drumPhrase);
         }
 
-        private static void SaveToMidiFile(string filename, Phrase bassPhrase, Phrase mainGuitarPhrase, Phrase altGuitarPhrase)
+        private static void SaveToMidiFile(string filename, Phrase bassPhrase, Phrase mainGuitarPhrase, Phrase altGuitarPhrase, Phrase drumPhrase)
         {
             bassPhrase.Instrument = MidiInstrument.ElectricBassFinger;
             bassPhrase.Description = "BassGuitar";
@@ -375,7 +380,12 @@ namespace Halloumi.Notez.Engine.Generator
             altGuitarPhrase.Instrument = MidiInstrument.OverdrivenGuitar;
             altGuitarPhrase.Description = "AltGuitar";
 
-            var phrases = new List<Phrase> { mainGuitarPhrase, altGuitarPhrase, bassPhrase };
+            drumPhrase.IsDrums = true;
+
+            var phrases = new List<Phrase> { mainGuitarPhrase, altGuitarPhrase, bassPhrase, drumPhrase };
+
+            PhraseHelper.EnsureLengthsAreEqual(phrases);
+
             MidiHelper.SaveToMidi(phrases, filename + ".mid");
         }
 
@@ -829,6 +839,11 @@ namespace Halloumi.Notez.Engine.Generator
                     ClipType = GetClipType(x)
                 })
                 .ToList();
+
+            foreach (var phrase in Clips.Where(x => x.ClipType == ClipType.Drums).Select(x => x.Phrase).ToList())
+            {
+                phrase.IsDrums = true;
+            }
         }
 
         private static ClipType GetClipType(string filename)
