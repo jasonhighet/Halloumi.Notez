@@ -345,8 +345,12 @@ namespace Halloumi.Notez.Engine.Generator
         {
             var sourceBaseClips = LoadSourceBasePhraseClips(3);
 
-            var drums = sourceBaseClips.OrderByDescending(x => _random.Next()).FirstOrDefault();
-            var drumPhrase = Clips.FirstOrDefault(x => x.ClipType == ClipType.Drums && x.Artist == drums.Artist && x.Song == drums.Song && x.Section == drums.Section).Phrase;
+            var drumPhrase = sourceBaseClips
+                .OrderByDescending(x => _random.Next())
+                .Select(drums => Clips.FirstOrDefault(x => x.ClipType == ClipType.Drums && x.Artist == drums.Artist && x.Song == drums.Song && x.Section == drums.Section))
+                .Where(x => x != null)
+                .Select(x => x.Phrase)
+                .FirstOrDefault();
 
             var randomSection = GenerateRandomSection(sourceBaseClips);
             sourceBaseClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.BasePhrase));
@@ -366,7 +370,7 @@ namespace Halloumi.Notez.Engine.Generator
             altGuitarClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.AltGuitar));
             var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, altGuitarClips);
 
-            
+
 
             SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase, drumPhrase);
         }

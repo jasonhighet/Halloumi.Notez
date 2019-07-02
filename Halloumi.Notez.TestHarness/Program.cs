@@ -16,7 +16,7 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\thrash\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\break\";
             var sourceLibrary = new SourceLibrary();
             sourceLibrary.LoadLibrary(folder);
 
