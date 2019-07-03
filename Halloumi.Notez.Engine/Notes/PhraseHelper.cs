@@ -260,12 +260,30 @@ namespace Halloumi.Notez.Engine.Notes
 
         public static void UpdateDurationsFromPositions(Phrase phrase, decimal phraseLength)
         {
-            for (var i = 0; i < phrase.Elements.Count; i++)
+            foreach (var element in phrase.Elements)
             {
-                var element = phrase.Elements[i];
-                var nextPosition = (i < phrase.Elements.Count - 1) ? phrase.Elements[i + 1].Position : phraseLength;
-                element.Duration = nextPosition - element.Position;
+                PhraseElement nextElement;
 
+                if (phrase.IsDrums)
+                {
+                    nextElement = phrase
+                        .Elements
+                        .Where(x => x.Position >= element.Position + element.Duration)
+                        .OrderBy(x => x.Position)
+                        .FirstOrDefault();
+                }
+                else
+                {
+                    nextElement = phrase
+                        .Elements
+                        .Where(x => phrase.Elements.IndexOf(x) > phrase.Elements.IndexOf(element) && x.Position > element.Position)
+                        .OrderBy(x => x.Position)
+                        .FirstOrDefault();
+                }
+
+                var nextPosition = (nextElement != null) ? nextElement.Position : phraseLength;
+
+                element.Duration = nextPosition - element.Position;
                 if (element.Duration <= 0)
                     throw new ApplicationException("Update duration has gone rogue");
             }

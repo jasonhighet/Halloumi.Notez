@@ -7,12 +7,18 @@ using System.Runtime.InteropServices;
 using Melanchall.DryWetMidi.Smf.Interaction;
 using Melanchall.DryWetMidi.Tools;
 using Halloumi.Notez.Engine.Notes;
+using Melanchall.DryWetMidi.Common;
 
 namespace Halloumi.Notez.Engine.Midi
 {
     public class MidiHelper
     {
         private const int NoteOffset = 24;
+
+        public static void SaveToMidi(Phrase phrase, string filepath)
+        {
+            SaveToMidi(new List<Phrase>() { phrase }, filepath);
+        }
 
         public static void SaveToMidi(List<Phrase> phrases, string filepath)
         {
@@ -71,6 +77,8 @@ namespace Halloumi.Notez.Engine.Midi
                     element.Duration = offNote.Item1 - element.Position;
                 }
             }
+
+            phrase.IsDrums = chunk.Events.Where(x => x is ChannelEvent).Where(x => ((ChannelEvent)x).Channel == (FourBitNumber)10).Any();
 
             phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
 

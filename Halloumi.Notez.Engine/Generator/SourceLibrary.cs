@@ -26,12 +26,9 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
 
-
-
             for (var i = 0; i < 31; i++)
             {
                 GenerateRiff("riff" + i);
-                //GenerateRandomRiff("riff" + i);
             }
         }
 
@@ -349,7 +346,7 @@ namespace Halloumi.Notez.Engine.Generator
                 .OrderByDescending(x => _random.Next())
                 .Select(drums => Clips.FirstOrDefault(x => x.ClipType == ClipType.Drums && x.Artist == drums.Artist && x.Song == drums.Song && x.Section == drums.Section))
                 .Where(x => x != null)
-                .Select(x => x.Phrase)
+                .Select(x => x.Phrase.Clone())
                 .FirstOrDefault();
 
             var randomSection = GenerateRandomSection(sourceBaseClips);
@@ -370,7 +367,7 @@ namespace Halloumi.Notez.Engine.Generator
             altGuitarClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.AltGuitar));
             var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, altGuitarClips);
 
-
+            
 
             SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase, drumPhrase);
         }
@@ -736,6 +733,11 @@ namespace Halloumi.Notez.Engine.Generator
         private IEnumerable<Clip> InstrumentClips()
         {
             return Clips.Where(x => x.ClipType != ClipType.Drums && x.ClipType != ClipType.BasePhrase);
+        }
+
+        private IEnumerable<Clip> DrumClips()
+        {
+            return Clips.Where(x => x.ClipType == ClipType.Drums);
         }
 
 

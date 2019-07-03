@@ -19,6 +19,7 @@ namespace Halloumi.Notez.Engine.Midi
         public MidiBuilder(List<Phrase> phrases, string name = "")
         {
             var bpm = phrases[0].Bpm;
+            if (bpm == 0M) bpm = 120M;
 
             _tempoChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
             AddTimeSignatureEvent(_tempoChunk);
@@ -42,12 +43,10 @@ namespace Halloumi.Notez.Engine.Midi
                 var index = phrases.IndexOf(sourcePhrase);
                 var phrase = sourcePhrase.Clone();
 
-                if (!phrase.IsDrums)
-                {
-                    PhraseHelper.UnmergeRepeatedNotes(phrase);
-                    PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
-                    PhraseHelper.UnmergeChords(phrase);
-                }
+
+                PhraseHelper.UnmergeRepeatedNotes(phrase);
+                PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
+                PhraseHelper.UnmergeChords(phrase);
 
                 var positions = phrase.Elements.Select(x => x.Position)
                     .Union(phrase.Elements.Select(x => x.Position + x.Duration))
