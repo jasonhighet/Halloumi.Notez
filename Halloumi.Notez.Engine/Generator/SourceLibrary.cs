@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Halloumi.Notez.Engine.Generator
 {
@@ -16,7 +17,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly Random _random = new Random();
 
-        public void LoadLibrary(string folder)
+        public SourceLibrary(string folder)
         {
             LoadClips(folder);
             CalculateScales();
@@ -25,10 +26,25 @@ namespace Halloumi.Notez.Engine.Generator
             MergeRepeatedNotes();
             CalculateLengths();
             CalculateBasePhrases();
+        }
 
-            for (var i = 0; i < 31; i++)
+        public void GenerateRiffs(string name, int count)
+        {
+            Parallel.For(0, count, i =>
             {
-                GenerateRiff("riff" + i);
+                GenerateRiff(name + i);
+            });
+        }
+
+        public void RunTests()
+        {
+            foreach (var clip in Clips.OrderBy(x=>x.Filename))
+            {
+                MidiHelper.SaveToMidi(clip.Phrase, "test.mid");
+                var phrase = MidiHelper.ReadMidi("test.mid");
+                if (phrase.PhraseLength != clip.Phrase.PhraseLength)
+                    Console.WriteLine("Error saving " + clip.Filename);
+
             }
         }
 
@@ -842,7 +858,8 @@ namespace Halloumi.Notez.Engine.Generator
                     Section = (Path.GetFileNameWithoutExtension(x) + "").Split(' ')[0],
                     Artist = (Path.GetFileNameWithoutExtension(x) + "").Split('-')[0],
                     Phrase = MidiHelper.ReadMidi(x),
-                    ClipType = GetClipType(x)
+                    ClipType = GetClipType(x),
+                    Filename = Path.GetFullPath(x)
                 })
                 .ToList();
 
@@ -896,6 +913,7 @@ namespace Halloumi.Notez.Engine.Generator
             public int BaseIntervalDiff { get; set; }
 
             public ClipType ClipType { get; set; }
+            public string Filename { get; internal set; }
         }
 
         private class MergedPhrase
