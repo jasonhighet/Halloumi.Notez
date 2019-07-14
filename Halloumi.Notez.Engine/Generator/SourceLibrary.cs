@@ -30,10 +30,15 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void GenerateRiffs(string name, int count)
         {
-            Parallel.For(0, count, i =>
+            //Parallel.For(0, count, i =>
+            //{
+                
+            //});
+
+            for (int i = 0; i < count; i++)
             {
                 GenerateRiff(name + i);
-            });
+            }
         }
 
         public void RunTests()

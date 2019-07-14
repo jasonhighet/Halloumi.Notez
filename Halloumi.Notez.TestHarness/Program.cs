@@ -16,10 +16,10 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\THRASH\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\BLAST";
             var sourceLibrary = new SourceLibrary(folder);
             sourceLibrary.GenerateRiffs("riff", 10);
-            //sourceLibrary.RunTests();
+           // sourceLibrary.RunTests();
 
             //var midi = MidiHelper.ReadMidi(@"riff0.mid");
             //PatternFinder.FindPatterns(phrase);
