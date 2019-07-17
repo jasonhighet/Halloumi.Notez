@@ -16,9 +16,13 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\Thrash\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\";
             var sourceLibrary = new SourceLibrary(folder);
-            sourceLibrary.GenerateRiffs("riff", 10);
+
+            foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid"))  File.Delete(midiFile);
+
+            var now = DateTime.Now.ToString("yyyymmddhhss");
+            sourceLibrary.GenerateRiffs(now, 10);
            // sourceLibrary.RunTests();
 
             //var midi = MidiHelper.ReadMidi(@"riff0.mid");
