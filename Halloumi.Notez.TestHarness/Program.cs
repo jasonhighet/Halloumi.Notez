@@ -16,7 +16,7 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\BLAST";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\Thrash\";
             var sourceLibrary = new SourceLibrary(folder);
             sourceLibrary.GenerateRiffs("riff", 10);
            // sourceLibrary.RunTests();

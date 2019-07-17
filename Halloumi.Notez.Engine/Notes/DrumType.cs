@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Halloumi.Notez.Engine.Midi
+﻿namespace Halloumi.Notez.Engine.Notes
 {
-    public enum MidiDrumType
+    public enum DrumType
     {
-        AcousticBassDrum = 35,
+        AcousticBassDrum = 35 - 24,
         BassDrum1,
         Rimshot,
         AcousticSnare,

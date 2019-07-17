@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Melanchall.DryWetMidi.Smf.Interaction;
 using Melanchall.DryWetMidi.Tools;
 using Halloumi.Notez.Engine.Notes;
@@ -78,7 +77,7 @@ namespace Halloumi.Notez.Engine.Midi
                 }
             }
 
-            phrase.IsDrums = chunk.Events.Where(x => x is ChannelEvent).Where(x => ((ChannelEvent)x).Channel == (FourBitNumber)10).Any();
+            phrase.IsDrums = chunk.Events.Where(x => x is ChannelEvent).Any(x => ((ChannelEvent)x).Channel == (FourBitNumber)10);
 
             phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
 
@@ -91,8 +90,7 @@ namespace Halloumi.Notez.Engine.Midi
 
         private static PhraseElement GetNewPhraseElement(TimedEvent timedEvent)
         {
-            var noteOn = timedEvent.Event as NoteOnEvent;
-            if (noteOn == null) throw new ArgumentNullException();
+            if (!(timedEvent.Event is NoteOnEvent noteOn)) throw new ArgumentNullException();
 
             var element = new PhraseElement()
             {

@@ -16,7 +16,7 @@ namespace Halloumi.Notez.Engine.Midi
 
         private readonly TrackChunk _tempoChunk;
 
-        public MidiBuilder(List<Phrase> phrases, string name = "")
+        public MidiBuilder(IList<Phrase> phrases, string name = "")
         {
             var bpm = phrases[0].Bpm;
             if (bpm == 0M) bpm = 120M;
@@ -34,7 +34,21 @@ namespace Halloumi.Notez.Engine.Midi
             {
                 var trackChunk = new TrackChunk();
                 trackChunk.Events.Add(new SequenceTrackNameEvent(phrase.Description + "\0"));
-                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument)));
+
+
+                if (!phrase.IsDrums)
+                {
+                    var programChange =
+                        new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument))
+                        {
+                            Channel = (FourBitNumber)_trackChunks.Count
+                        };
+                    trackChunk.Events.Add(programChange);
+                }
+
+                //trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument)));
+
+
                 _trackChunks.Add(trackChunk);
             }
 
@@ -78,23 +92,26 @@ namespace Halloumi.Notez.Engine.Midi
             return Convert.ToInt64( (1 / (bpm / 60)) * 1000000);
         }
 
-        //public void AddNote(int trackIndex, int note, decimal lengthInThirtySecondNotes)
-        //{
-        //    AddNoteOn(trackIndex, note);
-        //    AddNoteOff(trackIndex, note, lengthInThirtySecondNotes);
-        //}
 
         private void AddNoteOn(int trackIndex, int note, Phrase phrase)
         {
             const int noteOffset = 24;
             var noteNumber = (SevenBitNumber)(note + noteOffset);
 
-            var channel = phrase.IsDrums ? 10 : trackIndex;
+            var channel = phrase.IsDrums ? 9 : trackIndex;
             var trackChunk = _trackChunks[trackIndex];
 
             if (!phrase.IsDrums)
-                trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument)));
-            
+            {
+                var programChange =
+                    new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument))
+                    {
+                        Channel = (FourBitNumber)channel
+                    };
+                trackChunk.Events.Add(programChange);
+            }
+
+
             trackChunk.Events.Add(new NoteOnEvent
             {
                 DeltaTime = 0,

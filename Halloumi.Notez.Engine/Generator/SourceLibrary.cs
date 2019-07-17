@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Halloumi.Notez.Engine.Generator
 {
@@ -26,13 +25,14 @@ namespace Halloumi.Notez.Engine.Generator
             MergeRepeatedNotes();
             CalculateLengths();
             CalculateBasePhrases();
+            CalculateDrumAverages();
         }
 
         public void GenerateRiffs(string name, int count)
         {
             //Parallel.For(0, count, i =>
             //{
-                
+
             //});
 
             for (int i = 0; i < count; i++)
@@ -43,7 +43,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void RunTests()
         {
-            foreach (var clip in Clips.OrderBy(x=>x.Filename))
+            foreach (var clip in Clips.OrderBy(x => x.Filename))
             {
                 MidiHelper.SaveToMidi(clip.Phrase, "test.mid");
                 var phrase = MidiHelper.ReadMidi("test.mid");
@@ -388,7 +388,7 @@ namespace Halloumi.Notez.Engine.Generator
             altGuitarClips.Add(randomSection.FirstOrDefault(x => x.ClipType == ClipType.AltGuitar));
             var altGuitarPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, altGuitarClips);
 
-            
+
 
             SaveToMidiFile(filename, bassPhrase, mainGuitarPhrase, altGuitarPhrase, drumPhrase);
         }
@@ -425,6 +425,9 @@ namespace Halloumi.Notez.Engine.Generator
             clips.AddRange(Clips.Where(x => x.ClipType == ClipType.BasePhrase)
                 .Where(x => x != inititialClip)
                 .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
+                .OrderBy(x=> Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
+                .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
+                .Take(10)
                 .OrderBy(x => _random.Next())
                 .Take(count - 1)
                 .ToList());
@@ -434,13 +437,16 @@ namespace Halloumi.Notez.Engine.Generator
                 clips.AddRange(Clips.Where(x => x.ClipType == ClipType.BasePhrase)
                     .Where(x => x != inititialClip)
                     .Where(x => x.Phrase.Elements.Min(y => y.Duration) > minDuration)
+                    .OrderBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
+                    .Take(10)
                     .OrderBy(x => _random.Next())
                     .Take(missing)
                     .ToList());
             return clips;
         }
 
-        private Phrase GeneratePhraseFromBasePhrase(MergedPhrase mergedPhrase, IEnumerable<Clip> sourceBaseClips, IReadOnlyCollection<Clip> sourceInstrumentClips)
+        private static Phrase GeneratePhraseFromBasePhrase(MergedPhrase mergedPhrase, IEnumerable<Clip> sourceBaseClips, IReadOnlyCollection<Clip> sourceInstrumentClips)
         {
             var instrumentClips = new List<Clip>();
             var instrumentPhrases = new List<Phrase>();
@@ -874,6 +880,41 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
+        private void CalculateDrumAverages()
+        {
+            foreach (var drumClip in DrumClips())
+            {
+                var kicks = drumClip.Phrase.Elements.Where(x => DrumHelper.IsBassDrum(x.Note)).ToList();
+                if (kicks.Count < 2)
+                    continue;
+
+                var totalKickDiff =
+                (
+                    from kick in kicks
+                    let next = kicks.Where(x => x.Position > kick.Position).OrderBy(x => x.Position).FirstOrDefault()
+                    where next != null
+                    select next.Position - kick.Position
+                ).Sum();
+
+                drumClip.AvgDistanceBetweenKicks = totalKickDiff / (kicks.Count - 1);
+
+
+                var snares = drumClip.Phrase.Elements.Where(x => DrumHelper.IsSnareDrum(x.Note)).ToList();
+                if (snares.Count < 2)
+                    continue;
+
+                var totalSnareDiff =
+                (
+                    from snare in snares
+                    let next = snares.Where(x => x.Position > snare.Position).OrderBy(x => x.Position).FirstOrDefault()
+                    where next != null
+                    select next.Position - snare.Position
+                ).Sum();
+
+                drumClip.AvgDistanceBetweenSnares = totalSnareDiff / (snares.Count - 1);
+            }
+        }
+
         private static ClipType GetClipType(string filename)
         {
             if (filename.EndsWith(" 4.mid"))
@@ -919,6 +960,8 @@ namespace Halloumi.Notez.Engine.Generator
 
             public ClipType ClipType { get; set; }
             public string Filename { get; internal set; }
+            public decimal AvgDistanceBetweenKicks { get; set; }
+            public decimal AvgDistanceBetweenSnares { get; set; }
         }
 
         private class MergedPhrase
