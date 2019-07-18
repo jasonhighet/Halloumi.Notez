@@ -12,6 +12,7 @@ namespace Halloumi.Notez.Engine.Midi
 {
     public class MidiBuilder
     {
+        private const int DrumChannel = 9;
         private readonly List<TrackChunk> _trackChunks;
 
         private readonly TrackChunk _tempoChunk;
@@ -23,32 +24,15 @@ namespace Halloumi.Notez.Engine.Midi
 
             _tempoChunk = new TrackChunk(new SetTempoEvent(GetBpmAsMicroseconds(bpm)));
             AddTimeSignatureEvent(_tempoChunk);
-            if (name != "")
-            {
-                _tempoChunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
-            }
+            AddNameEvent(_tempoChunk, name);
 
             _trackChunks = new List<TrackChunk>();
 
             foreach (var phrase in phrases)
             {
                 var trackChunk = new TrackChunk();
-                trackChunk.Events.Add(new SequenceTrackNameEvent(phrase.Description + "\0"));
-
-
-                if (!phrase.IsDrums)
-                {
-                    var programChange =
-                        new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument))
-                        {
-                            Channel = (FourBitNumber)_trackChunks.Count
-                        };
-                    trackChunk.Events.Add(programChange);
-                }
-
-                //trackChunk.Events.Add(new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument)));
-
-
+                AddNameEvent(trackChunk, phrase.Description);
+                SetInstrument(trackChunk, phrase);
                 _trackChunks.Add(trackChunk);
             }
 
@@ -84,7 +68,39 @@ namespace Halloumi.Notez.Engine.Midi
                     }
                 }
             }
+        }
 
+        private void SetInstrument(TrackChunk chunk, Phrase phrase)
+        {
+            var programChange = new ProgramChangeEvent()
+            {
+                ProgramNumber = GetProgramNumber(phrase),
+                Channel = GetChannel(_trackChunks.Count, phrase)
+            };
+
+            chunk.Events.Add(programChange);
+        }
+
+        private static void AddNameEvent(TrackChunk chunk, string name)
+        {
+            if (name == "") return;
+            chunk.Events.Add(new SequenceTrackNameEvent(name + "\0"));
+        }
+
+        private static SevenBitNumber GetProgramNumber(Phrase phrase)
+        {
+            return (SevenBitNumber)Convert.ToInt32(phrase.Instrument);
+        }
+
+        private static FourBitNumber GetChannel(int trackIndex, Phrase phrase)
+        {
+            if (phrase.IsDrums)
+                return (FourBitNumber)DrumChannel;
+
+            if (trackIndex < DrumChannel)
+                return (FourBitNumber) trackIndex;
+
+            return (FourBitNumber) (trackIndex + 1);
         }
 
         private static long GetBpmAsMicroseconds(decimal bpm)
@@ -92,50 +108,40 @@ namespace Halloumi.Notez.Engine.Midi
             return Convert.ToInt64( (1 / (bpm / 60)) * 1000000);
         }
 
-
         private void AddNoteOn(int trackIndex, int note, Phrase phrase)
         {
-            const int noteOffset = 24;
-            var noteNumber = (SevenBitNumber)(note + noteOffset);
-
-            var channel = phrase.IsDrums ? 9 : trackIndex;
+            var noteNumber = GetMidiNote(note);
+            var channel = GetChannel(trackIndex, phrase);
             var trackChunk = _trackChunks[trackIndex];
-
-            if (!phrase.IsDrums)
-            {
-                var programChange =
-                    new ProgramChangeEvent((SevenBitNumber)Convert.ToInt32(phrase.Instrument))
-                    {
-                        Channel = (FourBitNumber)channel
-                    };
-                trackChunk.Events.Add(programChange);
-            }
-
 
             trackChunk.Events.Add(new NoteOnEvent
             {
                 DeltaTime = 0,
                 Velocity = (SevenBitNumber)100,
                 NoteNumber = noteNumber,
-                Channel = (FourBitNumber)channel
+                Channel = channel
             });
+        }
+
+        private static SevenBitNumber GetMidiNote(int note)
+        {
+            const int noteOffset = 24;
+            return (SevenBitNumber)(note + noteOffset);
         }
 
         private void AddNoteOff(int trackIndex, int note, decimal lengthInThirtySecondNotes, Phrase phrase)
         {
-            const int noteOffset = 24;
-
             var noteLength = Convert.ToInt64(24 * lengthInThirtySecondNotes);
-            var noteNumber = (SevenBitNumber)(note + noteOffset);
+            var noteNumber = GetMidiNote(note);
+            var channel = GetChannel(trackIndex, phrase);
 
-            var channel = phrase.IsDrums ? 10 : trackIndex;
             var trackChunk = _trackChunks[trackIndex];
             trackChunk.Events.Add(new NoteOffEvent
             {
                 DeltaTime = noteLength,
                 Velocity = (SevenBitNumber)64,
                 NoteNumber = noteNumber,
-                Channel = (FourBitNumber)channel
+                Channel = channel
             });
         }
 
@@ -158,7 +164,7 @@ namespace Halloumi.Notez.Engine.Midi
             csvConverter.ConvertMidiFileToCsv(newMidi, filepath, true);
         }
 
-        private void AddTimeSignatureEvent(TrackChunk trackChunk)
+        private static void AddTimeSignatureEvent(TrackChunk trackChunk)
         {
             trackChunk.Events.Add(new TimeSignatureEvent
             {
