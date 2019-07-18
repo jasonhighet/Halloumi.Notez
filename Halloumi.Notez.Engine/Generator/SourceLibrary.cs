@@ -361,7 +361,8 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateRiff(string filename)
         {
-            var sourceBaseClips = LoadSourceBasePhraseClips(3);
+            var sourceCount = GetBellCurvedRandom(2, 4);
+            var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount);
 
             var drumPhrase = sourceBaseClips
                 .OrderByDescending(x => _random.Next())
