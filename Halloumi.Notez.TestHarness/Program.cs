@@ -23,11 +23,11 @@ namespace Halloumi.Notez.TestHarness
 
             var now = DateTime.Now.ToString("yyyymmddhhss");
             sourceLibrary.GenerateRiffs(now, 40);
-           // sourceLibrary.RunTests();
+            //sourceLibrary.RunTests();
 
             //var midi = MidiHelper.ReadMidi(@"riff0.mid");
             //PatternFinder.FindPatterns(phrase);
-            //Console.WriteLine("Finished..");
+            Console.WriteLine("Finished..");
             Console.ReadLine();
         }
 
