@@ -839,7 +839,7 @@ namespace Halloumi.Notez.Engine.Generator
                 var scaleCount = sectionClips.Select(x => x.Scale).GroupBy(x => x).Count();
                 if (scaleCount == 1)
                     continue;
-                if (scaleCount > 2)
+                if (scaleCount > 3)
                     throw new ApplicationException("Too many scales");
 
                 var primaryScale = sectionClips
