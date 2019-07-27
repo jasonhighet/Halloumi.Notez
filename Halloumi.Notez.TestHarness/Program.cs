@@ -20,13 +20,10 @@ namespace Halloumi.Notez.TestHarness
             var sourceLibrary = new SourceLibrary(folder);
 
             foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid"))  File.Delete(midiFile);
-
+            
             var now = DateTime.Now.ToString("yyyymmddhhss");
             sourceLibrary.GenerateRiffs(now, 40);
             //sourceLibrary.RunTests();
-
-            //var midi = MidiHelper.ReadMidi(@"riff0.mid");
-            //PatternFinder.FindPatterns(phrase);
             Console.WriteLine("Finished..");
             Console.ReadLine();
         }
