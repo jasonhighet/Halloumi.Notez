@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Halloumi.Notez.Engine.Notes;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Smf;
+using Melanchall.DryWetMidi.Smf.Interaction;
 using Melanchall.DryWetMidi.Tools;
 
 namespace Halloumi.Notez.Engine.Midi
@@ -46,27 +47,28 @@ namespace Halloumi.Notez.Engine.Midi
                 //PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
                 PhraseHelper.UnmergeChords(phrase);
 
-                var positions = phrase.Elements.Select(x => x.Position)
-                    .Union(phrase.Elements.Select(x => x.Position + x.Duration))
-                    .Distinct()
-                    .OrderBy(x => x)
-                    .ToList();
-
-                foreach (var position in positions)
+                using (var notesManager = _trackChunks[index].ManageNotes())
                 {
-                    var notesOff = phrase.Elements.Where(x => x.Position + x.Duration == position).ToList();
-                    foreach (var noteOff in notesOff)
-                    {
-                        var delta = notesOff.First() == noteOff ? noteOff.Duration : 0M;
-                        AddNoteOff(index, noteOff.Note, delta, phrase);
-                    }
+                    var notes = phrase.Elements
+                        .Select(x => new Note
+                        (
+                            GetMidiNoteNumber(x.Note), 
+                            GetMidiNoteLength(x.Duration),
+                            GetMidiNoteLength(x.Position)
+                        )).ToList();
 
-                    var notesOn = phrase.Elements.Where(x => x.Position == position).ToList();
-                    foreach (var noteOn in notesOn)
-                    {
-                        AddNoteOn(index, noteOn.Note, phrase);
-                    }
+                    notesManager.Notes.Add(notes);
                 }
+
+                var notesOn = _trackChunks[index].Events.Where(x => x is NoteOnEvent).Select(x => x as NoteOnEvent).ToList();
+                foreach (var noteOn in notesOn)
+                    noteOn.Channel = GetChannel(index, sourcePhrase);
+
+                var notesOff = _trackChunks[index].Events.Where(x => x is NoteOffEvent).Select(x => x as NoteOffEvent).ToList();
+                foreach (var noteOff in notesOff)
+                    noteOff.Channel = GetChannel(index, sourcePhrase);
+
+
             }
         }
 
@@ -110,7 +112,7 @@ namespace Halloumi.Notez.Engine.Midi
 
         private void AddNoteOn(int trackIndex, int note, Phrase phrase)
         {
-            var noteNumber = GetMidiNote(note);
+            var noteNumber = GetMidiNoteNumber(note);
             var channel = GetChannel(trackIndex, phrase);
             var trackChunk = _trackChunks[trackIndex];
 
@@ -123,7 +125,7 @@ namespace Halloumi.Notez.Engine.Midi
             });
         }
 
-        private static SevenBitNumber GetMidiNote(int note)
+        private static SevenBitNumber GetMidiNoteNumber(int note)
         {
             const int noteOffset = 24;
             return (SevenBitNumber)(note + noteOffset);
@@ -131,8 +133,8 @@ namespace Halloumi.Notez.Engine.Midi
 
         private void AddNoteOff(int trackIndex, int note, decimal lengthInThirtySecondNotes, Phrase phrase)
         {
-            var noteLength = Convert.ToInt64(24 * lengthInThirtySecondNotes);
-            var noteNumber = GetMidiNote(note);
+            var noteLength = GetMidiNoteLength(lengthInThirtySecondNotes);
+            var noteNumber = GetMidiNoteNumber(note);
             var channel = GetChannel(trackIndex, phrase);
 
             var trackChunk = _trackChunks[trackIndex];
@@ -143,6 +145,11 @@ namespace Halloumi.Notez.Engine.Midi
                 NoteNumber = noteNumber,
                 Channel = channel
             });
+        }
+
+        private static long GetMidiNoteLength(decimal lengthInThirtySecondNotes)
+        {
+            return Convert.ToInt64(24 * lengthInThirtySecondNotes);
         }
 
         public void SaveToFile(string filepath)

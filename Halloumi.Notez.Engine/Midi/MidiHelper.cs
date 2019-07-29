@@ -103,9 +103,6 @@ namespace Halloumi.Notez.Engine.Midi
                 Position = Convert.ToDecimal(timedEvent.Time) / 24M
             };
 
-            //element.Position = Math.Round(element.Position, 2, MidpointRounding.AwayFromZero);
-            //element.Position = Math.Round(element.Position * 24, MidpointRounding.AwayFromZero) / 24;
-
             return element;
         }
 
@@ -114,10 +111,10 @@ namespace Halloumi.Notez.Engine.Midi
 
             var phrases = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
                 .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
+                .Where(x=>x.EndsWith("ATG-Blinded2 1.mid"))
                 .Select(ReadMidi)
                 .ToList();
 
-            var error = false;
             foreach (var sourcePhrase in phrases)
             {
                 SaveToMidi(sourcePhrase, "test.mid");
@@ -126,7 +123,6 @@ namespace Halloumi.Notez.Engine.Midi
                 if (testPhrase.Elements.Count != sourcePhrase.Elements.Count)
                 {
                     Console.WriteLine("Error saving " + sourcePhrase.Description + " - different note counts");
-                    error = true;
                 }
 
                 foreach (var testElement in testPhrase.Elements)
@@ -137,15 +133,11 @@ namespace Halloumi.Notez.Engine.Midi
 
                     var sourceElement = sourcePhrase.Elements[index];
                     if (testElement.Note == sourceElement.Note && testElement.Duration == sourceElement.Duration &&
-                        testElement.OffPosition == sourceElement.OffPosition) continue;
+                        testElement.OffPosition == sourceElement.OffPosition && testElement.Position == sourceElement.Position) continue;
 
                     Console.WriteLine($"Error saving {sourcePhrase.Description} - different values on note {index}");
-                    Console.WriteLine($"{sourceElement.Note}vs{testElement.Note}, {sourceElement.Duration}vs{testElement.Duration}, {sourceElement.OffPosition}vs{testElement.OffPosition}");
-                    error = true;
+                    Console.WriteLine($"{sourceElement.Position},{testElement.Position}\t{sourceElement.Note},{testElement.Note}\t{sourceElement.Duration},{testElement.Duration}\t{sourceElement.OffPosition},{testElement.OffPosition}");
                 }
-
-                if(error)
-                    break;
             }
         }
 
