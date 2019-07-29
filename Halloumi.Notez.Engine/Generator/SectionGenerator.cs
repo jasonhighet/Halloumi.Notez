@@ -36,6 +36,26 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
+        public void MergeSourceClips()
+        {
+            var sections = Clips.Select(x => x.Section).Distinct().ToList();
+
+            foreach (var section in sections)
+            {
+                var clips = Clips.Where(x => x.Section == section && x.ClipType != ClipType.BasePhrase).ToList();
+
+                var bassGuitarPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.BassGuitar).Phrase.Clone();
+                var mainGuitarPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.MainGuitar).Phrase;
+                var altGuitarPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.AltGuitar).Phrase;
+                var drumsPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.Drums).Phrase;
+
+                bassGuitarPhrase.Bpm = 180;
+
+                SaveToMidiFile(section + ".mid", bassGuitarPhrase, mainGuitarPhrase, altGuitarPhrase, drumsPhrase);
+            }
+
+        }
+
 
         private List<Clip> GenerateRandomSection(IEnumerable<Clip> sourceBaseClips)
         {
