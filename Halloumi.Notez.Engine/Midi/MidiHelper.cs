@@ -69,7 +69,7 @@ namespace Halloumi.Notez.Engine.Midi
 
                 var offNotes = manager.Events
                     .Where(x => x.Event is NoteOffEvent)
-                    .Select(x => new Tuple<decimal, int>(x.Time / 24M,
+                    .Select(x => new Tuple<decimal, int>(Convert.ToDecimal(x.Time) / 24M,
                         ((NoteOffEvent) x.Event).NoteNumber - NoteOffset))
                     .ToList();
 
@@ -100,12 +100,53 @@ namespace Halloumi.Notez.Engine.Midi
             var element = new PhraseElement()
             {
                 Note = noteOn.NoteNumber - NoteOffset,
-                Position = (decimal)timedEvent.Time / 24
+                Position = Convert.ToDecimal(timedEvent.Time) / 24M
             };
 
-            element.Position = Math.Round(element.Position * 2, MidpointRounding.AwayFromZero) / 2;
+            //element.Position = Math.Round(element.Position, 2, MidpointRounding.AwayFromZero);
+            //element.Position = Math.Round(element.Position * 24, MidpointRounding.AwayFromZero) / 24;
 
             return element;
+        }
+
+        public static void RunTests(string folder)
+        {
+
+            var phrases = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
+                .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
+                .Select(ReadMidi)
+                .ToList();
+
+            var error = false;
+            foreach (var sourcePhrase in phrases)
+            {
+                SaveToMidi(sourcePhrase, "test.mid");
+                var testPhrase = ReadMidi("test.mid");
+
+                if (testPhrase.Elements.Count != sourcePhrase.Elements.Count)
+                {
+                    Console.WriteLine("Error saving " + sourcePhrase.Description + " - different note counts");
+                    error = true;
+                }
+
+                foreach (var testElement in testPhrase.Elements)
+                {
+                    var index = testPhrase.Elements.IndexOf(testElement);
+                    if (index >= sourcePhrase.Elements.Count)
+                        break;
+
+                    var sourceElement = sourcePhrase.Elements[index];
+                    if (testElement.Note == sourceElement.Note && testElement.Duration == sourceElement.Duration &&
+                        testElement.OffPosition == sourceElement.OffPosition) continue;
+
+                    Console.WriteLine($"Error saving {sourcePhrase.Description} - different values on note {index}");
+                    Console.WriteLine($"{sourceElement.Note}vs{testElement.Note}, {sourceElement.Duration}vs{testElement.Duration}, {sourceElement.OffPosition}vs{testElement.OffPosition}");
+                    error = true;
+                }
+
+                if(error)
+                    break;
+            }
         }
 
     }

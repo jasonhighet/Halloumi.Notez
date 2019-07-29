@@ -36,17 +36,6 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
-        public void RunTests()
-        {
-            foreach (var clip in Clips.OrderBy(x => x.Filename))
-            {
-                MidiHelper.SaveToMidi(clip.Phrase, "test.mid");
-                var phrase = MidiHelper.ReadMidi("test.mid");
-                if (phrase.PhraseLength != clip.Phrase.PhraseLength)
-                    Console.WriteLine("Error saving " + clip.Filename);
-
-            }
-        }
 
         private List<Clip> GenerateRandomSection(IEnumerable<Clip> sourceBaseClips)
         {

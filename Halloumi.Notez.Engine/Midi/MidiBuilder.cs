@@ -43,7 +43,7 @@ namespace Halloumi.Notez.Engine.Midi
 
 
                 PhraseHelper.UnmergeRepeatedNotes(phrase);
-                PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
+                //PhraseHelper.UpdateDurationsFromPositions(phrase, phrase.PhraseLength);
                 PhraseHelper.UnmergeChords(phrase);
 
                 var positions = phrase.Elements.Select(x => x.Position)

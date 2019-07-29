@@ -17,13 +17,11 @@ namespace Halloumi.Notez.TestHarness
         static void Main(string[] args)
         {
             var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\";
-            var sourceLibrary = new SectionGenerator(folder);
-
-            foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid"))  File.Delete(midiFile);
-            
-            var now = DateTime.Now.ToString("yyyymmddhhss");
-            sourceLibrary.GenerateRiffs(now, 40);
-            //sourceLibrary.RunTests();
+            //var sourceLibrary = new SectionGenerator(folder);
+            //foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid"))  File.Delete(midiFile);
+            //var now = DateTime.Now.ToString("yyyymmddhhss");
+            //sourceLibrary.GenerateRiffs(now, 40);
+            MidiHelper.RunTests(folder);
             Console.WriteLine("Finished..");
             Console.ReadLine();
         }
