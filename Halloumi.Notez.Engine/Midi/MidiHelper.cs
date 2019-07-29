@@ -26,6 +26,11 @@ namespace Halloumi.Notez.Engine.Midi
             builder.SaveToFile(filepath);
         }
 
+        public static void SaveToMidi(Section section, string filepath)
+        {
+            SaveToMidi(section.Phrases, filepath);
+        }
+
         public static void SaveToCsv(List<Phrase> phrases, string filepath)
         {
             var name = Path.GetFileNameWithoutExtension(filepath);

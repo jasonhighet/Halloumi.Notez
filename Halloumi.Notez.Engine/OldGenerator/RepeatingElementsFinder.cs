@@ -1,9 +1,9 @@
-﻿using Halloumi.Notez.Engine.Notes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Halloumi.Notez.Engine.Notes;
 
-namespace Halloumi.Notez.Engine.Generator
+namespace Halloumi.Notez.Engine.OldGenerator
 {
     public static class RepeatingElementsFinder
     {

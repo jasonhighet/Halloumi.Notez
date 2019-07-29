@@ -1,15 +1,12 @@
-﻿using Halloumi.Notez.Engine.Midi;
-using Halloumi.Notez.Engine.Notes;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
 
-namespace Halloumi.Notez.Engine.Generator
+namespace Halloumi.Notez.Engine.OldGenerator
 {
-    public class RiffGenerator
+    public class RiffGeneratorOld
     {
         public void GenerateRiffs(string folder)
         {
@@ -17,7 +14,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             DeleteMidiFiles();
 
-            var generator = new PhraseGenerator(32, folder);
+            var generator = new PhraseGeneratorOld(32, folder);
             for (var i = 1; i <= riffCount; i++)
             {
                 var phrase = generator.GeneratePhrase();

@@ -12,6 +12,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Halloumi.Notez.Engine.OldGenerator;
 
 namespace Halloumi.Notez.Api.Controllers
 {
@@ -23,7 +24,7 @@ namespace Halloumi.Notez.Api.Controllers
         {
             var midiPath = @"RandomRiff.mid";
 
-            var generator = new PhraseGenerator();
+            var generator = new PhraseGeneratorOld();
             var phrase = generator.GeneratePhrase();
             MidiHelper.SaveToMidi(new List<Phrase> { phrase }, midiPath);
  

@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace Halloumi.Notez.Engine.Generator
 {
-    public class SourceLibrary
+    public class SectionGenerator
     {
         private const string BaseScale = "C Harmonic Minor";
 
@@ -16,7 +16,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly Random _random = new Random();
 
-        public SourceLibrary(string folder)
+        public SectionGenerator(string folder)
         {
             LoadClips(folder);
             CalculateScales();
@@ -30,12 +30,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void GenerateRiffs(string name, int count)
         {
-            //Parallel.For(0, count, i =>
-            //{
-
-            //});
-
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 GenerateRiff(name + i);
             }

@@ -1,13 +1,13 @@
-﻿using Halloumi.Notez.Engine.Midi;
-using Halloumi.Notez.Engine.Notes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
 
-namespace Halloumi.Notez.Engine.Generator
+namespace Halloumi.Notez.Engine.OldGenerator
 {
-    public class PhraseGenerator
+    public class PhraseGeneratorOld
     {
         private int _minNotes;
         private int _maxNotes;
@@ -27,7 +27,7 @@ namespace Halloumi.Notez.Engine.Generator
         private List<Phrase> _riffs;
         private readonly string _rootFolder = "TestMidi";
 
-        public PhraseGenerator(int riffLength = 16, string rootFolder = "", List<Phrase> sourceRiffs = null, string baseScale = "C Natural Minor")
+        public PhraseGeneratorOld(int riffLength = 16, string rootFolder = "", List<Phrase> sourceRiffs = null, string baseScale = "C Natural Minor")
         {
             _rootFolder = Path.Combine(_rootFolder, rootFolder);
             _riffLength = riffLength;
