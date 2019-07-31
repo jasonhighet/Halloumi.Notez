@@ -20,9 +20,9 @@ namespace Halloumi.Notez.TestHarness
             var sourceLibrary = new SectionGenerator(folder);
             foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid"))  File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
-            // sourceLibrary.GenerateRiffs(now, 40);
+            sourceLibrary.GenerateRiffs(now, 20);
 
-            sourceLibrary.MergeSourceClips();
+            //sourceLibrary.MergeSourceClips();
 
             //MidiHelper.RunTests(folder);
             Console.WriteLine("Finished..");
