@@ -43,21 +43,27 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void MergeSourceClips()
         {
-            //var sections = Clips.Select(x => x.Section).Distinct().ToList();
+            var sections = Clips.Select(x => x.Section).Distinct().ToList();
 
-            //foreach (var section in sections)
-            //{
-            //    var clips = Clips.Where(x => x.Section == section && x.ClipType != ClipType.BasePhrase).ToList();
+            foreach (var sectionName in sections)
+            {
+                var section = new Section();
+                foreach (var channel in _generatorSettings.Channels)
+                {
+                    var channelClip = Clips.Where(x => x.ClipType == channel.Name && x.Section == sectionName).First();
 
-            //    var bassGuitarPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.BassGuitar).Phrase.Clone();
-            //    var mainGuitarPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.MainGuitar).Phrase;
-            //    var altGuitarPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.AltGuitar).Phrase;
-            //    var drumsPhrase = clips.FirstOrDefault(x => x.Section == section && x.ClipType == ClipType.Drums).Phrase;
+                    var channelPhrase = channelClip.Phrase.Clone();
+                    channelPhrase.IsDrums = channel.IsDrums;
+                    channelPhrase.Description = channel.Name;
+                    channelPhrase.Instrument = channel.Instrument;
+                    channelPhrase.Bpm = _generatorSettings.Bpm;
 
-            //    bassGuitarPhrase.Bpm = 180;
+                    section.Phrases.Add(channelPhrase);
+                }
 
-            //    SaveToMidiFile(section + ".mid", bassGuitarPhrase, mainGuitarPhrase, altGuitarPhrase, drumsPhrase);
-            //}
+                PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
+                MidiHelper.SaveToMidi(section, sectionName + ".mid");
+            }
 
         }
 
@@ -838,9 +844,9 @@ namespace Halloumi.Notez.Engine.Generator
                 .Select(x => new Clip
                 {
                     Name = Path.GetFileNameWithoutExtension(x),
-                    Song = Regex.Replace(Path.GetFileNameWithoutExtension(x) + "", @"[\d-]", string.Empty),
-                    Section = (Path.GetFileNameWithoutExtension(x) + "").Split(' ')[0],
-                    Artist = (Path.GetFileNameWithoutExtension(x) + "").Split('-')[0],
+                    Song = Regex.Replace(Path.GetFileNameWithoutExtension(x).Replace(" - ", "-"), @"[\d-]", string.Empty),
+                    Section = (Path.GetFileNameWithoutExtension(x) + "").Split(' ')[0].Trim(),
+                    Artist = (Path.GetFileNameWithoutExtension(x) + "").Split('-')[0].Trim(),
                     Phrase = MidiHelper.ReadMidi(x),
                     ClipType = GetClipTypeByFilename(x),
                     Filename = Path.GetFullPath(x)
