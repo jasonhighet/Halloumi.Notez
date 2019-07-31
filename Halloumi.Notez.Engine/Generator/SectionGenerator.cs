@@ -840,14 +840,15 @@ namespace Halloumi.Notez.Engine.Generator
         private void LoadClips(string folder)
         {
             Clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
+                .Where(x => IsSingleChannelMidiFile(x))
                 .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
                 .Select(x => new Clip
                 {
                     Name = Path.GetFileNameWithoutExtension(x),
-                    Song = Regex.Replace(Path.GetFileNameWithoutExtension(x).Replace(" - ", "-"), @"[\d-]", string.Empty),
-                    Section = (Path.GetFileNameWithoutExtension(x) + "").Split(' ')[0].Trim(),
-                    Artist = (Path.GetFileNameWithoutExtension(x) + "").Split('-')[0].Trim(),
-                    Phrase = MidiHelper.ReadMidi(x),
+                    Song = GetSongNameFromFilename(x),
+                    Section = GetSectionNameFromFilename(x),
+                    Artist = GetArtistNameFromFilename(x),
+                    Phrase = MidiHelper.ReadMidi(x).Phrases[0],
                     ClipType = GetClipTypeByFilename(x),
                     Filename = Path.GetFullPath(x)
                 })
@@ -857,6 +858,80 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 phrase.IsDrums = true;
             }
+
+            var multiChannelMidis = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
+                .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
+                .Where(x => !IsSingleChannelMidiFile(x))
+                .ToList();
+
+            foreach (var multiChannelMidi in multiChannelMidis)
+            {
+                var section = MidiHelper.ReadMidi(multiChannelMidi);
+                foreach (var phrase in section.Phrases)
+                {
+                    var clip = new Clip
+                    {
+                        Name = Path.GetFileNameWithoutExtension(multiChannelMidi),
+                        Song = GetSongNameFromFilename(multiChannelMidi),
+                        Section = GetSectionNameFromFilename(multiChannelMidi),
+                        Artist = GetArtistNameFromFilename(multiChannelMidi),
+                        Phrase = phrase,
+                        ClipType = _generatorSettings.Channels[section.Phrases.IndexOf(phrase)].Name,
+                        Filename = Path.GetFullPath(multiChannelMidi)
+                    };
+                }
+            }
+
+        }
+
+        private string GetArtistNameFromFilename(string filename)
+        {
+            filename = RemoveFileEnding(filename);
+            filename = Path.GetFileNameWithoutExtension(filename).Replace(" ", "");
+            filename = filename.Split('-')[0];
+
+            return filename;
+        }
+
+        private string RemoveFileEnding(string filename)
+        {
+            foreach (var channel in _generatorSettings.Channels)
+            {
+                if (filename.EndsWith(channel.FileEnding + ".mid"))
+                    filename = filename.Replace(channel.FileEnding + ".mid", "");
+            }
+
+            return filename;
+        }
+
+        
+
+        private string GetSectionNameFromFilename(string filename)
+        {
+            filename = RemoveFileEnding(filename);
+            filename = Path.GetFileNameWithoutExtension(filename).Replace(" ", "");
+            return filename;
+        }
+
+        private string GetSongNameFromFilename(string filename)
+        {
+            filename = RemoveFileEnding(filename);
+            filename = Path.GetFileNameWithoutExtension(filename).Replace(" ", "");
+            filename = filename.Split('-')[1];
+            filename = Regex.Replace(filename, @"[\d-]", string.Empty);
+
+            return filename;
+        }
+
+        private bool IsSingleChannelMidiFile(string filename)
+        {
+            foreach (var channel in _generatorSettings.Channels)
+            {
+                if (filename.EndsWith(channel.FileEnding + ".mid"))
+                    return true;
+            }
+
+            return false;
         }
 
         private void CalculateDrumAverages()

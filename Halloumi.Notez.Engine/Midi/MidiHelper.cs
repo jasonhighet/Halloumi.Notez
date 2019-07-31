@@ -48,49 +48,55 @@ namespace Halloumi.Notez.Engine.Midi
         }
 
 
-        public static Phrase ReadMidi(string filepath)
+        public static Section ReadMidi(string filepath)
         {
             var midi = MidiFile.Read(filepath);
 
-            if (midi.Chunks.Count == 0)
-                throw new ApplicationException("Invalid Midi File");
-
-            if (!(midi.Chunks[0] is TrackChunk chunk))
-                throw new ApplicationException("Invalid Midi File");
-
-            var phrase = new Phrase();
-
-            using (var manager = new TimedEventsManager(chunk.Events))
+            var section = new Section();
+            for (int i = 0; i < midi.Chunks.Count; i++)
             {
-                phrase.Elements = manager.Events
-                    .Where(x => x.Event is NoteOnEvent)
-                    .Select(GetNewPhraseElement)
-                    .ToList();
+                if (!(midi.Chunks[i] is TrackChunk chunk))
+                    continue;
 
-                var offNotes = manager.Events
-                    .Where(x => x.Event is NoteOffEvent)
-                    .Select(x => new Tuple<decimal, int>(Convert.ToDecimal(x.Time) / 24M,
-                        ((NoteOffEvent) x.Event).NoteNumber - NoteOffset))
-                    .ToList();
+                var phrase = new Phrase();
 
-                foreach (var element in phrase.Elements)
+                using (var manager = new TimedEventsManager(chunk.Events))
                 {
-                    var offNote = offNotes
-                        .FirstOrDefault(x => x.Item1 > element.Position && x.Item2 == element.Note);
-                    if (offNote == null) throw new ApplicationException("No off note found");
-                    element.Duration = offNote.Item1 - element.Position;
+                    phrase.Elements = manager.Events
+                        .Where(x => x.Event is NoteOnEvent)
+                        .Select(GetNewPhraseElement)
+                        .ToList();
+
+                    var offNotes = manager.Events
+                        .Where(x => x.Event is NoteOffEvent)
+                        .Select(x => new Tuple<decimal, int>(Convert.ToDecimal(x.Time) / 24M,
+                            ((NoteOffEvent)x.Event).NoteNumber - NoteOffset))
+                        .ToList();
+
+                    foreach (var element in phrase.Elements)
+                    {
+                        var offNote = offNotes
+                            .FirstOrDefault(x => x.Item1 > element.Position && x.Item2 == element.Note);
+                        if (offNote == null) throw new ApplicationException("No off note found");
+                        element.Duration = offNote.Item1 - element.Position;
+                    }
                 }
+
+                phrase.IsDrums = chunk.Events.Where(x => x is ChannelEvent).Any(x => ((ChannelEvent)x).Channel == (FourBitNumber)10);
+
+                phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
+
+                phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ThenBy(x => x.Note).ToList();
+
+                phrase.Description = Path.GetFileName(filepath);
+
+                section.Phrases.Add(phrase);
             }
 
-            phrase.IsDrums = chunk.Events.Where(x => x is ChannelEvent).Any(x => ((ChannelEvent)x).Channel == (FourBitNumber)10);
+            if (section.Phrases.Count == 0)
+                throw new ApplicationException("Invalid Midi File");
 
-            phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
-
-            phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ThenBy(x => x.Note).ToList();
-
-            phrase.Description = Path.GetFileName(filepath);
-
-            return phrase;
+            return section;
         }
 
         private static PhraseElement GetNewPhraseElement(TimedEvent timedEvent)
@@ -112,13 +118,13 @@ namespace Halloumi.Notez.Engine.Midi
             var phrases = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
                 .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
                 .Where(x=>x.EndsWith("ATG-Blinded2 1.mid"))
-                .Select(ReadMidi)
+                .Select(x=> ReadMidi(x).Phrases[0])
                 .ToList();
 
             foreach (var sourcePhrase in phrases)
             {
                 SaveToMidi(sourcePhrase, "test.mid");
-                var testPhrase = ReadMidi("test.mid");
+                var testPhrase = ReadMidi("test.mid").Phrases[0];
 
                 if (testPhrase.Elements.Count != sourcePhrase.Elements.Count)
                 {

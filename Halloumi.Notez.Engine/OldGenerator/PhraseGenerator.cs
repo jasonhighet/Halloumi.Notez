@@ -43,7 +43,7 @@ namespace Halloumi.Notez.Engine.OldGenerator
             if (sourceRiffs == null)
             {
                 _riffs = Directory.GetFiles(_rootFolder, "*.mid", SearchOption.AllDirectories)
-                    .Select(MidiHelper.ReadMidi)
+                    .Select(x=> MidiHelper.ReadMidi(x).Phrases[0])
                     .ToList();
             }
             else
