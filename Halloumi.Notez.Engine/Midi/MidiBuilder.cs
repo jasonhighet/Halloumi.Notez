@@ -107,7 +107,7 @@ namespace Halloumi.Notez.Engine.Midi
 
         private static long GetBpmAsMicroseconds(decimal bpm)
         {
-            return Convert.ToInt64( (1 / (bpm / 60)) * 1000000);
+            return Convert.ToInt64( 1 / (bpm / 60) * 1000000);
         }
 
         private void AddNoteOn(int trackIndex, int note, Phrase phrase)

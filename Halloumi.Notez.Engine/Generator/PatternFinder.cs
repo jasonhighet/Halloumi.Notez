@@ -279,8 +279,8 @@ namespace Halloumi.Notez.Engine.Generator
 
             for (var i = 0; i < windowLength; i++)
             {
-                var sourceElementIndex = (windowStart + i);
-                var compareWindowIndex = (compareWindowStart + i);
+                var sourceElementIndex = windowStart + i;
+                var compareWindowIndex = compareWindowStart + i;
 
                 var sourceElement = elements[sourceElementIndex];
                 var compareElement = elements[compareWindowIndex];

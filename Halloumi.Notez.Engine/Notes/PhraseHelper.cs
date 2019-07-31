@@ -243,8 +243,8 @@ namespace Halloumi.Notez.Engine.Notes
 
         private static bool AreTheSame(PhraseElement element1, PhraseElement element2)
         {
-            return (element1.Note == element2.Note
-                    && element1.Duration == element2.Duration);
+            return element1.Note == element2.Note
+                    && element1.Duration == element2.Duration;
         }
 
         public static void UpdatePositionsFromDurations(Phrase phrase)

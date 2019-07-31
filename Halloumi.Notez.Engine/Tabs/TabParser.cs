@@ -175,7 +175,7 @@ namespace Halloumi.Notez.Engine.Tabs
 
             var remainder = 1M - TabNotes.Sum(x => x.Length);
             var stepsToDistribute = Convert.ToInt32(remainder / stepLength);
-            var removeSteps = (stepsToDistribute < 0);
+            var removeSteps = stepsToDistribute < 0;
 
             while (Math.Abs(remainder) >= stepLength)
             {

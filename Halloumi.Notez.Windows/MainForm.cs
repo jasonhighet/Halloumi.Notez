@@ -24,7 +24,7 @@ namespace Halloumi.Notez.Windows
             var tab = new TabParser();
             tab.LoadTabFromTabText(textBoxTab.Text);
 
-            var notes = tab.TabNotes.Aggregate("", (current, note) => current + (note.Note) + "\t");
+            var notes = tab.TabNotes.Aggregate("", (current, note) => current + note.Note + "\t");
 
             textBoxNotes.Text = notes;
 
