@@ -67,10 +67,11 @@ namespace Halloumi.Notez.Engine.Generator
                     section.Phrases.Add(channelPhrase);
                 }
 
-                MidiHelper.SaveToMidi(section, sectionName + ".mid");
-                //MidiHelper.TestMidi(section, sectionName);
+                MidiHelper.SaveToMidi(section, Path.Combine(_folder, sectionName + ".mid"));
             }
 
+            var filesToDelete = Directory.EnumerateFiles(_folder, "*.mid", SearchOption.AllDirectories).Where(x => IsSingleChannelMidiFile(x)).ToList();
+            foreach (string fileToDelete in filesToDelete) File.Delete(fileToDelete);
         }
 
 
@@ -865,7 +866,8 @@ namespace Halloumi.Notez.Engine.Generator
                     Section = GetSectionNameFromFilename(x),
                     Artist = GetArtistNameFromFilename(x),
                     Phrase = MidiHelper.ReadMidi(x).Phrases[0],
-                    ClipType = GetClipTypeByFilename(x)
+                    ClipType = GetClipTypeByFilename(x),
+                    Filename = x
                 })
                 .ToList();
 
@@ -893,6 +895,7 @@ namespace Halloumi.Notez.Engine.Generator
                         Artist = GetArtistNameFromFilename(multiChannelMidi),
                         Phrase = phrase,
                         ClipType = _generatorSettings.Channels[section.Phrases.IndexOf(phrase)].Name,
+                        Filename = multiChannelMidi
                     };
 
                     if (!clips.Exists(x => x.Song == clip.Song && x.Section == clip.Section && x.Artist == clip.Artist && x.ClipType == clip.ClipType))
@@ -1028,6 +1031,7 @@ namespace Halloumi.Notez.Engine.Generator
             public string ClipType { get; set; }
             public decimal AvgDistanceBetweenKicks { get; set; }
             public decimal AvgDistanceBetweenSnares { get; set; }
+            public string Filename { get; internal set; }
         }
 
         private class MergedPhrase
