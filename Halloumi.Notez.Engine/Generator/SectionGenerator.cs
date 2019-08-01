@@ -16,6 +16,9 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly string _folder;
 
+        private const int SourceCount = 3;
+        private const int RandomSourceCount = 1;
+
         private readonly GeneratorSettings _generatorSettings;
 
         public SectionGenerator(string folder)
@@ -71,7 +74,7 @@ namespace Halloumi.Notez.Engine.Generator
         }
 
 
-        private List<Clip> GenerateRandomSection(IEnumerable<Clip> sourceBaseClips)
+        private List<Clip> GenerateRandomClips(IEnumerable<Clip> sourceBaseClips)
         {
             const decimal maxLength = 64M;
 
@@ -85,48 +88,59 @@ namespace Halloumi.Notez.Engine.Generator
             var probabilities = GenerateProbabilities(sourcePhrases);
             PhraseHelper.EnsureLengthsAreEqual(sourcePhrases, phraseLength);
 
-            var basePhrase = GenratePhraseBasic(probabilities, phraseLength / 2);
-            PhraseHelper.DuplicatePhrase(basePhrase);
+            var clips = new List<Clip>();
+            var randomSourceCount = GetBellCurvedRandom(RandomSourceCount - 1, RandomSourceCount + 1);
 
-
-            var patterns = PatternFinder.FindPatterns(sourcePhrases.OrderBy(x => _random.Next()).FirstOrDefault())
-                .OrderByDescending(x => x.Value.PatternType)
-                .ThenBy(x => x.Value.WindowSize)
-                .ThenBy(x => x.Value.ToList().FirstOrDefault().Value.Start)
-                .ToList();
-
-            basePhrase = ApplyPatterns(patterns, basePhrase, probabilities);
-            basePhrase.Bpm = _generatorSettings.Bpm;
-
-            var name = Guid.NewGuid().ToString();
-            var section = Guid.NewGuid().ToString();
-            var artist = Guid.NewGuid().ToString();
-
-            var clips = new List<Clip>
+            for (var i = 0; i < randomSourceCount; i++)
             {
-                new Clip()
-                {
-                    Phrase = basePhrase,
-                    ClipType = "BasePhrase",
-                    Section = section,
-                    Artist = artist,
-                    Name = name,
-                }
-            };
+                var basePhrase = GenratePhraseBasic(probabilities, phraseLength / 2);
+                PhraseHelper.DuplicatePhrase(basePhrase);
 
-            foreach (var channel in _generatorSettings.Channels.Where(x => !x.IsDrums).ToList())
-            {
-                var channelPhrase = basePhrase.Clone();
-                NoteHelper.ShiftNotes(channelPhrase, channel.DefaultStepDifference, Interval.Step);
+
+                var patterns = PatternFinder.FindPatterns(sourcePhrases.OrderBy(x => _random.Next()).FirstOrDefault())
+                    .OrderByDescending(x => x.Value.PatternType)
+                    .ThenBy(x => x.Value.WindowSize)
+                    .ThenBy(x => x.Value.ToList().FirstOrDefault().Value.Start)
+                    .ToList();
+
+                basePhrase = ApplyPatterns(patterns, basePhrase, probabilities);
+                basePhrase.Bpm = _generatorSettings.Bpm;
+
+                PhraseHelper.UpdateDurationsFromPositions(basePhrase, phraseLength);
+
+                var name = "Random-Random" + i;
+                var section = "Random" + i;
+                var artist = "Random";
+                var song = "Random-Random";
+
                 clips.Add(new Clip()
+                    {
+                        Phrase = basePhrase,
+                        ClipType = "BasePhrase",
+                        Section = section,
+                        Artist = artist, 
+                        Name = name,
+                        Song =  song
+                    });
+                
+
+                foreach (var channel in _generatorSettings.Channels.Where(x => !x.IsDrums).ToList())
                 {
-                    Phrase = channelPhrase,
-                    ClipType = channel.Name,
-                    Section = section,
-                    Artist = artist,
-                    Name = name,
-                });
+                    var channelPhrase = basePhrase.Clone();
+                    NoteHelper.ShiftNotes(channelPhrase, channel.DefaultStepDifference, Interval.Step);
+                    clips.Add(new Clip()
+                    {
+                        Phrase = channelPhrase,
+                        ClipType = channel.Name,
+                        Section = section,
+                        Artist = artist,
+                        Name = name,
+                        Song = song
+                    });
+                }
+
             }
+
 
             return clips;
         }
@@ -348,11 +362,11 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateSection(string filename)
         {
-            var sourceCount = GetBellCurvedRandom(2, 4);
+            var sourceCount = GetBellCurvedRandom(SourceCount - 1, SourceCount + 1);
             var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount);
 
-            var randomSection = GenerateRandomSection(sourceBaseClips);
-            sourceBaseClips.Add(randomSection.FirstOrDefault(x => x.ClipType == "BasePhrase"));
+            var randomClips = GenerateRandomClips(sourceBaseClips);
+            sourceBaseClips.AddRange(randomClips.Where(x => x.ClipType == "BasePhrase"));
 
             var mergedPhrase = MergePhrases(sourceBaseClips.Select(x => x.Phrase).ToList());
             mergedPhrase.Phrase.Bpm = _generatorSettings.Bpm;
@@ -373,7 +387,7 @@ namespace Halloumi.Notez.Engine.Generator
                 else
                 {
                     var channelClips = Clips.Where(x => x.ClipType == channel.Name).ToList();
-                    channelClips.Add(randomSection.FirstOrDefault(x => x.ClipType == channel.Name));
+                    channelClips.AddRange(randomClips.Where(x => x.ClipType == channel.Name));
                     channelPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, channelClips);
                 }
 
