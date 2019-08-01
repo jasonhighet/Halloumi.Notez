@@ -8,14 +8,19 @@ namespace Halloumi.Notez.Engine.Notes
     {
         public static void TrimPhrase(Phrase phrase, decimal newLength)
         {
+            var toRemove = phrase.Elements.Where(x => x.Position >= newLength).ToList();
+            if (toRemove.Any())
+            {
+                phrase.Elements.RemoveAll(x => x.Position >= newLength);
+            }
+
+
+            foreach (var element in phrase.Elements.Where(x => x.OffPosition >= newLength))
+            {
+                element.Duration = newLength - element.Position;
+            }
+
             phrase.PhraseLength = newLength;
-            phrase.Elements.RemoveAll(x => x.Position >= newLength);
-
-            var lastElement = phrase.Elements.LastOrDefault();
-            if (lastElement == null)
-                return;
-
-            lastElement.Duration = newLength - lastElement.Position;
         }
 
         public static void DuplicatePhrase(Phrase phrase, int count = 1)
@@ -32,6 +37,7 @@ namespace Halloumi.Notez.Engine.Notes
                 phrase.PhraseLength = newLength;
                 phrase.Elements.AddRange(newElements);
             }
+
         }
 
         public static void EnsureLengthsAreEqual(IReadOnlyCollection<Phrase> phrases, decimal length = 0)

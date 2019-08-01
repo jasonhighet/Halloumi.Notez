@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
 using System.IO;
 using System.Linq;
-using Halloumi.Notez.Engine.Midi;
-using Halloumi.Notez.Engine.Notes;
 
 namespace Halloumi.Notez.Engine.OldGenerator
 {
@@ -21,7 +20,10 @@ namespace Halloumi.Notez.Engine.OldGenerator
                 string midiPath = GetFileName(i, phrase);
                 phrase.Instrument = MidiInstrument.OverdrivenGuitar;
 
-                MidiHelper.SaveToMidi(new List<Phrase> { phrase }, midiPath);
+                var section = new Section();
+                section.Phrases.Add(phrase);
+
+                MidiHelper.SaveToMidi(section, midiPath);
             }
         }
 

@@ -1,40 +1,28 @@
-﻿using Melanchall.DryWetMidi.Smf;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using Halloumi.Notez.Engine.Notes;
+using Melanchall.DryWetMidi.Common;
+using Melanchall.DryWetMidi.Smf;
 using Melanchall.DryWetMidi.Smf.Interaction;
 using Melanchall.DryWetMidi.Tools;
-using Halloumi.Notez.Engine.Notes;
-using Melanchall.DryWetMidi.Common;
+using System;
+using System.IO;
+using System.Linq;
 
 namespace Halloumi.Notez.Engine.Midi
 {
     public class MidiHelper
     {
         private const int NoteOffset = 24;
-
-        public static void SaveToMidi(Phrase phrase, string filepath)
-        {
-            SaveToMidi(new List<Phrase>() { phrase }, filepath);
-        }
-
-        public static void SaveToMidi(List<Phrase> phrases, string filepath)
-        {
-            var name = Path.GetFileNameWithoutExtension(filepath);
-            var builder = new MidiBuilder(phrases, name);
-            builder.SaveToFile(filepath);
-        }
+        private const int DrumChannel = 9;
 
         public static void SaveToMidi(Section section, string filepath)
         {
-            SaveToMidi(section.Phrases, filepath);
+            var builder = new MidiBuilder(section);
+            builder.SaveToFile(filepath);
         }
 
-        public static void SaveToCsv(List<Phrase> phrases, string filepath)
+        public static void SaveToCsv(Section section, string filepath)
         {
-            var name = Path.GetFileNameWithoutExtension(filepath);
-            var builder = new MidiBuilder(phrases, name);
+            var builder = new MidiBuilder(section);
             builder.SaveToCsvFile(filepath);
         }
 
@@ -53,12 +41,24 @@ namespace Halloumi.Notez.Engine.Midi
             var midi = MidiFile.Read(filepath);
 
             var section = new Section();
-            for (int i = 0; i < midi.Chunks.Count; i++)
+            foreach (var midiChunk in midi.Chunks)
             {
-                if (!(midi.Chunks[i] is TrackChunk chunk))
+                if (!(midiChunk is TrackChunk chunk))
                     continue;
 
                 var phrase = new Phrase();
+
+                var programEvent = chunk.Events.OfType<ProgramChangeEvent>().FirstOrDefault();
+                if (programEvent != null)
+                    phrase.Instrument = (MidiInstrument)(int) programEvent.ProgramNumber;
+
+                var nameEvent = chunk.Events.OfType<SequenceTrackNameEvent>().FirstOrDefault();
+                if (nameEvent != null)
+                    phrase.Description = nameEvent.Text.Replace("\0", "");
+
+                var tempoEvent = chunk.Events.OfType<SetTempoEvent>().FirstOrDefault();
+                if (tempoEvent != null)
+                    phrase.Bpm = Math.Round(1M / (tempoEvent.MicrosecondsPerQuarterNote / 60M) * 1000000M, 2);
 
                 using (var manager = new TimedEventsManager(chunk.Events))
                 {
@@ -82,13 +82,11 @@ namespace Halloumi.Notez.Engine.Midi
                     }
                 }
 
-                phrase.IsDrums = chunk.Events.Where(x => x is ChannelEvent).Any(x => ((ChannelEvent)x).Channel == (FourBitNumber)10);
+                phrase.IsDrums = chunk.Events.OfType<NoteOnEvent>().Any(x => x.Channel == (FourBitNumber)DrumChannel);
 
                 phrase.PhraseLength = NoteHelper.GetTotalDuration(phrase);
 
                 phrase.Elements = phrase.Elements.OrderBy(x => x.Position).ThenBy(x => x.Note).ToList();
-
-                phrase.Description = Path.GetFileName(filepath);
 
                 section.Phrases.Add(phrase);
             }
@@ -115,21 +113,57 @@ namespace Halloumi.Notez.Engine.Midi
         public static void RunTests(string folder)
         {
 
-            var phrases = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
+            var sectionFiles = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
                 .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
-                .Where(x=>x.EndsWith("ATG-Blinded2 1.mid"))
-                .Select(x=> ReadMidi(x).Phrases[0])
+                //.Where(x=>x.EndsWith("ATG-Blinded2 1.mid"))
                 .ToList();
 
-            foreach (var sourcePhrase in phrases)
+            foreach (var sectionFile in sectionFiles)
             {
-                SaveToMidi(sourcePhrase, "test.mid");
-                var testPhrase = ReadMidi("test.mid").Phrases[0];
+                var section = ReadMidi(sectionFile);
+                TestMidi(section, sectionFile);
+            }
+        }
+
+        public static void TestMidi(Section section, string description)
+        {
+            SaveToMidi(section, "test.mid");
+
+            var testSection = ReadMidi("test.mid");
+            if (testSection.Phrases.Count != section.Phrases.Count)
+            {
+                Console.WriteLine($"Error saving {description} - different phrase counts");
+            }
+
+            foreach (var testPhrase in testSection.Phrases)
+            {
+                var sourcePhrase = section.Phrases[testSection.Phrases.IndexOf(testPhrase)];
 
                 if (testPhrase.Elements.Count != sourcePhrase.Elements.Count)
                 {
-                    Console.WriteLine("Error saving " + sourcePhrase.Description + " - different note counts");
+                    Console.WriteLine($"Error saving {description} {sourcePhrase.Description} - different note counts");
                 }
+                if (testPhrase.Bpm != sourcePhrase.Bpm)
+                {
+                    Console.WriteLine($"Error saving {description} {sourcePhrase.Description} - different bpm");
+                }
+                if (testPhrase.Instrument != sourcePhrase.Instrument)
+                {
+                    Console.WriteLine($"Error saving {description} {sourcePhrase.Description} - different instruments");
+                }
+                if (testPhrase.IsDrums != sourcePhrase.IsDrums)
+                {
+                    Console.WriteLine($"Error saving {description} {sourcePhrase.Description} - different drum settings");
+                }
+                if (testPhrase.Description != sourcePhrase.Description)
+                {
+                    Console.WriteLine($"Error saving {description} {sourcePhrase.Description} - different descriptions");
+                }
+                if (testPhrase.PhraseLength != sourcePhrase.PhraseLength)
+                {
+                    Console.WriteLine($"Error saving {description} {sourcePhrase.Description} - different lengths");
+                }
+
 
                 foreach (var testElement in testPhrase.Elements)
                 {
@@ -138,14 +172,16 @@ namespace Halloumi.Notez.Engine.Midi
                         break;
 
                     var sourceElement = sourcePhrase.Elements[index];
-                    if (testElement.Note == sourceElement.Note && testElement.Duration == sourceElement.Duration &&
-                        testElement.OffPosition == sourceElement.OffPosition && testElement.Position == sourceElement.Position) continue;
+                    if (testElement.Note == sourceElement.Note 
+                        && Math.Abs(testElement.Duration - sourceElement.Duration) < 0.00000000000000000001M
+                        && Math.Abs(testElement.OffPosition - sourceElement.OffPosition) < 0.00000000000000000001M
+                        && Math.Abs(testElement.Position - sourceElement.Position) < 0.00000000000000000001M) continue;
 
-                    Console.WriteLine($"Error saving {sourcePhrase.Description} - different values on note {index}");
-                    Console.WriteLine($"{sourceElement.Position},{testElement.Position}\t{sourceElement.Note},{testElement.Note}\t{sourceElement.Duration},{testElement.Duration}\t{sourceElement.OffPosition},{testElement.OffPosition}");
+                    Console.WriteLine($"Error saving {description} {sourcePhrase.Description} - different values on note {index}");
+                    Console.WriteLine(
+                        $"{sourceElement.Position},{testElement.Position}\t{sourceElement.Note},{testElement.Note}\t{sourceElement.Duration},{testElement.Duration}\t{sourceElement.OffPosition},{testElement.OffPosition}");
                 }
             }
         }
-
     }
 }

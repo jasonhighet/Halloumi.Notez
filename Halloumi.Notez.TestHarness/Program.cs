@@ -22,9 +22,8 @@ namespace Halloumi.Notez.TestHarness
             var now = DateTime.Now.ToString("yyyymmddhhss");
             //sourceLibrary.GenerateRiffs(now, 20);
 
-           sourceLibrary.MergeSourceClips();
+            sourceLibrary.MergeSourceClips();
 
-            //MidiHelper.RunTests(folder);
             Console.WriteLine("Finished..");
             Console.ReadLine();
         }

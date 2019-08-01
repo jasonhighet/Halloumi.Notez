@@ -26,7 +26,11 @@ namespace Halloumi.Notez.Api.Controllers
 
             var generator = new PhraseGeneratorOld();
             var phrase = generator.GeneratePhrase();
-            MidiHelper.SaveToMidi(new List<Phrase> { phrase }, midiPath);
+
+            var section = new Section();
+            section.Phrases.Add(phrase);
+
+            MidiHelper.SaveToMidi(section, midiPath);
  
             var stream = new FileStream(midiPath, FileMode.Open, FileAccess.Read);
             var result = new HttpResponseMessage(HttpStatusCode.OK)

@@ -130,7 +130,8 @@ namespace Halloumi.Notez.Engine.Notes
 
         public static decimal GetTotalDuration(Phrase phrase)
         {
-            return phrase.Elements.Max(x => x.OffPosition) + 1;
+            if (phrase.Elements.Count == 0) return 0M;
+            return phrase.Elements.Max(x => x.OffPosition);
         }
     }
 

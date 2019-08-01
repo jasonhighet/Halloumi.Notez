@@ -18,7 +18,7 @@ namespace Halloumi.Notez.Engine.Notes
         public decimal Position { get; set; }
         public List<int> ChordNotes { get; set; }
 
-        public decimal OffPosition => Position + Duration - 1;
+        public decimal OffPosition => Position + Duration;
         public bool IsChord => ChordNotes != null && ChordNotes.Count > 0;
 
 

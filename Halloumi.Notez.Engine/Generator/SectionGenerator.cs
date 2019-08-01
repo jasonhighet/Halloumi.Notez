@@ -23,7 +23,7 @@ namespace Halloumi.Notez.Engine.Generator
             _folder = folder;
             _generatorSettings = new GeneratorSettings();
 
-            LoadClips(folder);
+            Clips = LoadClips(folder);
             CalculateScales();
             MashToScale();
             MergeChords();
@@ -43,26 +43,29 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void MergeSourceClips()
         {
-            var sections = Clips.Select(x => x.Section).Distinct().ToList();
+            var clips = LoadClips(_folder);
+
+            var sections = clips.Select(x => x.Section).Distinct().ToList();
 
             foreach (var sectionName in sections)
             {
                 var section = new Section();
                 foreach (var channel in _generatorSettings.Channels)
                 {
-                    var channelClip = Clips.Where(x => x.ClipType == channel.Name && x.Section == sectionName).First();
+                    var channelClip = clips.First(x => x.ClipType == channel.Name && x.Section == sectionName);
 
                     var channelPhrase = channelClip.Phrase.Clone();
                     channelPhrase.IsDrums = channel.IsDrums;
                     channelPhrase.Description = channel.Name;
                     channelPhrase.Instrument = channel.Instrument;
                     channelPhrase.Bpm = _generatorSettings.Bpm;
+                    channelPhrase.PhraseLength = NoteHelper.GetTotalDuration(channelPhrase);
 
                     section.Phrases.Add(channelPhrase);
                 }
 
-                PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
                 MidiHelper.SaveToMidi(section, sectionName + ".mid");
+                //MidiHelper.TestMidi(section, sectionName);
             }
 
         }
@@ -542,7 +545,6 @@ namespace Halloumi.Notez.Engine.Generator
         {
             var mergedPhrase = new MergedPhrase()
             {
-                SourcePhrases = sourcePhrases,
                 SourceIndexes = new List<Tuple<string, decimal, decimal>>()
             };
 
@@ -837,10 +839,10 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
-        private void LoadClips(string folder)
+        private List<Clip> LoadClips(string folder)
         {
-            Clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
-                .Where(x => IsSingleChannelMidiFile(x))
+            var clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
+                .Where(IsSingleChannelMidiFile)
                 .OrderBy(x => Path.GetFileNameWithoutExtension(x) + "")
                 .Select(x => new Clip
                 {
@@ -849,14 +851,14 @@ namespace Halloumi.Notez.Engine.Generator
                     Section = GetSectionNameFromFilename(x),
                     Artist = GetArtistNameFromFilename(x),
                     Phrase = MidiHelper.ReadMidi(x).Phrases[0],
-                    ClipType = GetClipTypeByFilename(x),
-                    Filename = Path.GetFullPath(x)
+                    ClipType = GetClipTypeByFilename(x)
                 })
                 .ToList();
 
-            foreach (var phrase in DrumClips().Select(x => x.Phrase).ToList())
+
+            foreach (var clip in clips.Where(x => GetGeneratorSettingsByClip(x).IsDrums))
             {
-                phrase.IsDrums = true;
+                clip.Phrase.IsDrums = true;
             }
 
             var multiChannelMidis = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
@@ -877,17 +879,20 @@ namespace Halloumi.Notez.Engine.Generator
                         Artist = GetArtistNameFromFilename(multiChannelMidi),
                         Phrase = phrase,
                         ClipType = _generatorSettings.Channels[section.Phrases.IndexOf(phrase)].Name,
-                        Filename = Path.GetFullPath(multiChannelMidi)
                     };
+
+                    if (!clips.Exists(x => x.Song == clip.Song && x.Section == clip.Section && x.Artist == clip.Artist && x.ClipType == clip.ClipType))
+                        clips.Add(clip);
                 }
             }
+
+            return clips;
 
         }
 
         private string GetArtistNameFromFilename(string filename)
         {
-            filename = RemoveFileEnding(filename);
-            filename = Path.GetFileNameWithoutExtension(filename).Replace(" ", "");
+            filename = GetSectionNameFromFilename(filename);
             filename = filename.Split('-')[0];
 
             return filename;
@@ -904,19 +909,18 @@ namespace Halloumi.Notez.Engine.Generator
             return filename;
         }
 
-        
+
 
         private string GetSectionNameFromFilename(string filename)
         {
             filename = RemoveFileEnding(filename);
-            filename = Path.GetFileNameWithoutExtension(filename).Replace(" ", "");
+            filename = (Path.GetFileNameWithoutExtension(filename) + "").Replace(" ", "");
             return filename;
         }
 
         private string GetSongNameFromFilename(string filename)
         {
-            filename = RemoveFileEnding(filename);
-            filename = Path.GetFileNameWithoutExtension(filename).Replace(" ", "");
+            filename = GetSectionNameFromFilename(filename);
             filename = filename.Split('-')[1];
             filename = Regex.Replace(filename, @"[\d-]", string.Empty);
 
@@ -925,13 +929,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private bool IsSingleChannelMidiFile(string filename)
         {
-            foreach (var channel in _generatorSettings.Channels)
-            {
-                if (filename.EndsWith(channel.FileEnding + ".mid"))
-                    return true;
-            }
-
-            return false;
+            return _generatorSettings.Channels.Any(channel => filename.EndsWith(channel.FileEnding + ".mid"));
         }
 
         private void CalculateDrumAverages()
@@ -1014,7 +1012,6 @@ namespace Halloumi.Notez.Engine.Generator
             public int BaseIntervalDiff { get; set; }
 
             public string ClipType { get; set; }
-            public string Filename { get; internal set; }
             public decimal AvgDistanceBetweenKicks { get; set; }
             public decimal AvgDistanceBetweenSnares { get; set; }
         }
@@ -1022,18 +1019,8 @@ namespace Halloumi.Notez.Engine.Generator
         private class MergedPhrase
         {
             public Phrase Phrase { get; set; }
-            public List<Phrase> SourcePhrases { get; set; }
             public List<Tuple<string, decimal, decimal>> SourceIndexes { get; set; }
         }
-
-        //private enum ClipType
-        //{
-        //    MainGuitar,
-        //    AltGuitar,
-        //    BassGuitar,
-        //    Drums,
-        //    BasePhrase
-        //}
 
         public class PhraseProbabilities
         {
