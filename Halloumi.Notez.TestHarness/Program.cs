@@ -18,16 +18,20 @@ namespace Halloumi.Notez.TestHarness
         {
             var folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\";
             var sourceLibrary = new SectionGenerator(folder);
-            foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid"))  File.Delete(midiFile);
-            var now = DateTime.Now.ToString("yyyymmddhhss");
-            sourceLibrary.GenerateRiffs(now, 20);
 
-           //sourceLibrary.MergeSourceClips();
+            while (true)
+            {
+                foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
+                var now = DateTime.Now.ToString("yyyymmddhhss");
+                sourceLibrary.GenerateRiffs(now, 20);
 
-            Console.WriteLine("Finished..");
-            Console.ReadLine();
+                //sourceLibrary.MergeSourceClips();
+
+                Console.WriteLine("push any key..");
+                Console.ReadLine();
+            }
+            
         }
-
 
     }
 }
