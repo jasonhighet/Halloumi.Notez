@@ -311,7 +311,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             var allNotes = phrases.SelectMany(x => x.Elements).GroupBy(x => new
             {
-                x.Position,
+                Position = Math.Round(x.Position, 8),
                 x.Note
             })
                 .Select(x => new
@@ -332,10 +332,13 @@ namespace Halloumi.Notez.Engine.Generator
                 {
                     Position = x,
                     OnOffChance = allNotes.Where(y => y.Position == x).Sum(y => y.Count) / Convert.ToDouble(phrases.Count),
-                    Notes = allNotes.Where(y => y.Position == x).ToDictionary(y => y.Note, y => y.Count)
+                    //Notes = allNotes.Where(y => y.Position == x).ToDictionary(y => y.Note, y => y.Count)
                 })
                 .ToList();
-
+            foreach (var prob in probabilities.NoteProbabilities)
+            {
+                prob.Notes = allNotes.Where(y => y.Position == prob.Position).ToDictionary(y => y.Note, y => y.Count);
+            }
 
             probabilities.MinNotes = phrases.Select(x => x.Elements.Count).Min();
             probabilities.MaxNotes = phrases.Select(x => x.Elements.Count).Max();
