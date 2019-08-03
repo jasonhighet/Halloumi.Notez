@@ -110,15 +110,16 @@ namespace Halloumi.Notez.Engine.Generator
                 PhraseHelper.UpdateDurationsFromPositions(basePhrase, phraseLength);
 
                 var name = "Random-Random" + i;
-                var section = "Random" + i;
                 var artist = "Random";
                 var song = "Random-Random";
+                basePhrase.Description = name;
+
 
                 clips.Add(new Clip()
                     {
                         Phrase = basePhrase,
                         ClipType = "BasePhrase",
-                        Section = section,
+                        Section = name,
                         Artist = artist, 
                         Name = name,
                         Song =  song
@@ -133,7 +134,7 @@ namespace Halloumi.Notez.Engine.Generator
                     {
                         Phrase = channelPhrase,
                         ClipType = channel.Name,
-                        Section = section,
+                        Section = name,
                         Artist = artist,
                         Name = name,
                         Song = song
@@ -467,9 +468,21 @@ namespace Halloumi.Notez.Engine.Generator
             foreach (var sourceIndex in mergedPhrase.SourceIndexes)
             {
                 var sourcePhrase = instrumentPhrases.FirstOrDefault(x => x.Description == sourceIndex.Item1);
-                var sourceElement = sourcePhrase?.Elements.FirstOrDefault(x => x.Position == sourceIndex.Item3);
+                var sourceElement = sourcePhrase?.Elements.FirstOrDefault(x => x.Position == sourceIndex.Item2);
 
                 if (sourceElement == null)
+                    sourceElement = sourcePhrase?.Elements
+                        .Where(x => x.Note == sourceIndex.Item3)
+                        .OrderBy(x => Math.Abs(x.Position - sourceIndex.Item2))
+                        .FirstOrDefault();
+
+                if (sourceElement == null)
+                    sourceElement = sourcePhrase?.Elements.FirstOrDefault(x => x.Position < sourceIndex.Item2);
+
+                if (sourceElement == null)
+                    continue;
+
+                if (sourceIndex.Item2 < nextPosition)
                     continue;
 
                 sourceElement = sourceElement.Clone();
@@ -630,7 +643,7 @@ namespace Halloumi.Notez.Engine.Generator
                 foreach (var phrase in sourcePhrases)
                 {
                     if (phrase.Elements.Contains(sourceElement))
-                        mergedPhrase.SourceIndexes.Add(new Tuple<string, decimal, decimal>(phrase.Description, position, sourceElement.Position));
+                        mergedPhrase.SourceIndexes.Add(new Tuple<string, decimal, decimal>(phrase.Description, position, sourceElement.Note));
                 }
 
                 newElement.Duration = 0.1M;
