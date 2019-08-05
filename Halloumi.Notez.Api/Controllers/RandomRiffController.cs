@@ -12,26 +12,28 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
+
 using Halloumi.Notez.Engine.OldGenerator;
 
 namespace Halloumi.Notez.Api.Controllers
 {
     public class RandomRiffController : ApiController
     {
+        private const string Folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\";
+        private static SectionGenerator _sectionGenerator;
+
 
         [HttpGet]
         public HttpResponseMessage Generate()
         {
-            var midiPath = @"RandomRiff.mid";
+            if (_sectionGenerator == null)
+                LoadSectionGenerator();
 
-            var generator = new PhraseGeneratorOld();
-            var phrase = generator.GeneratePhrase();
+            const string midiPath = @"RandomRiff.mid";
 
-            var section = new Section();
-            section.Phrases.Add(phrase);
 
-            MidiHelper.SaveToMidi(section, midiPath);
- 
+            _sectionGenerator?.GenerateRiffs(midiPath);
+
             var stream = new FileStream(midiPath, FileMode.Open, FileAccess.Read);
             var result = new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -47,6 +49,13 @@ namespace Halloumi.Notez.Api.Controllers
             result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
             return result;
+        }
+
+        private void LoadSectionGenerator()
+        {
+            if(_sectionGenerator == null)
+                _sectionGenerator = new SectionGenerator(Folder);
+
         }
     }
 }

@@ -36,8 +36,11 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateDrumAverages();
         }
 
-        public void GenerateRiffs(string name, int count)
+        public void GenerateRiffs(string name, int count = 0)
         {
+            if(count == 0)
+                GenerateSection(name);
+
             for (var i = 0; i < count; i++)
             {
                 GenerateSection(name + i);
@@ -402,6 +405,9 @@ namespace Halloumi.Notez.Engine.Generator
 
                 section.Phrases.Add(channelPhrase);
             }
+
+            if (!filename.EndsWith(".mid"))
+                filename += ".mid";
 
             PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
             MidiHelper.SaveToMidi(section, filename + ".mid");
