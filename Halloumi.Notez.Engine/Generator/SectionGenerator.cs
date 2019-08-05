@@ -410,7 +410,7 @@ namespace Halloumi.Notez.Engine.Generator
                 filename += ".mid";
 
             PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
-            MidiHelper.SaveToMidi(section, filename + ".mid");
+            MidiHelper.SaveToMidi(section, filename);
         }
 
 
