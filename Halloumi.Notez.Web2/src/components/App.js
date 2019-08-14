@@ -27,6 +27,7 @@ class App extends Component {
       request.onload = function() {
         var reader = new FileReader();
         reader.readAsDataURL(request.response);
+        //reader.readAsBinaryString(request.response);
         reader.onload = function(e) {
           resolve(e.target.result);
         };
@@ -69,22 +70,30 @@ class App extends Component {
     // // Initialize player and register event handler
     if (!this.player)
       this.player = new MidiPlayer.Player(event => {
-        console.log(event);
-        if (!this.instruments[event.track]) return;
+        setTimeout(() => {
+          if (!this.instruments[event.track]) return;
 
-        if (event.name === "Note on") {
-          this.instruments[event.track].play(
-            event.noteName,
-            this.audioContext.currentTime,
-            {
-              gain: event.velocity / 100
-            }
-          );
-        }
+          if (event.name === "Set tempo") {
+            this.player.tempo = event.data;
+          }
 
-        if (event.name === "Note off") {
-          this.instruments[event.track].stop();
-        }
+          if (event.name === "Note on") {
+            this.instruments[event.track].play(
+              event.noteName,
+              this.audioContext.currentTime,
+              {
+                //gain: event.velocity / 100
+                // gain: 100
+              }
+            );
+          }
+
+          if (event.name === "Note off") {
+            this.instruments[event.track].stop();
+          }
+
+          //console.log(event);
+        });
       });
 
     this.loadMidiFromUri("http://localhost:9000/api/randomriff").then(midi => {
