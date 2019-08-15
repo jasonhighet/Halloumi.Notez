@@ -16,7 +16,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly string _folder;
 
-        private const int SourceCount = 3;
+        private const int SourceCount = 4;
         private const int RandomSourceCount = 1;
 
         private readonly GeneratorSettings _generatorSettings;
