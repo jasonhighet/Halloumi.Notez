@@ -16,8 +16,8 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly string _folder;
 
-        private const int SourceCount = 4;
-        private const int RandomSourceCount = 1;
+        private const int SourceCount = 2;
+        private const int RandomSourceCount = 2;
 
         private readonly GeneratorSettings _generatorSettings;
 
@@ -371,6 +371,7 @@ namespace Halloumi.Notez.Engine.Generator
         private void GenerateSection(string filename)
         {
             var sourceCount = GetBellCurvedRandom(SourceCount - 1, SourceCount + 1);
+            if (sourceCount < 2) sourceCount = 2;
             var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount);
 
             var randomClips = GenerateRandomClips(sourceBaseClips);
