@@ -49,7 +49,10 @@ namespace Halloumi.Notez.Engine.Midi
                             GetMidiNoteNumber(x.Note),
                             GetMidiNoteLength(x.Duration),
                             GetMidiNoteLength(x.Position)
-                        )).ToList();
+                        )
+                        {
+                            Velocity = (SevenBitNumber)x.Velocity
+                        }).ToList();
 
                     notesManager.Notes.Add(notes);
                 }

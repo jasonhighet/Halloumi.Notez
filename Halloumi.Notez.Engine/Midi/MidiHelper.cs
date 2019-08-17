@@ -104,7 +104,8 @@ namespace Halloumi.Notez.Engine.Midi
             var element = new PhraseElement()
             {
                 Note = noteOn.NoteNumber - NoteOffset,
-                Position = Convert.ToDecimal(timedEvent.Time) / 24M
+                Position = Convert.ToDecimal(timedEvent.Time) / 24M,
+                Velocity = (int)noteOn.Velocity
             };
 
             return element;

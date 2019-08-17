@@ -11,6 +11,7 @@ namespace Halloumi.Notez.Engine.Notes
         public PhraseElement()
         {
             ChordNotes = new List<int>();
+            Velocity = 95;
         }
 
         public int Note { get; set; }
@@ -26,6 +27,8 @@ namespace Halloumi.Notez.Engine.Notes
         public decimal RepeatDuration { get; set; }
         public decimal RepeatCount => RepeatDuration == 0 ? 0 : Duration / RepeatDuration;
 
+        public int Velocity { get; set; }
+
         public PhraseElement Clone()
         {
             return new PhraseElement()
@@ -34,7 +37,8 @@ namespace Halloumi.Notez.Engine.Notes
                 Duration = Duration,
                 Position = Position,
                 ChordNotes = new List<int>(ChordNotes),
-                RepeatDuration = RepeatDuration
+                RepeatDuration = RepeatDuration,
+                Velocity = Velocity
             };
         }
 

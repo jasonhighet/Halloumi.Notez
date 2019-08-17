@@ -17,7 +17,7 @@ namespace Halloumi.Notez.Engine.Generator
         private readonly string _folder;
 
         private const int SourceCount = 2;
-        private const int RandomSourceCount = 2;
+        private const int RandomSourceCount = 1;
 
         private readonly GeneratorSettings _generatorSettings;
 
@@ -405,6 +405,8 @@ namespace Halloumi.Notez.Engine.Generator
                 channelPhrase.Instrument = channel.Instrument;
 
                 section.Phrases.Add(channelPhrase);
+
+                VelocityHelper.ApplyVelocityStrategy(channelPhrase, channel.VelocityStrategy);
             }
 
             if (!filename.EndsWith(".mid"))
@@ -1090,8 +1092,8 @@ namespace Halloumi.Notez.Engine.Generator
                 Bpm = 180M;
                 Channels = new List<Channel>
                 {
-                    new Channel("MainGuitar", 1, MidiInstrument.DistortedGuitar, " 1", primaryChannel:true),
-                    new Channel("AltGuitar", 2, MidiInstrument.OverdrivenGuitar, " 2", 12, true),
+                    new Channel("MainGuitar", 1, MidiInstrument.DistortedGuitar, " 1", primaryChannel:true, velocityStrategy:"Shreddage"),
+                    new Channel("AltGuitar", 2, MidiInstrument.OverdrivenGuitar, " 2", 12, true, velocityStrategy:"Shreddage"),
                     new Channel("BassGuitar", 3, MidiInstrument.ElectricBassFinger, " 3", -12),
                     new Channel("Drums", 10, MidiInstrument.AcousticGrandPiano, " 4")
                 };
@@ -1105,7 +1107,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             public class Channel
             {
-                public Channel(string name, int midiChannel, MidiInstrument instrument, string fileEnding, int defaultStepDifference = 0, bool primaryChannel = false)
+                public Channel(string name, int midiChannel, MidiInstrument instrument, string fileEnding, int defaultStepDifference = 0, bool primaryChannel = false, string velocityStrategy = "")
                 {
                     Name = name;
                     MidiChannel = midiChannel;
@@ -1113,6 +1115,7 @@ namespace Halloumi.Notez.Engine.Generator
                     FileEnding = fileEnding;
                     DefaultStepDifference = defaultStepDifference;
                     IsPrimaryRiff = primaryChannel;
+                    VelocityStrategy = velocityStrategy;
                 }
 
                 public string Name { get; set; }
@@ -1128,6 +1131,8 @@ namespace Halloumi.Notez.Engine.Generator
                 public bool IsDrums => MidiChannel == 10;
 
                 public bool IsPrimaryRiff { get; set; }
+
+                public string VelocityStrategy { get; set; }
             }
         }
     }
