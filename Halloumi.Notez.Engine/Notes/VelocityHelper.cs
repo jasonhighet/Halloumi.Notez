@@ -10,7 +10,8 @@ namespace Halloumi.Notez.Engine.Notes
     {
         public static void ApplyVelocityStrategy(Phrase phrase, string strategy)
         {
-            if (strategy != "Shreddage") return;
+            if (strategy == "Shreddage")
+                ApplyShreddage(phrase);
 
             if (strategy == "FlatHigh")
                 ApplyShreddage(phrase);
