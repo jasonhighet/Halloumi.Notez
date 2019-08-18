@@ -335,7 +335,6 @@ namespace Halloumi.Notez.Engine.Generator
                 {
                     Position = x,
                     OnOffChance = allNotes.Where(y => y.Position == x).Sum(y => y.Count) / Convert.ToDouble(phrases.Count),
-                    //Notes = allNotes.Where(y => y.Position == x).ToDictionary(y => y.Note, y => y.Count)
                 })
                 .ToList();
             foreach (var prob in probabilities.NoteProbabilities)
