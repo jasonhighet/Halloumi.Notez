@@ -36,14 +36,14 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateDrumAverages();
         }
 
-        public void GenerateRiffs(string name, int count = 0)
+        public void GenerateRiffs(string name, int count = 0, string seedClip = "")
         {
             if(count == 0)
-                GenerateSection(name);
+                GenerateSection(name, seedClip);
 
             for (var i = 0; i < count; i++)
             {
-                GenerateSection(name + i);
+                GenerateSection(name + i, seedClip);
             }
         }
 
@@ -73,8 +73,8 @@ namespace Halloumi.Notez.Engine.Generator
                 MidiHelper.SaveToMidi(section, Path.Combine(_folder, sectionName + ".mid"));
             }
 
-            var filesToDelete = Directory.EnumerateFiles(_folder, "*.mid", SearchOption.AllDirectories).Where(x => IsSingleChannelMidiFile(x)).ToList();
-            foreach (string fileToDelete in filesToDelete) File.Delete(fileToDelete);
+            var filesToDelete = Directory.EnumerateFiles(_folder, "*.mid", SearchOption.AllDirectories).Where(IsSingleChannelMidiFile).ToList();
+            foreach (var fileToDelete in filesToDelete) File.Delete(fileToDelete);
         }
 
 
@@ -368,11 +368,11 @@ namespace Halloumi.Notez.Engine.Generator
 
         }
 
-        private void GenerateSection(string filename)
+        private void GenerateSection(string filename, string seedClip = "")
         {
             var sourceCount = GetBellCurvedRandom(SourceCount - 1, SourceCount + 1);
             if (sourceCount < 2) sourceCount = 2;
-            var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount);
+            var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount, seedClip);
 
             var randomClips = GenerateRandomClips(sourceBaseClips);
             sourceBaseClips.AddRange(randomClips.Where(x => x.ClipType == "BasePhrase"));
@@ -417,13 +417,23 @@ namespace Halloumi.Notez.Engine.Generator
         }
 
 
-        private List<Clip> LoadSourceBasePhraseClips(int count)
+        private List<Clip> LoadSourceBasePhraseClips(int count, string seedClip)
         {
-            var clips = Clips
-                .Where(x => x.ClipType == "BasePhrase")
-                .OrderBy(x => _random.Next())
-                .Take(1)
-                .ToList();
+            var clips = new List<Clip>();
+            if (seedClip != "")
+            {
+                clips.AddRange(Clips
+                    .Where(x => Path.GetFileNameWithoutExtension(x.Filename) == seedClip)
+                    .OrderBy(x => _random.Next())
+                    .Take(1));
+            }
+            if (clips.Count == 0)
+            {
+                clips.AddRange(Clips
+                    .Where(x => x.ClipType == "BasePhrase")
+                    .OrderBy(x => _random.Next())
+                    .Take(1));
+            }
 
             var inititialClip = clips[0];
             var minDuration = inititialClip.Phrase.Elements.Min(x => x.Duration);
@@ -564,7 +574,8 @@ namespace Halloumi.Notez.Engine.Generator
                     Name = section,
                     Scale = primaryClip.Scale,
                     Section = primaryClip.Section,
-                    Song = primaryClip.Song
+                    Song = primaryClip.Song,
+                    Filename = primaryClip.Filename
                 };
 
                 Clips.Add(clip);
@@ -581,7 +592,7 @@ namespace Halloumi.Notez.Engine.Generator
         }
 
 
-        private static MergedPhrase MergePhrases(List<Phrase> sourcePhrases)
+        private static MergedPhrase MergePhrases(IReadOnlyCollection<Phrase> sourcePhrases)
         {
             var mergedPhrase = new MergedPhrase()
             {
