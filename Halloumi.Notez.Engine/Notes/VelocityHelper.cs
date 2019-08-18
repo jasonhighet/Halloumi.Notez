@@ -12,6 +12,21 @@ namespace Halloumi.Notez.Engine.Notes
         {
             if (strategy != "Shreddage") return;
 
+            if (strategy == "FlatHigh")
+                ApplyShreddage(phrase);
+
+        }
+
+        private static void ApplyFlatHigh(Phrase phrase)
+        {
+            foreach (var element in phrase.Elements)
+            {
+                element.Velocity = 96;
+            }
+        }
+
+        private static void ApplyShreddage(Phrase phrase)
+        {
             var minVelocity = 60M;
             var maxVelocity = 120M;
             var velocityRange = maxVelocity - minVelocity;
