@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace Halloumi.Notez.Engine.Generator
 {
@@ -16,15 +17,13 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly string _folder;
 
-        private const int SourceCount = 2;
-        private const int RandomSourceCount = 1;
-
         private readonly GeneratorSettings _generatorSettings;
 
         public SectionGenerator(string folder)
         {
             _folder = folder;
-            _generatorSettings = new GeneratorSettings();
+            var settingFile = Path.Combine(folder, "generatorSettings.json");
+            _generatorSettings = JsonConvert.DeserializeObject<GeneratorSettings>(File.ReadAllText(settingFile));
 
             Clips = LoadClips(folder);
             CalculateScales();
@@ -93,7 +92,7 @@ namespace Halloumi.Notez.Engine.Generator
             PhraseHelper.EnsureLengthsAreEqual(sourcePhrases, phraseLength);
 
             var clips = new List<Clip>();
-            var randomSourceCount = GetBellCurvedRandom(RandomSourceCount - 1, RandomSourceCount + 1);
+            var randomSourceCount = GetBellCurvedRandom(_generatorSettings.RandomSourceCount - 1, _generatorSettings.RandomSourceCount + 1);
 
             for (var i = 0; i < randomSourceCount; i++)
             {
@@ -369,7 +368,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateSection(string filename, string seedClip = "")
         {
-            var sourceCount = GetBellCurvedRandom(SourceCount - 1, SourceCount + 1);
+            var sourceCount = GetBellCurvedRandom(_generatorSettings.SourceCount - 1, _generatorSettings.SourceCount + 1);
             if (sourceCount < 2) sourceCount = 2;
             var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount, seedClip);
 
@@ -387,10 +386,13 @@ namespace Halloumi.Notez.Engine.Generator
                 {
                     channelPhrase = sourceBaseClips
                         .OrderByDescending(x => _random.Next())
-                        .Select(drums => Clips.FirstOrDefault(x => x.ClipType == channel.Name && x.Artist == drums.Artist && x.Song == drums.Song && x.Section == drums.Section))
+                        .Select(
+                            drums => Clips.FirstOrDefault(
+                                x => x.ClipType == channel.Name && x.Artist == drums.Artist && x.Song == drums.Song &&
+                                     x.Section == drums.Section))
                         .Where(x => x != null)
                         .Select(x => x.Phrase.Clone())
-                        .First();
+                        .FirstOrDefault();
                 }
                 else
                 {
@@ -398,6 +400,9 @@ namespace Halloumi.Notez.Engine.Generator
                     channelClips.AddRange(randomClips.Where(x => x.ClipType == channel.Name));
                     channelPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, channelClips);
                 }
+
+                if(channelPhrase == null)
+                    continue;
 
                 channelPhrase.IsDrums = channel.IsDrums;
                 channelPhrase.Description = channel.Name;
@@ -761,6 +766,15 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
             Clips.RemoveAll(x => !ValidLength(x.Phrase.PhraseLength));
+
+
+            invalidClips = Clips.Where(x => x.Phrase.Elements.Any(y=>y.Note < -24)).ToList();
+            foreach (var clip in invalidClips)
+            {
+                Console.WriteLine("Invalid Notes:" + clip.Name);
+            }
+
+            Clips.RemoveAll(x => x.Phrase.Elements.Any(y => y.Note < -12));
         }
 
         private static bool ValidLength(decimal length)
@@ -1098,6 +1112,8 @@ namespace Halloumi.Notez.Engine.Generator
         {
             public GeneratorSettings()
             {
+                RandomSourceCount = 1;
+                SourceCount = 2;
                 Scale = "C Harmonic Minor";
                 Bpm = 180M;
                 Channels = new List<Channel>
@@ -1108,6 +1124,10 @@ namespace Halloumi.Notez.Engine.Generator
                     new Channel("Drums", 10, MidiInstrument.AcousticGrandPiano, " 4")
                 };
             }
+
+            public  int SourceCount { get; set; }
+
+            public int RandomSourceCount { get; set; }
 
             public decimal Bpm { get; set; }
 
