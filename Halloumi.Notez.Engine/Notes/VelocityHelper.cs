@@ -10,19 +10,33 @@ namespace Halloumi.Notez.Engine.Notes
     {
         public static void ApplyVelocityStrategy(Phrase phrase, string strategy)
         {
-            if (strategy == "Shreddage")
-                ApplyShreddage(phrase);
-
-            if (strategy == "FlatHigh")
-                ApplyShreddage(phrase);
-
+            switch (strategy)
+            {
+                case "Shreddage":
+                    ApplyShreddage(phrase);
+                    break;
+                case "Highest":
+                    ApplyHighest(phrase);
+                    break;
+                default:
+                    ApplyDefault(phrase);
+                    break;
+            }
         }
 
-        private static void ApplyFlatHigh(Phrase phrase)
+        private static void ApplyDefault(Phrase phrase)
         {
             foreach (var element in phrase.Elements)
             {
                 element.Velocity = 96;
+            }
+        }
+
+        private static void ApplyHighest(Phrase phrase)
+        {
+            foreach (var element in phrase.Elements)
+            {
+                element.Velocity = 127;
             }
         }
 

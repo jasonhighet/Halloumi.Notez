@@ -1,11 +1,11 @@
 ﻿using Halloumi.Notez.Engine.Midi;
 using Halloumi.Notez.Engine.Notes;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 
 namespace Halloumi.Notez.Engine.Generator
 {
@@ -37,7 +37,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void GenerateRiffs(string name, int count = 0, string seedClip = "")
         {
-            if(count == 0)
+            if (count == 0)
                 GenerateSection(name, seedClip);
 
             for (var i = 0; i < count; i++)
@@ -118,15 +118,15 @@ namespace Halloumi.Notez.Engine.Generator
 
 
                 clips.Add(new Clip()
-                    {
-                        Phrase = basePhrase,
-                        ClipType = "BasePhrase",
-                        Section = name,
-                        Artist = artist, 
-                        Name = name,
-                        Song =  song
-                    });
-                
+                {
+                    Phrase = basePhrase,
+                    ClipType = "BasePhrase",
+                    Section = name,
+                    Artist = artist,
+                    Name = name,
+                    Song = song
+                });
+
 
                 foreach (var channel in _generatorSettings.Channels.Where(x => !x.IsDrums).ToList())
                 {
@@ -399,9 +399,14 @@ namespace Halloumi.Notez.Engine.Generator
                     var channelClips = Clips.Where(x => x.ClipType == channel.Name).ToList();
                     channelClips.AddRange(randomClips.Where(x => x.ClipType == channel.Name));
                     channelPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, channelClips);
+
+                    foreach (var element in channelPhrase.Elements.Where(x => x.Note < -24))
+                    {
+                        element.Note += 12;
+                    }
                 }
 
-                if(channelPhrase == null)
+                if (channelPhrase == null)
                     continue;
 
                 channelPhrase.IsDrums = channel.IsDrums;
@@ -768,7 +773,7 @@ namespace Halloumi.Notez.Engine.Generator
             Clips.RemoveAll(x => !ValidLength(x.Phrase.PhraseLength));
 
 
-            invalidClips = Clips.Where(x => x.Phrase.Elements.Any(y=>y.Note < -24)).ToList();
+            invalidClips = Clips.Where(x => x.Phrase.Elements.Any(y => y.Note < -24)).ToList();
             foreach (var clip in invalidClips)
             {
                 Console.WriteLine("Invalid Notes:" + clip.Name);
@@ -1110,22 +1115,22 @@ namespace Halloumi.Notez.Engine.Generator
 
         public class GeneratorSettings
         {
-            public GeneratorSettings()
-            {
-                RandomSourceCount = 1;
-                SourceCount = 2;
-                Scale = "C Harmonic Minor";
-                Bpm = 180M;
-                Channels = new List<Channel>
-                {
-                    new Channel("MainGuitar", 1, MidiInstrument.DistortedGuitar, " 1", primaryChannel:true, velocityStrategy:"Shreddage"),
-                    new Channel("AltGuitar", 2, MidiInstrument.OverdrivenGuitar, " 2", 12, true, velocityStrategy:"Shreddage"),
-                    new Channel("BassGuitar", 3, MidiInstrument.ElectricBassFinger, " 3", -12),
-                    new Channel("Drums", 10, MidiInstrument.AcousticGrandPiano, " 4")
-                };
-            }
+            //public GeneratorSettings()
+            //{
+            //    RandomSourceCount = 1;
+            //    SourceCount = 2;
+            //    Scale = "C Harmonic Minor";
+            //    Bpm = 180M;
+            //    Channels = new List<Channel>
+            //    {
+            //        new Channel("MainGuitar", 1, MidiInstrument.DistortedGuitar, " 1", primaryChannel:true, velocityStrategy:"Shreddage"),
+            //        new Channel("AltGuitar", 2, MidiInstrument.OverdrivenGuitar, " 2", 12, true, velocityStrategy:"Shreddage"),
+            //        new Channel("BassGuitar", 3, MidiInstrument.ElectricBassFinger, " 3", -12),
+            //        new Channel("Drums", 10, MidiInstrument.AcousticGrandPiano, " 4")
+            //    };
+            //}
 
-            public  int SourceCount { get; set; }
+            public int SourceCount { get; set; }
 
             public int RandomSourceCount { get; set; }
 
