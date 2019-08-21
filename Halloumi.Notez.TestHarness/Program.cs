@@ -58,7 +58,7 @@ namespace Halloumi.Notez.TestHarness
             //}
             //Console.ReadLine();
 
-            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Doom\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Death\";
             var sourceLibrary = new SectionGenerator(folder);
 
             while (true)
@@ -66,8 +66,8 @@ namespace Halloumi.Notez.TestHarness
                 foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
                 var now = DateTime.Now.ToString("yyyymmddhhss");
 
-                //sourceLibrary.MergeSourceClips();
-                sourceLibrary.GenerateRiffs(now, 20);
+                sourceLibrary.MergeSourceClips();
+                //sourceLibrary.GenerateRiffs(now, 20);
 
                 Console.WriteLine("push any key..");
                 Console.ReadLine();
