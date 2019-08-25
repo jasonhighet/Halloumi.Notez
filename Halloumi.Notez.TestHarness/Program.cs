@@ -58,7 +58,7 @@ namespace Halloumi.Notez.TestHarness
             //}
             //Console.ReadLine();
 
-            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Death\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Doom\";
             var sourceLibrary = new SectionGenerator(folder);
 
             while (true)
