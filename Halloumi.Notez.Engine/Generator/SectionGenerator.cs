@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 
 namespace Halloumi.Notez.Engine.Generator
@@ -33,6 +35,16 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateLengths();
             CalculateBasePhrases();
             CalculateDrumAverages();
+
+            SaveCache();
+        }
+
+        private void SaveCache()
+        {
+            var formatter = new BinaryFormatter();
+            var stream = new FileStream(Path.GetFileNameWithoutExtension(_folder) + ".cache.json", FileMode.Create, FileAccess.Write, FileShare.None);
+            formatter.Serialize(stream, Clips);
+            stream.Close();
         }
 
         public void GenerateRiffs(string name, int count = 0, string seedClip = "")
@@ -1069,6 +1081,7 @@ namespace Halloumi.Notez.Engine.Generator
             public int Count { get; set; }
         }
 
+        [Serializable]
         private class Clip
         {
             public string Name { get; set; }
