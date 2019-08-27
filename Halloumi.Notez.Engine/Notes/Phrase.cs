@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Halloumi.Notez.Engine.Notes
 {
+    [Serializable]
     public class Phrase
     {
         public Phrase()

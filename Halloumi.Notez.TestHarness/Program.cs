@@ -25,7 +25,7 @@ namespace Halloumi.Notez.TestHarness
                 var now = DateTime.Now.ToString("yyyymmddhhss");
 
                 //sourceLibrary.MergeSourceClips();
-                //sourceLibrary.GenerateRiffs(now, 20);
+                sourceLibrary.GenerateRiffs(now, 20);
 
                 Console.WriteLine("push any key..");
                 Console.ReadLine();
