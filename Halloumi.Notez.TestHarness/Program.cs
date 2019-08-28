@@ -16,49 +16,7 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            //MidiFileLibraryHelper.CopyPlaylistFiles(@"E:\OneDrive\Music\Midi\metal\doom.mpl", @"C:\Users\jason\Desktop\metalmidi\doom");
-
-
-            //var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Doom\";
-            //var drums = MidiHelper.ReadMidi(folder + "drums.mid");
-            //foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
-
-            //foreach (string midiFile in Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories))
-            //{
-            //    if (Path.GetFileName(midiFile) == "drums.mid")
-            //        continue;
-
-            //    Console.WriteLine(midiFile);
-
-            //    var section = MidiHelper.ReadMidi(midiFile);
-            //    section.Phrases[0].Bpm = 70;
-            //    section.Phrases[0].Instrument = MidiInstrument.DistortedGuitar;
-
-            //    section.Phrases.Add(section.Phrases[0].Clone());
-            //    section.Phrases[1].Instrument = MidiInstrument.OverdrivenGuitar;
-
-            //    var bassPhrase = section.Phrases[0].Clone();
-            //    NoteHelper.ShiftNotesDirect(bassPhrase, 1, Interval.Octave, Direction.Down);
-            //    bassPhrase.Instrument = MidiInstrument.ElectricBassPick;
-            //    section.Phrases.Add(bassPhrase);
-
-            //    var drumPhrase = drums.Phrases[0].Clone();
-            //    drumPhrase.IsDrums = true;
-
-            //    section.Phrases.Add(drumPhrase);
-
-            //    for (int i = 0; i < 3; i++)
-            //    {
-            //        NoteHelper.ShiftNotesDirect(section.Phrases[i], 2, Interval.Octave, Direction.Down);
-            //        VelocityHelper.ApplyVelocityStrategy(section.Phrases[i], "FlatHigh");
-            //    }
-            //    PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
-
-            //    MidiHelper.SaveToMidi(section, Path.GetFileName(midiFile));
-            //}
-            //Console.ReadLine();
-
-            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Death\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Doom\";
             var sourceLibrary = new SectionGenerator(folder);
 
             while (true)
@@ -66,7 +24,6 @@ namespace Halloumi.Notez.TestHarness
                 foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
                 var now = DateTime.Now.ToString("yyyymmddhhss");
 
-               //sourceLibrary.MergeSourceClips();
                 //sourceLibrary.GenerateRiffs(now, 20);
 
                 Console.WriteLine("push any key..");

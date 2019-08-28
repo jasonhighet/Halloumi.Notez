@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 
 namespace Halloumi.Notez.Engine.Generator
@@ -25,7 +27,15 @@ namespace Halloumi.Notez.Engine.Generator
             var settingFile = Path.Combine(folder, "generatorSettings.json");
             _generatorSettings = JsonConvert.DeserializeObject<GeneratorSettings>(File.ReadAllText(settingFile));
 
-            Clips = LoadClips(folder);
+            if(!LoadCache())
+                LoadClips(folder);
+
+            SaveCache();
+        }
+
+        private void LoadClips(string folder)
+        {
+            Clips = LoadMidi(folder);
             CalculateScales();
             MashToScale();
             MergeChords();
@@ -34,6 +44,47 @@ namespace Halloumi.Notez.Engine.Generator
             CalculateBasePhrases();
             CalculateDrumAverages();
         }
+
+        private void SaveCache()
+        {
+            var formatter = new BinaryFormatter();
+            var stream = new FileStream(GetCacheFilename(), FileMode.Create, FileAccess.Write, FileShare.None);
+            formatter.Serialize(stream, Clips);
+            stream.Close();
+        }
+
+        private string GetCacheFilename()
+        {
+            var folder = _folder;
+            if (folder.EndsWith("\\"))
+                folder = folder.Remove(_folder.LastIndexOf('\\'));
+
+            return folder.Remove(0, folder.LastIndexOf('\\') + 1) + ".cache.bin";
+        }
+
+        private bool LoadCache()
+        {
+            if (!File.Exists(GetCacheFilename()))
+                return false;
+
+            try
+            {
+                var formatter = new BinaryFormatter();
+                var stream = new FileStream(GetCacheFilename(), FileMode.Open, FileAccess.Read, FileShare.None);
+                Clips = formatter.Deserialize(stream) as List<Clip>;
+                stream.Close();
+
+                Console.WriteLine("Loading clips cache");
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
 
         public void GenerateRiffs(string name, int count = 0, string seedClip = "")
         {
@@ -48,7 +99,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void MergeSourceClips()
         {
-            var clips = LoadClips(_folder);
+            var clips = LoadMidi(_folder);
 
             var sections = clips.Select(x => x.Section).Distinct().ToList();
 
@@ -908,7 +959,7 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
-        private List<Clip> LoadClips(string folder)
+        private List<Clip> LoadMidi(string folder)
         {
             var clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
                 .Where(IsSingleChannelMidiFile)
@@ -1069,6 +1120,7 @@ namespace Halloumi.Notez.Engine.Generator
             public int Count { get; set; }
         }
 
+        [Serializable]
         private class Clip
         {
             public string Name { get; set; }

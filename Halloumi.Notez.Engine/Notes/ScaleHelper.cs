@@ -206,6 +206,7 @@ namespace Halloumi.Notez.Engine.Notes
             return scale.Notes.Select(x => Math.Abs(NoteHelper.GetDistanceBetweenNotes(note, x))).Min();
         }
 
+        [Serializable]
         public class ScaleMatch
         {
             public ScaleMatch()
@@ -219,6 +220,7 @@ namespace Halloumi.Notez.Engine.Notes
             public List<int> NotInScale { get; set; }
         }
 
+        [Serializable]
         public class Scale
         {
             public string Name { get; set; }
