@@ -26,23 +26,23 @@ namespace Halloumi.Notez.Engine.Generator
             _folder = folder;
             var settingFile = Path.Combine(folder, "generatorSettings.json");
             _generatorSettings = JsonConvert.DeserializeObject<GeneratorSettings>(File.ReadAllText(settingFile));
-
-            if(!LoadCache())
-                LoadClips(folder);
-
-            SaveCache();
         }
 
-        private void LoadClips(string folder)
+        public void Load(bool clearCache = false)
         {
-            Clips = LoadMidi(folder);
-            CalculateScales();
-            MashToScale();
-            MergeChords();
-            MergeRepeatedNotes();
-            CalculateLengths();
-            CalculateBasePhrases();
-            CalculateDrumAverages();
+            if (clearCache || !LoadCache())
+            {
+                Clips = LoadMidi(_folder);
+                CalculateScales();
+                MashToScale();
+                MergeChords();
+                MergeRepeatedNotes();
+                CalculateLengths();
+                CalculateBasePhrases();
+                CalculateDrumAverages();
+            }
+
+            SaveCache();
         }
 
         private void SaveCache()

@@ -16,11 +16,15 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Doom\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\Death\";
             var sourceLibrary = new SectionGenerator(folder);
+
+            sourceLibrary.Load(true);
 
             while (true)
             {
+
+
                 foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
                 var now = DateTime.Now.ToString("yyyymmddhhss");
 
