@@ -24,12 +24,12 @@ namespace Halloumi.Notez.TestHarness
             foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
 
-            sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { SeedArtist = "CC" });
+            //sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { SeedArtist = "CC" });
 
             Console.WriteLine("push any key..");
             Console.ReadLine();
 
-            //sourceLibrary.MergeSourceClips();
+            sourceLibrary.MergeSourceClips();
         }
 
     }
