@@ -287,7 +287,7 @@ namespace Halloumi.Notez.Engine.Notes
                         .FirstOrDefault();
                 }
 
-                var nextPosition = (nextElement != null) ? nextElement.Position : phraseLength;
+                var nextPosition = nextElement?.Position ?? phraseLength;
 
                 element.Duration = nextPosition - element.Position;
                 if (element.Duration <= 0)
@@ -309,6 +309,27 @@ namespace Halloumi.Notez.Engine.Notes
 
             return newPhrase;
 
+        }
+
+        public static void ChangeLength(Phrase phrase, decimal multiplier)
+        {
+            foreach (var element in phrase.Elements)
+            {
+                element.Position = element.Position * multiplier;
+                element.Duration = element.Duration * multiplier;
+            }
+
+            phrase.PhraseLength = phrase.PhraseLength * multiplier;
+
+            phrase.Bpm = phrase.Bpm * multiplier;
+        }
+
+        public static void ChangeLength(Section section, decimal multiplier)
+        {
+            foreach (var phrase in section.Phrases)
+            {
+                ChangeLength(phrase, multiplier);
+            }
         }
     }
 }

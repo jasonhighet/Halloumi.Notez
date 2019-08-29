@@ -441,6 +441,7 @@ namespace Halloumi.Notez.Engine.Generator
                 if (channel.IsDrums)
                 {
                     channelPhrase = sourceBaseClips
+                        //.Where(x => !x.IsSecondary)
                         .OrderByDescending(x => _random.Next())
                         .Select(
                             drums => Clips.FirstOrDefault(
@@ -495,7 +496,7 @@ namespace Halloumi.Notez.Engine.Generator
             if (clips.Count == 0)
             {
                 clips.AddRange(Clips
-                    .Where(x => x.ClipType == "BasePhrase" && x.IsSecondary)
+                    .Where(x => x.ClipType == "BasePhrase" && !x.IsSecondary)
                     .OrderBy(x => _random.Next())
                     .Take(1));
             }
@@ -508,6 +509,7 @@ namespace Halloumi.Notez.Engine.Generator
                 .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
                 .OrderBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
                 .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
+               // .ThenBy(x => x.IsSecondary)
                 .Take(10)
                 .OrderBy(x => _random.Next())
                 .Take(count - 1)
@@ -520,6 +522,7 @@ namespace Halloumi.Notez.Engine.Generator
                     .Where(x => x.Phrase.Elements.Min(y => y.Duration) > minDuration)
                     .OrderBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
                     .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
+                  //  .ThenBy(x => x.IsSecondary)
                     .Take(10)
                     .OrderBy(x => _random.Next())
                     .Take(missing)
@@ -971,14 +974,14 @@ namespace Halloumi.Notez.Engine.Generator
 
             if (!string.IsNullOrEmpty(_generatorSettings.SecondaryLibraryFolder))
             {
-                clips.AddRange(LoadMidiInFolder(GetSecondaryLibraryFolder(), true));
+                clips.AddRange(LoadMidiInFolder(GetSecondaryLibraryFolder(), true, _generatorSettings.SecondaryLibraryLengthMultiplier));
             }
 
             return clips;
 
         }
 
-        private List<Clip> LoadMidiInFolder(string folder, bool isSecondary = false)
+        private List<Clip> LoadMidiInFolder(string folder, bool isSecondary = false, decimal lengthModifier = 0)
         {
             var clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
                 .Where(IsSingleChannelMidiFile)
@@ -1027,6 +1030,13 @@ namespace Halloumi.Notez.Engine.Generator
                     if (!clips.Exists(x => x.Song == clip.Song && x.Section == clip.Section && x.Artist == clip.Artist && x.ClipType == clip.ClipType))
                         clips.Add(clip);
                 }
+            }
+
+            if (lengthModifier == 0) return clips;
+
+            foreach (var clip in clips)
+            {
+                PhraseHelper.ChangeLength(clip.Phrase, lengthModifier);
             }
 
             return clips;
@@ -1201,6 +1211,8 @@ namespace Halloumi.Notez.Engine.Generator
             public string LibraryFolder { get; set; }
 
             public string SecondaryLibraryFolder { get; set; }
+
+            public decimal SecondaryLibraryLengthMultiplier { get; set; }
 
             public class Channel
             {

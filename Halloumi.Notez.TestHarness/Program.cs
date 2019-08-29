@@ -17,23 +17,19 @@ namespace Halloumi.Notez.TestHarness
         static void Main(string[] args)
         {
             var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\";
-            var sourceLibrary = new SectionGenerator(folder, "Doom", true);
 
-            while (true)
-            {
+            var sourceLibrary = new SectionGenerator(folder, "Death", true);
 
 
-                foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
-                var now = DateTime.Now.ToString("yyyymmddhhss");
+            foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
+            var now = DateTime.Now.ToString("yyyymmddhhss");
 
-                //sourceLibrary.GenerateRiffs(now, 20);
+            sourceLibrary.GenerateRiffs(now, 20);
 
-                Console.WriteLine("push any key..");
-                Console.ReadLine();
+            Console.WriteLine("push any key..");
+            Console.ReadLine();
 
-                sourceLibrary.MergeSourceClips();
-            }
-
+            //sourceLibrary.MergeSourceClips();
         }
 
     }

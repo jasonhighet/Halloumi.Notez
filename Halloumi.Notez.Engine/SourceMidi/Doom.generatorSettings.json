@@ -5,6 +5,7 @@
   "Scale": "C Natural Minor",
   "LibraryFolder": "Doom",
   "SecondaryLibraryFolder": "Death",
+  "SecondaryLibraryLengthMultiplier": 0.5,
   "Channels": [
     {
       "Name": "MainGuitar",
