@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 
@@ -21,18 +20,15 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly GeneratorSettings _generatorSettings;
 
-        public SectionGenerator(string folder)
+        public SectionGenerator(string folder, string library, bool clearCache = false)
         {
             _folder = folder;
-            var settingFile = Path.Combine(folder, "generatorSettings.json");
+            var settingFile = Path.Combine(folder, library + ".generatorSettings.json");
             _generatorSettings = JsonConvert.DeserializeObject<GeneratorSettings>(File.ReadAllText(settingFile));
-        }
 
-        public void Load(bool clearCache = false)
-        {
             if (clearCache || !LoadCache())
             {
-                Clips = LoadMidi(_folder);
+                Clips = LoadMidi();
                 CalculateScales();
                 MashToScale();
                 MergeChords();
@@ -45,6 +41,17 @@ namespace Halloumi.Notez.Engine.Generator
             SaveCache();
         }
 
+        private string GetLibraryFolder()
+        {
+            return Path.Combine(_folder, _generatorSettings.LibraryFolder);
+        }
+
+        private string GetSecondaryLibraryFolder()
+        {
+            return Path.Combine(_folder, _generatorSettings.SecondaryLibraryFolder);
+        }
+
+
         private void SaveCache()
         {
             var formatter = new BinaryFormatter();
@@ -55,11 +62,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private string GetCacheFilename()
         {
-            var folder = _folder;
-            if (folder.EndsWith("\\"))
-                folder = folder.Remove(_folder.LastIndexOf('\\'));
-
-            return folder.Remove(0, folder.LastIndexOf('\\') + 1) + ".cache.bin";
+            return _generatorSettings.LibraryFolder + ".cache.bin";
         }
 
         private bool LoadCache()
@@ -99,16 +102,14 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void MergeSourceClips()
         {
-            var clips = LoadMidi(_folder);
-
-            var sections = clips.Select(x => x.Section).Distinct().ToList();
+            var sections = Clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
 
             foreach (var sectionName in sections)
             {
                 var section = new Section();
                 foreach (var channel in _generatorSettings.Channels)
                 {
-                    var channelClip = clips.First(x => x.ClipType == channel.Name && x.Section == sectionName);
+                    var channelClip = Clips.First(x => x.ClipType == channel.Name && x.Section == sectionName);
 
                     var channelPhrase = channelClip.Phrase.Clone();
                     channelPhrase.IsDrums = channel.IsDrums;
@@ -120,11 +121,15 @@ namespace Halloumi.Notez.Engine.Generator
                     section.Phrases.Add(channelPhrase);
                 }
 
-                MidiHelper.SaveToMidi(section, Path.Combine(_folder, sectionName + ".mid"));
+                MidiHelper.SaveToMidi(section, Path.Combine(GetLibraryFolder(), sectionName + ".mid"));
             }
 
-            var filesToDelete = Directory.EnumerateFiles(_folder, "*.mid", SearchOption.AllDirectories).Where(IsSingleChannelMidiFile).ToList();
-            foreach (var fileToDelete in filesToDelete) File.Delete(fileToDelete);
+            var filesToDelete = Directory.EnumerateFiles(GetLibraryFolder(), "*.mid", SearchOption.AllDirectories)
+                .Where(IsSingleChannelMidiFile)
+                .ToList();
+
+            foreach (var fileToDelete in filesToDelete)
+                File.Delete(fileToDelete);
         }
 
 
@@ -490,7 +495,7 @@ namespace Halloumi.Notez.Engine.Generator
             if (clips.Count == 0)
             {
                 clips.AddRange(Clips
-                    .Where(x => x.ClipType == "BasePhrase")
+                    .Where(x => x.ClipType == "BasePhrase" && x.IsSecondary)
                     .OrderBy(x => _random.Next())
                     .Take(1));
             }
@@ -635,7 +640,8 @@ namespace Halloumi.Notez.Engine.Generator
                     Scale = primaryClip.Scale,
                     Section = primaryClip.Section,
                     Song = primaryClip.Song,
-                    Filename = primaryClip.Filename
+                    Filename = primaryClip.Filename,
+                    IsSecondary = primaryClip.IsSecondary
                 };
 
                 Clips.Add(clip);
@@ -959,7 +965,20 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
-        private List<Clip> LoadMidi(string folder)
+        private List<Clip> LoadMidi()
+        {
+            var clips = LoadMidiInFolder(GetLibraryFolder());
+
+            if (!string.IsNullOrEmpty(_generatorSettings.SecondaryLibraryFolder))
+            {
+                clips.AddRange(LoadMidiInFolder(GetSecondaryLibraryFolder(), true));
+            }
+
+            return clips;
+
+        }
+
+        private List<Clip> LoadMidiInFolder(string folder, bool isSecondary = false)
         {
             var clips = Directory.EnumerateFiles(folder, "*.mid", SearchOption.AllDirectories)
                 .Where(IsSingleChannelMidiFile)
@@ -972,7 +991,8 @@ namespace Halloumi.Notez.Engine.Generator
                     Artist = GetArtistNameFromFilename(x),
                     Phrase = MidiHelper.ReadMidi(x).Phrases[0],
                     ClipType = GetClipTypeByFilename(x),
-                    Filename = x
+                    Filename = x,
+                    IsSecondary = isSecondary
                 })
                 .ToList();
 
@@ -1000,7 +1020,8 @@ namespace Halloumi.Notez.Engine.Generator
                         Artist = GetArtistNameFromFilename(multiChannelMidi),
                         Phrase = phrase,
                         ClipType = _generatorSettings.Channels[section.Phrases.IndexOf(phrase)].Name,
-                        Filename = multiChannelMidi
+                        Filename = multiChannelMidi,
+                        IsSecondary = isSecondary
                     };
 
                     if (!clips.Exists(x => x.Song == clip.Song && x.Section == clip.Section && x.Artist == clip.Artist && x.ClipType == clip.ClipType))
@@ -1009,7 +1030,6 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
             return clips;
-
         }
 
         private string GetArtistNameFromFilename(string filename)
@@ -1138,6 +1158,8 @@ namespace Halloumi.Notez.Engine.Generator
             public decimal AvgDistanceBetweenKicks { get; set; }
             public decimal AvgDistanceBetweenSnares { get; set; }
             public string Filename { get; internal set; }
+
+            public bool IsSecondary { get; set; }
         }
 
         private class MergedPhrase
@@ -1167,21 +1189,6 @@ namespace Halloumi.Notez.Engine.Generator
 
         public class GeneratorSettings
         {
-            //public GeneratorSettings()
-            //{
-            //    RandomSourceCount = 1;
-            //    SourceCount = 2;
-            //    Scale = "C Harmonic Minor";
-            //    Bpm = 180M;
-            //    Channels = new List<Channel>
-            //    {
-            //        new Channel("MainGuitar", 1, MidiInstrument.DistortedGuitar, " 1", primaryChannel:true, velocityStrategy:"Shreddage"),
-            //        new Channel("AltGuitar", 2, MidiInstrument.OverdrivenGuitar, " 2", 12, true, velocityStrategy:"Shreddage"),
-            //        new Channel("BassGuitar", 3, MidiInstrument.ElectricBassFinger, " 3", -12),
-            //        new Channel("Drums", 10, MidiInstrument.AcousticGrandPiano, " 4")
-            //    };
-            //}
-
             public int SourceCount { get; set; }
 
             public int RandomSourceCount { get; set; }
@@ -1191,6 +1198,9 @@ namespace Halloumi.Notez.Engine.Generator
             public string Scale { get; set; }
 
             public List<Channel> Channels { get; set; }
+            public string LibraryFolder { get; set; }
+
+            public string SecondaryLibraryFolder { get; set; }
 
             public class Channel
             {

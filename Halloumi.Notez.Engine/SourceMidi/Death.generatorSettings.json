@@ -3,6 +3,8 @@
   "RandomSourceCount": 1,
   "Bpm": 180.0,
   "Scale": "C Harmonic Minor",
+  "LibraryFolder": "Death",
+  "SecondaryLibraryFolder": "Doom",
   "Channels": [
     {
       "Name": "MainGuitar",
