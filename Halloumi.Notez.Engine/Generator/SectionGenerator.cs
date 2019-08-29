@@ -89,14 +89,14 @@ namespace Halloumi.Notez.Engine.Generator
 
 
 
-        public void GenerateRiffs(string name, int count = 0, string seedClip = "")
+        public void GenerateRiffs(string name, int count = 0, SourceFilter filter = null)
         {
             if (count == 0)
-                GenerateSection(name, seedClip);
+                GenerateSection(name, filter);
 
             for (var i = 0; i < count; i++)
             {
-                GenerateSection(name + i, seedClip);
+                GenerateSection(name + i, filter);
             }
         }
 
@@ -422,11 +422,11 @@ namespace Halloumi.Notez.Engine.Generator
 
         }
 
-        private void GenerateSection(string filename, string seedClip = "")
+        private void GenerateSection(string filename, SourceFilter filter)
         {
             var sourceCount = GetBellCurvedRandom(_generatorSettings.SourceCount - 1, _generatorSettings.SourceCount + 1);
             if (sourceCount < 2) sourceCount = 2;
-            var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount, seedClip);
+            var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount, filter);
 
             var randomClips = GenerateRandomClips(sourceBaseClips);
             sourceBaseClips.AddRange(randomClips.Where(x => x.ClipType == "BasePhrase"));
@@ -483,16 +483,20 @@ namespace Halloumi.Notez.Engine.Generator
         }
 
 
-        private List<Clip> LoadSourceBasePhraseClips(int count, string seedClip)
+        private List<Clip> LoadSourceBasePhraseClips(int count, SourceFilter filter)
         {
             var clips = new List<Clip>();
-            if (seedClip != "")
-            {
-                clips.AddRange(Clips
-                    .Where(x => Path.GetFileNameWithoutExtension(x.Filename) == seedClip)
-                    .OrderBy(x => _random.Next())
-                    .Take(1));
-            }
+            if (filter == null) filter = new SourceFilter();
+            
+            clips.AddRange(Clips
+                .Where(x => x.ClipType == "BasePhrase" && !x.IsSecondary)
+                .Where(x => string.IsNullOrEmpty(filter.SeedArtist) || x.Artist == filter.SeedArtist)
+                .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
+                .Where(x => string.IsNullOrEmpty(filter.SeedSection) || x.Section == filter.SeedSection)
+                .OrderBy(x => _random.Next())
+                .Take(1));
+            
+
             if (clips.Count == 0)
             {
                 clips.AddRange(Clips
@@ -506,10 +510,10 @@ namespace Halloumi.Notez.Engine.Generator
 
             clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase")
                 .Where(x => x != inititialClip)
+                .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
                 .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
                 .OrderBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
                 .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
-               // .ThenBy(x => x.IsSecondary)
                 .Take(10)
                 .OrderBy(x => _random.Next())
                 .Take(count - 1)
@@ -519,10 +523,10 @@ namespace Halloumi.Notez.Engine.Generator
             if (missing > 0)
                 clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase")
                     .Where(x => x != inititialClip)
+                    .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
                     .Where(x => x.Phrase.Elements.Min(y => y.Duration) > minDuration)
                     .OrderBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
                     .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
-                  //  .ThenBy(x => x.IsSecondary)
                     .Take(10)
                     .OrderBy(x => _random.Next())
                     .Take(missing)
@@ -1195,6 +1199,13 @@ namespace Halloumi.Notez.Engine.Generator
             public double OnOffChance { get; set; }
 
             public Dictionary<int, int> Notes { get; set; }
+        }
+
+        public class SourceFilter
+        {
+            public string SeedSection { get; set; }
+            public string SeedArtist { get; set; }
+            public string ArtistFilter { get; set; }
         }
 
         public class GeneratorSettings

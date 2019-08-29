@@ -24,7 +24,7 @@ namespace Halloumi.Notez.TestHarness
             foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
 
-            sourceLibrary.GenerateRiffs(now, 20);
+            sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { ArtistFilter = "SL" });
 
             Console.WriteLine("push any key..");
             Console.ReadLine();
