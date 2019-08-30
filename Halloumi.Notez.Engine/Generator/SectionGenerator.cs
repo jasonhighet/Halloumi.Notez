@@ -102,14 +102,15 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void MergeSourceClips()
         {
-            var sections = Clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
+            var clips = LoadMidiInFolder(GetLibraryFolder());
+            var sections = clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
 
             foreach (var sectionName in sections)
             {
                 var section = new Section();
                 foreach (var channel in _generatorSettings.Channels)
                 {
-                    var channelClip = Clips.First(x => x.ClipType == channel.Name && x.Section == sectionName);
+                    var channelClip = clips.First(x => x.ClipType == channel.Name && x.Section == sectionName);
 
                     var channelPhrase = channelClip.Phrase.Clone();
                     channelPhrase.IsDrums = channel.IsDrums;
