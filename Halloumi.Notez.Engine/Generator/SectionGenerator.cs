@@ -802,17 +802,13 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 var section = sections.FirstOrDefault(x => x.Name == clip.Section);
 
-                var closestValidMatch = section?.Lengths
-                    .Where(x => ValidLength(x.Length))
-                    .OrderBy(x => clip.Phrase.PhraseLength - x.Length)
-                    .FirstOrDefault();
-
-                if (closestValidMatch == null) continue;
-
-                var diff = closestValidMatch.Length - clip.Phrase.PhraseLength;
-                if (diff > 0 && (diff / closestValidMatch.Length) < .25M)
+                foreach (var validLength in new List<int> { 8, 16, 32, 64, 128, 256 })
                 {
-                    clip.Phrase.PhraseLength = closestValidMatch.Length;
+                    var diff = validLength - clip.Phrase.PhraseLength;
+                    if (diff > 0 && (diff / validLength) <= .25M)
+                    {
+                        clip.Phrase.PhraseLength = validLength;
+                    }
                 }
             }
 

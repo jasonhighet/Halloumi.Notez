@@ -29,7 +29,7 @@ namespace Halloumi.Notez.TestHarness
             Console.WriteLine("push any key..");
             Console.ReadLine();
 
-            sourceLibrary.MergeSourceClips();
+            //sourceLibrary.MergeSourceClips();
         }
 
     }
