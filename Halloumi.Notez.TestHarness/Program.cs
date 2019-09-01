@@ -18,13 +18,13 @@ namespace Halloumi.Notez.TestHarness
         {
             var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\";
 
-            var sourceLibrary = new SectionGenerator(folder, "Doom", true);
+            var sourceLibrary = new SectionGenerator(folder, "Death", true);
 
 
             foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
 
-            sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { SeedArtist = "CC" });
+            sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { SeedArtist = "SL" });
 
             Console.WriteLine("push any key..");
             Console.ReadLine();
