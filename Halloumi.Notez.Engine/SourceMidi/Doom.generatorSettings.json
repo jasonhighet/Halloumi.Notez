@@ -6,6 +6,7 @@
   "LibraryFolder": "Doom",
   "SecondaryLibraryFolder": "Death",
   "SecondaryLibraryLengthMultiplier": 0.5,
+  "SecondaryLibraryIncludeDrums": false,
   "Channels": [
     {
       "Name": "MainGuitar",

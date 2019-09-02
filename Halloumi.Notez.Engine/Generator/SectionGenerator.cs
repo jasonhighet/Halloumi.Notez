@@ -438,11 +438,11 @@ namespace Halloumi.Notez.Engine.Generator
             var section = new Section();
             foreach (var channel in _generatorSettings.Channels)
             {
-                Phrase channelPhrase;   
+                Phrase channelPhrase;
                 if (channel.IsDrums)
                 {
                     channelPhrase = sourceBaseClips
-                        .Where(x => !x.IsSecondary)
+                        .Where(x => _generatorSettings.SecondaryLibraryIncludeDrums || (!_generatorSettings.SecondaryLibraryIncludeDrums && !x.IsSecondary))
                         .OrderByDescending(x => _random.Next())
                         .Select(
                             drums => Clips.FirstOrDefault(
@@ -799,7 +799,7 @@ namespace Halloumi.Notez.Engine.Generator
             var invalidClips = Clips.Where(x => !ValidLength(x.Phrase.PhraseLength)).ToList();
             foreach (var clip in invalidClips)
             {
-                foreach (var validLength in new List<int> { 2,4, 8, 16, 32, 64, 128, 256 })
+                foreach (var validLength in new List<int> { 2, 4, 8, 16, 32, 64, 128, 256 })
                 {
                     var diff = validLength - clip.Phrase.PhraseLength;
                     if (diff > 0 && (diff / validLength) <= .25M)
@@ -1219,6 +1219,8 @@ namespace Halloumi.Notez.Engine.Generator
             public string SecondaryLibraryFolder { get; set; }
 
             public decimal SecondaryLibraryLengthMultiplier { get; set; }
+
+            public bool SecondaryLibraryIncludeDrums { get; set; }
 
             public class Channel
             {
