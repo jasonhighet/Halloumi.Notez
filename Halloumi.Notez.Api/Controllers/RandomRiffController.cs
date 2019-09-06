@@ -19,7 +19,7 @@ namespace Halloumi.Notez.Api.Controllers
 {
     public class RandomRiffController : ApiController
     {
-        private const string Folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\Death\";
+        private const string Folder = @"..\..\..\Halloumi.Notez.Engine\TestMidi\";
         private static SectionGenerator _sectionGenerator;
 
 
@@ -55,6 +55,7 @@ namespace Halloumi.Notez.Api.Controllers
         {
             if(_sectionGenerator == null)
                 _sectionGenerator = new SectionGenerator(Folder);
+                _sectionGenerator.LoadLibrary("Doom", false);
 
         }
     }

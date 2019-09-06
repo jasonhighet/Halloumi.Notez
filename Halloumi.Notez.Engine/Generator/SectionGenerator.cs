@@ -18,26 +18,48 @@ namespace Halloumi.Notez.Engine.Generator
 
         private readonly string _folder;
 
-        private readonly GeneratorSettings _generatorSettings;
+        private GeneratorSettings _generatorSettings;
 
-        public SectionGenerator(string folder, string library, bool clearCache = false)
+        public SectionGenerator(string folder)
         {
             _folder = folder;
-            var settingFile = Path.Combine(folder, library + ".generatorSettings.json");
+        }
+
+        public List<string> GetLibraries()
+        {
+            return Directory.GetFiles(_folder, "*.generatorSettings.json")
+                .ToList()
+                .Select(Path.GetFileNameWithoutExtension)
+                .Select(x => x.Replace(".generatorSettings", ""))
+                .ToList();
+        }
+
+        public List<string> GetArtists()
+        {
+            return Clips.Where(x => !x.IsSecondary).Select(x => x.Artist).Distinct().ToList();
+        }
+
+        public List<string> GetSections()
+        {
+            return Clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
+        }
+
+
+        public void LoadLibrary(string library, bool clearCache)
+        {
+            var settingFile = Path.Combine(_folder, library + ".generatorSettings.json");
             _generatorSettings = JsonConvert.DeserializeObject<GeneratorSettings>(File.ReadAllText(settingFile));
 
-            if (clearCache || !LoadCache())
-            {
-                Clips = LoadMidi();
-                CalculateScales();
-                MashToScale();
-                MergeChords();
-                MergeRepeatedNotes();
-                CalculateLengths();
-                CalculateBasePhrases();
-                CalculateDrumAverages();
-            }
+            if (!clearCache && LoadCache()) return;
 
+            Clips = LoadMidi();
+            CalculateScales();
+            MashToScale();
+            MergeChords();
+            MergeRepeatedNotes();
+            CalculateLengths();
+            CalculateBasePhrases();
+            CalculateDrumAverages();
             SaveCache();
         }
 
@@ -76,8 +98,6 @@ namespace Halloumi.Notez.Engine.Generator
                 var stream = new FileStream(GetCacheFilename(), FileMode.Open, FileAccess.Read, FileShare.None);
                 Clips = formatter.Deserialize(stream) as List<Clip>;
                 stream.Close();
-
-                Console.WriteLine("Loading clips cache");
 
                 return true;
             }
@@ -858,7 +878,7 @@ namespace Halloumi.Notez.Engine.Generator
                 if (clip.ScaleMatchIncomplete)
                 {
                     clip.Phrase = ScaleHelper.MashNotesToScale(clip.Phrase, clip.Scale);
-                    Console.WriteLine(clip.Name.PadRight(20) + clip.Scale + (clip.ScaleMatchIncomplete ? $"({clip.ScaleMatch.DistanceFromScale})" : ""));
+                    //Console.WriteLine(clip.Name.PadRight(20) + clip.Scale + (clip.ScaleMatchIncomplete ? $"({clip.ScaleMatch.DistanceFromScale})" : ""));
                 }
                 clip.Phrase = ScaleHelper.TransposeToScale(clip.Phrase, clip.Scale, _generatorSettings.Scale);
             }

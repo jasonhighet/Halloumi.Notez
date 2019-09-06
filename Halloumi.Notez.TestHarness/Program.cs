@@ -18,7 +18,8 @@ namespace Halloumi.Notez.TestHarness
         {
             var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\";
 
-            var sourceLibrary = new SectionGenerator(folder, "Death", true);
+            var sourceLibrary = new SectionGenerator(folder);
+            sourceLibrary.LoadLibrary("Death", true);
 
 
             foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
