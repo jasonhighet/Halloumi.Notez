@@ -1165,34 +1165,13 @@ namespace Halloumi.Notez.Engine.Generator
         {
             foreach (var drumClip in DrumClips())
             {
-                var kicks = drumClip.Phrase.Elements.Where(x => DrumHelper.IsBassDrum(x.Note)).ToList();
-                if (kicks.Count < 2)
-                    continue;
+                var duration = drumClip.Phrase.PhraseLength;
 
-                var totalKickDiff =
-                (
-                    from kick in kicks
-                    let next = kicks.Where(x => x.Position > kick.Position).OrderBy(x => x.Position).FirstOrDefault()
-                    where next != null
-                    select next.Position - kick.Position
-                ).Sum();
+                var kickCount = drumClip.Phrase.Elements.Count(x => DrumHelper.IsBassDrum(x.Note) && x.Position < duration);
+                drumClip.AvgDistanceBetweenKicks = kickCount == 0 ? 0 : duration / kickCount;
 
-                drumClip.AvgDistanceBetweenKicks = totalKickDiff / (kicks.Count - 1);
-
-
-                var snares = drumClip.Phrase.Elements.Where(x => DrumHelper.IsSnareDrum(x.Note)).ToList();
-                if (snares.Count < 2)
-                    continue;
-
-                var totalSnareDiff =
-                (
-                    from snare in snares
-                    let next = snares.Where(x => x.Position > snare.Position).OrderBy(x => x.Position).FirstOrDefault()
-                    where next != null
-                    select next.Position - snare.Position
-                ).Sum();
-
-                drumClip.AvgDistanceBetweenSnares = totalSnareDiff / (snares.Count - 1);
+                var snareCount = drumClip.Phrase.Elements.Count(x => DrumHelper.IsSnareDrum(x.Note) && x.Position < duration);
+                drumClip.AvgDistanceBetweenSnares = snareCount == 0 ? 0 : duration / snareCount;
             }
         }
 
