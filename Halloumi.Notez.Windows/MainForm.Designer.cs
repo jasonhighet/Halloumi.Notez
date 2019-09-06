@@ -35,13 +35,14 @@
             this.generateButton = new System.Windows.Forms.Button();
             this.countDropdown = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.riffGenerator1 = new Halloumi.Notez.Windows.RiffGenerator();
             this.seedArtistDropdown = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.filterArtistDropdown = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
             this.seedSectionDropdown = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
+            this.riffGenerator1 = new Halloumi.Notez.Windows.RiffGenerator();
+            this.exploreButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -120,14 +121,6 @@
             this.label2.TabIndex = 5;
             this.label2.Text = "Count";
             // 
-            // riffGenerator1
-            // 
-            this.riffGenerator1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.riffGenerator1.Location = new System.Drawing.Point(0, 0);
-            this.riffGenerator1.Name = "riffGenerator1";
-            this.riffGenerator1.Size = new System.Drawing.Size(603, 231);
-            this.riffGenerator1.TabIndex = 0;
-            // 
             // seedArtistDropdown
             // 
             this.seedArtistDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -191,11 +184,31 @@
             this.label5.TabIndex = 12;
             this.label5.Text = "Seed Section";
             // 
+            // riffGenerator1
+            // 
+            this.riffGenerator1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.riffGenerator1.Location = new System.Drawing.Point(0, 0);
+            this.riffGenerator1.Name = "riffGenerator1";
+            this.riffGenerator1.Size = new System.Drawing.Size(603, 231);
+            this.riffGenerator1.TabIndex = 0;
+            // 
+            // exploreButton
+            // 
+            this.exploreButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.exploreButton.Location = new System.Drawing.Point(397, 180);
+            this.exploreButton.Name = "exploreButton";
+            this.exploreButton.Size = new System.Drawing.Size(131, 28);
+            this.exploreButton.TabIndex = 14;
+            this.exploreButton.Text = "Explore";
+            this.exploreButton.UseVisualStyleBackColor = true;
+            this.exploreButton.Click += new System.EventHandler(this.exploreButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(603, 231);
+            this.Controls.Add(this.exploreButton);
             this.Controls.Add(this.seedSectionDropdown);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.filterArtistDropdown);
@@ -238,6 +251,7 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.ComboBox seedSectionDropdown;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button exploreButton;
     }
 }
 

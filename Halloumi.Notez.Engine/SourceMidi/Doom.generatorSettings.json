@@ -16,7 +16,8 @@
       "DefaultStepDifference": 0,
       "IsDrums": false,
       "IsPrimaryRiff": true,
-      "VelocityStrategy": "Shreddage"
+      "VelocityStrategy": "Shreddage",
+      "RemoveChords": "WhenMajority"
     },
     {
       "Name": "AltGuitar",
@@ -26,7 +27,8 @@
       "DefaultStepDifference": 0,
       "IsDrums": false,
       "IsPrimaryRiff": true,
-      "VelocityStrategy": "Shreddage"
+      "VelocityStrategy": "Shreddage",
+      "RemoveChords": "WhenMajority"
     },
     {
       "Name": "BassGuitar",
@@ -36,7 +38,8 @@
       "DefaultStepDifference": -12,
       "IsDrums": false,
       "IsPrimaryRiff": false,
-      "VelocityStrategy": ""
+      "VelocityStrategy": "",
+      "RemoveChords": "Always"
     },
     {
       "Name": "Drums",

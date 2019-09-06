@@ -36,7 +36,8 @@
       "DefaultStepDifference": -12,
       "IsDrums": false,
       "IsPrimaryRiff": false,
-      "VelocityStrategy": ""
+      "VelocityStrategy": "",
+      "RemoveChords": "Always"
     },
     {
       "Name": "Drums",

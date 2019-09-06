@@ -1,5 +1,6 @@
 ﻿using Halloumi.Notez.Engine.Generator;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -72,6 +73,7 @@ namespace Halloumi.Notez.Windows
             _generator.GetSections().ForEach(x => seedSectionDropdown.Items.Add(x));
             seedSectionDropdown.SelectedIndex = 0;
 
+            var drumAvgs = _generator.GetDrumAvgs();
 
             Console.SetOut(Console.Out);
             var messge = consoleOut.ToString();
@@ -119,6 +121,11 @@ namespace Halloumi.Notez.Windows
             _generator.GenerateRiffs(now, count, sourceFilter);
 
             Cursor = Cursors.Default;
+        }
+
+        private void exploreButton_Click(object sender, EventArgs e)
+        {
+            Process.Start(AppDomain.CurrentDomain.BaseDirectory);
         }
     }
 }

@@ -44,6 +44,14 @@ namespace Halloumi.Notez.Engine.Generator
             return Clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
         }
 
+        public List<string> GetDrumAvgs()
+        {
+            return Clips.Where(x => !x.IsSecondary)
+                .Select(x => Math.Round(x.AvgDistanceBetweenKicks, 0, MidpointRounding.AwayFromZero).ToString("00") + "," + Math.Round(x.AvgDistanceBetweenSnares, 0, MidpointRounding.AwayFromZero).ToString("00"))
+                .Distinct()
+                .ToList();
+        }
+
 
         public void LoadLibrary(string library, bool clearCache)
         {
@@ -58,6 +66,7 @@ namespace Halloumi.Notez.Engine.Generator
             MergeChords();
             MergeRepeatedNotes();
             CalculateLengths();
+            RemoveChords();
             CalculateBasePhrases();
             CalculateDrumAverages();
             SaveCache();
@@ -482,6 +491,10 @@ namespace Halloumi.Notez.Engine.Generator
                     {
                         element.Note += 12;
                     }
+
+                    PhraseHelper.MergeChords(channelPhrase);
+                    RemoveChords(channelPhrase, channel.RemoveChords);
+                    
                 }
 
                 if (channelPhrase == null)
@@ -501,6 +514,49 @@ namespace Halloumi.Notez.Engine.Generator
 
             PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
             MidiHelper.SaveToMidi(section, filename);
+        }
+
+        private void RemoveChords()
+    {
+            foreach (var channel in _generatorSettings.Channels)
+            {
+                if(string.IsNullOrEmpty(channel.RemoveChords))
+                    continue;
+
+                var channelClips = Clips.Where(x => x.ClipType == channel.Name).ToList();
+                foreach (var clip in channelClips)
+                {
+                    RemoveChords(clip.Phrase, channel.RemoveChords);
+                }
+            }
+
+        }
+
+        private static void RemoveChords(Phrase phrase, string removeChordStrategy)
+        {
+            if(string.IsNullOrEmpty(removeChordStrategy))
+                return;
+
+            if (removeChordStrategy == "WhenMajority")
+            {
+                if ((phrase.Elements.Where(x => x.IsChord).Sum(x => x.Duration) / phrase.PhraseLength) > .8M)
+                {
+                    foreach (var element in phrase.Elements)
+                    {
+                        if (element.IsChord)
+                            element.ChordNotes.Clear();
+                    }
+                }
+            }
+
+            if (removeChordStrategy == "Always")
+            {
+                foreach (var element in phrase.Elements)
+                {
+                    if(element.IsChord)
+                        element.ChordNotes.Clear();
+                }
+            }
         }
 
 
@@ -979,7 +1035,7 @@ namespace Halloumi.Notez.Engine.Generator
                     clip.Scale = primaryScale;
                     if (clip.MatchingScales.Select(x => x.Scale.Name).Contains(primaryScale)) continue;
 
-                    clip.ScaleMatch = ScaleHelper.MatchPhraseToScale(clip.Phrase, primaryScale);
+                    ScaleHelper.MatchPhraseToScale(clip.Phrase, primaryScale);
                     clip.ScaleMatchIncomplete = true;
                 }
             }
@@ -1178,7 +1234,6 @@ namespace Halloumi.Notez.Engine.Generator
             public List<ScaleHelper.ScaleMatch> MatchingScales { get; set; }
             public string Scale { get; set; }
             public bool ScaleMatchIncomplete { get; set; }
-            public ScaleHelper.ScaleMatch ScaleMatch { get; set; }
             public int BaseIntervalDiff { get; set; }
 
             public string ClipType { get; set; }
@@ -1244,7 +1299,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             public class Channel
             {
-                public Channel(string name, int midiChannel, MidiInstrument instrument, string fileEnding, int defaultStepDifference = 0, bool primaryChannel = false, string velocityStrategy = "")
+                public Channel(string name, int midiChannel, MidiInstrument instrument, string fileEnding, int defaultStepDifference = 0, bool primaryChannel = false, string velocityStrategy = "", string removeChords = "")
                 {
                     Name = name;
                     MidiChannel = midiChannel;
@@ -1253,6 +1308,7 @@ namespace Halloumi.Notez.Engine.Generator
                     DefaultStepDifference = defaultStepDifference;
                     IsPrimaryRiff = primaryChannel;
                     VelocityStrategy = velocityStrategy;
+                    RemoveChords = removeChords;
                 }
 
                 public string Name { get; set; }
@@ -1270,6 +1326,8 @@ namespace Halloumi.Notez.Engine.Generator
                 public bool IsPrimaryRiff { get; set; }
 
                 public string VelocityStrategy { get; set; }
+
+                public string RemoveChords { get; set; }
             }
         }
     }
