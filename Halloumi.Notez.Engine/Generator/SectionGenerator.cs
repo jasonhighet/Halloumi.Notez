@@ -44,7 +44,7 @@ namespace Halloumi.Notez.Engine.Generator
             return Clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
         }
 
-        public List<string> GetDrumAvgs()
+        public List<string> GetDrumPatterns()
         {
             return Clips.Where(x => !x.IsSecondary)
                 .Select(x => Math.Round(x.AvgDistanceBetweenKicks, 0, MidpointRounding.AwayFromZero).ToString("00") + "," + Math.Round(x.AvgDistanceBetweenSnares, 0, MidpointRounding.AwayFromZero).ToString("00"))
@@ -67,8 +67,8 @@ namespace Halloumi.Notez.Engine.Generator
             MergeRepeatedNotes();
             CalculateLengths();
             RemoveChords();
-            CalculateBasePhrases();
             CalculateDrumAverages();
+            CalculateBasePhrases();
             SaveCache();
         }
 
@@ -570,6 +570,8 @@ namespace Halloumi.Notez.Engine.Generator
                 .Where(x => string.IsNullOrEmpty(filter.SeedArtist) || x.Artist == filter.SeedArtist)
                 .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
                 .Where(x => string.IsNullOrEmpty(filter.SeedSection) || x.Section == filter.SeedSection)
+                .Where(x => filter.AvgDistanceBetweenKicks == 0 || Math.Round(x.AvgDistanceBetweenKicks, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenKicks)
+                .Where(x => filter.AvgDistanceBetweenSnares == 0 || Math.Round(x.AvgDistanceBetweenSnares, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenSnares)
                 .OrderBy(x => _random.Next())
                 .Take(1));
 
@@ -589,6 +591,8 @@ namespace Halloumi.Notez.Engine.Generator
                 .Where(x => x != inititialClip)
                 .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
                 .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
+                //.Where(x => filter.AvgDistanceBetweenKicks == 0 || Math.Round(x.AvgDistanceBetweenKicks, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenKicks)
+                //.Where(x => filter.AvgDistanceBetweenSnares == 0 || Math.Round(x.AvgDistanceBetweenSnares, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenSnares)
                 .OrderBy(x => Math.Abs(x.AvgNotePitch - inititialClip.AvgNotePitch))
                 .ThenBy(x => Math.Abs(x.AvgNoteDuration - inititialClip.AvgNoteDuration))
                 .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
@@ -1276,6 +1280,9 @@ namespace Halloumi.Notez.Engine.Generator
             public string SeedSection { get; set; }
             public string SeedArtist { get; set; }
             public string ArtistFilter { get; set; }
+            public decimal AvgDistanceBetweenKicks { get; set; }
+
+            public decimal AvgDistanceBetweenSnares { get; set; }
         }
 
         public class GeneratorSettings

@@ -41,8 +41,10 @@
             this.label4 = new System.Windows.Forms.Label();
             this.seedSectionDropdown = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.riffGenerator1 = new Halloumi.Notez.Windows.RiffGenerator();
             this.exploreButton = new System.Windows.Forms.Button();
+            this.riffGenerator1 = new Halloumi.Notez.Windows.RiffGenerator();
+            this.drumPatternDropdown = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -92,7 +94,7 @@
             // generateButton
             // 
             this.generateButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.generateButton.Location = new System.Drawing.Point(260, 179);
+            this.generateButton.Location = new System.Drawing.Point(260, 211);
             this.generateButton.Name = "generateButton";
             this.generateButton.Size = new System.Drawing.Size(131, 28);
             this.generateButton.TabIndex = 7;
@@ -105,7 +107,7 @@
             this.countDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.countDropdown.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.countDropdown.FormattingEnabled = true;
-            this.countDropdown.Location = new System.Drawing.Point(109, 180);
+            this.countDropdown.Location = new System.Drawing.Point(109, 212);
             this.countDropdown.Name = "countDropdown";
             this.countDropdown.Size = new System.Drawing.Size(144, 25);
             this.countDropdown.Sorted = true;
@@ -115,7 +117,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(12, 181);
+            this.label2.Location = new System.Drawing.Point(12, 213);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(47, 19);
             this.label2.TabIndex = 5;
@@ -184,18 +186,10 @@
             this.label5.TabIndex = 12;
             this.label5.Text = "Seed Section";
             // 
-            // riffGenerator1
-            // 
-            this.riffGenerator1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.riffGenerator1.Location = new System.Drawing.Point(0, 0);
-            this.riffGenerator1.Name = "riffGenerator1";
-            this.riffGenerator1.Size = new System.Drawing.Size(603, 231);
-            this.riffGenerator1.TabIndex = 0;
-            // 
             // exploreButton
             // 
             this.exploreButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.exploreButton.Location = new System.Drawing.Point(397, 180);
+            this.exploreButton.Location = new System.Drawing.Point(397, 212);
             this.exploreButton.Name = "exploreButton";
             this.exploreButton.Size = new System.Drawing.Size(131, 28);
             this.exploreButton.TabIndex = 14;
@@ -203,11 +197,42 @@
             this.exploreButton.UseVisualStyleBackColor = true;
             this.exploreButton.Click += new System.EventHandler(this.exploreButton_Click);
             // 
+            // riffGenerator1
+            // 
+            this.riffGenerator1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.riffGenerator1.Location = new System.Drawing.Point(0, 0);
+            this.riffGenerator1.Name = "riffGenerator1";
+            this.riffGenerator1.Size = new System.Drawing.Size(603, 249);
+            this.riffGenerator1.TabIndex = 0;
+            // 
+            // drumPatternDropdown
+            // 
+            this.drumPatternDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.drumPatternDropdown.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.drumPatternDropdown.FormattingEnabled = true;
+            this.drumPatternDropdown.Location = new System.Drawing.Point(109, 173);
+            this.drumPatternDropdown.Name = "drumPatternDropdown";
+            this.drumPatternDropdown.Size = new System.Drawing.Size(144, 25);
+            this.drumPatternDropdown.Sorted = true;
+            this.drumPatternDropdown.TabIndex = 16;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(12, 176);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(93, 19);
+            this.label6.TabIndex = 15;
+            this.label6.Text = "Drum Pattern";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(603, 231);
+            this.ClientSize = new System.Drawing.Size(603, 249);
+            this.Controls.Add(this.drumPatternDropdown);
+            this.Controls.Add(this.label6);
             this.Controls.Add(this.exploreButton);
             this.Controls.Add(this.seedSectionDropdown);
             this.Controls.Add(this.label5);
@@ -252,6 +277,8 @@
         private System.Windows.Forms.ComboBox seedSectionDropdown;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button exploreButton;
+        private System.Windows.Forms.ComboBox drumPatternDropdown;
+        private System.Windows.Forms.Label label6;
     }
 }
 

@@ -73,7 +73,10 @@ namespace Halloumi.Notez.Windows
             _generator.GetSections().ForEach(x => seedSectionDropdown.Items.Add(x));
             seedSectionDropdown.SelectedIndex = 0;
 
-            var drumAvgs = _generator.GetDrumAvgs();
+            drumPatternDropdown.Items.Clear();
+            drumPatternDropdown.Items.Add("");
+            _generator.GetDrumPatterns().ForEach(x => drumPatternDropdown.Items.Add(x));
+            drumPatternDropdown.SelectedIndex = 0;
 
             Console.SetOut(Console.Out);
             var messge = consoleOut.ToString();
@@ -110,6 +113,7 @@ namespace Halloumi.Notez.Windows
             var count = int.Parse(countDropdown.Items[countDropdown.SelectedIndex].ToString());
 
 
+
             var sourceFilter = new SectionGenerator.SourceFilter
             {
                 SeedArtist = seedArtistDropdown.Items[seedArtistDropdown.SelectedIndex].ToString(),
@@ -117,6 +121,13 @@ namespace Halloumi.Notez.Windows
                 SeedSection = seedSectionDropdown.Items[seedSectionDropdown.SelectedIndex].ToString()
             };
 
+
+            var drumPattern = drumPatternDropdown.Items[drumPatternDropdown.SelectedIndex].ToString();
+            if (drumPattern != "")
+            {
+                sourceFilter.AvgDistanceBetweenKicks = Convert.ToDecimal(drumPattern.Split(',')[0]);
+                sourceFilter.AvgDistanceBetweenSnares =  Convert.ToDecimal(drumPattern.Split(',')[1]);
+            }
 
             _generator.GenerateRiffs(now, count, sourceFilter);
 
