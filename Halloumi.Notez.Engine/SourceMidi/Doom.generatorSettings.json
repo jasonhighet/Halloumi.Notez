@@ -17,7 +17,8 @@
       "IsDrums": false,
       "IsPrimaryRiff": true,
       "VelocityStrategy": "Shreddage",
-      "RemoveChords": "WhenMajority"
+      "MaximumNotesInChord": 3,
+      "ConvertChordsToNotesCoverage": 0.5
     },
     {
       "Name": "AltGuitar",
@@ -28,7 +29,8 @@
       "IsDrums": false,
       "IsPrimaryRiff": true,
       "VelocityStrategy": "Shreddage",
-      "RemoveChords": "WhenMajority"
+      "MaximumNotesInChord": 3,
+      "ConvertChordsToNotesCoverage": 0.5
     },
     {
       "Name": "BassGuitar",
@@ -39,7 +41,7 @@
       "IsDrums": false,
       "IsPrimaryRiff": false,
       "VelocityStrategy": "",
-      "RemoveChords": "Always"
+      "MaximumNotesInChord": 1
     },
     {
       "Name": "Drums",

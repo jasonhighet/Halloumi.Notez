@@ -66,7 +66,7 @@ namespace Halloumi.Notez.Engine.Generator
             MergeChords();
             MergeRepeatedNotes();
             CalculateLengths();
-            RemoveChords();
+            ProcessChords();
             CalculateDrumAverages();
             CalculateBasePhrases();
             SaveCache();
@@ -493,7 +493,7 @@ namespace Halloumi.Notez.Engine.Generator
                     }
 
                     PhraseHelper.MergeChords(channelPhrase);
-                    RemoveChords(channelPhrase, channel.RemoveChords);
+                    ProcessChords(channel, channelPhrase);
                     
                 }
 
@@ -516,49 +516,45 @@ namespace Halloumi.Notez.Engine.Generator
             MidiHelper.SaveToMidi(section, filename);
         }
 
-        private void RemoveChords()
+        private void ProcessChords()
     {
             foreach (var channel in _generatorSettings.Channels)
             {
-                if(string.IsNullOrEmpty(channel.RemoveChords))
-                    continue;
-
-                var channelClips = Clips.Where(x => x.ClipType == channel.Name).ToList();
-                foreach (var clip in channelClips)
+                if (channel.MaximumNotesInChord > 0 || channel.ConvertChordsToNotesCoverage > 0)
                 {
-                    RemoveChords(clip.Phrase, channel.RemoveChords);
-                }
-            }
-
-        }
-
-        private static void RemoveChords(Phrase phrase, string removeChordStrategy)
-        {
-            if(string.IsNullOrEmpty(removeChordStrategy))
-                return;
-
-            if (removeChordStrategy == "WhenMajority")
-            {
-                if ((phrase.Elements.Where(x => x.IsChord).Sum(x => x.Duration) / phrase.PhraseLength) > .8M)
-                {
-                    foreach (var element in phrase.Elements)
+                    var channelClips = Clips.Where(x => x.ClipType == channel.Name).ToList();
+                    foreach (var clip in channelClips)
                     {
-                        if (element.IsChord)
-                            element.ChordNotes.Clear();
+                        ProcessChords(channel, clip.Phrase);
                     }
                 }
             }
 
-            if (removeChordStrategy == "Always")
+        }
+
+        private static void ProcessChords(GeneratorSettings.Channel channel, Phrase phrase)
+        {
+            if (channel.MaximumNotesInChord > 0)
             {
-                foreach (var element in phrase.Elements)
+                foreach (var element in phrase.Elements.Where(x => x.IsChord && x.ChordNotes.Count > channel.MaximumNotesInChord))
                 {
-                    if(element.IsChord)
+                    element.ChordNotes.RemoveAll(x => element.ChordNotes.IndexOf(x) >= channel.MaximumNotesInChord);
+                }
+            }
+
+            if (channel.ConvertChordsToNotesCoverage > 0)
+            {
+                var chordDuration = phrase.Elements.Where(x => x.IsChord).Sum(x => x.Duration);
+                var coverage = chordDuration / phrase.PhraseLength;
+                if (coverage > channel.ConvertChordsToNotesCoverage)
+                {
+                    foreach (var element in phrase.Elements)
+                    {
                         element.ChordNotes.Clear();
+                    }
                 }
             }
         }
-
 
         private List<Clip> LoadSourceBasePhraseClips(int count, SourceFilter filter)
         {
@@ -1285,17 +1281,8 @@ namespace Halloumi.Notez.Engine.Generator
 
             public class Channel
             {
-                public Channel(string name, int midiChannel, MidiInstrument instrument, string fileEnding, int defaultStepDifference = 0, bool primaryChannel = false, string velocityStrategy = "", string removeChords = "")
-                {
-                    Name = name;
-                    MidiChannel = midiChannel;
-                    Instrument = instrument;
-                    FileEnding = fileEnding;
-                    DefaultStepDifference = defaultStepDifference;
-                    IsPrimaryRiff = primaryChannel;
-                    VelocityStrategy = velocityStrategy;
-                    RemoveChords = removeChords;
-                }
+                public Channel()
+                { }
 
                 public string Name { get; set; }
 
@@ -1313,7 +1300,9 @@ namespace Halloumi.Notez.Engine.Generator
 
                 public string VelocityStrategy { get; set; }
 
-                public string RemoveChords { get; set; }
+                public int MaximumNotesInChord { get; set; }
+
+                public decimal ConvertChordsToNotesCoverage { get; set; }
             }
         }
     }
