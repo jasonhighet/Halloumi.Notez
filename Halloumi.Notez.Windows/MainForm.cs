@@ -162,7 +162,6 @@ namespace Halloumi.Notez.Windows
                 File.WriteAllLines(playlistName, midiFiles);
                 Process.Start(playlistName);
                 Thread.Sleep(500);
-                File.Delete(playlistName);
             }
 
             Cursor = Cursors.Default;
