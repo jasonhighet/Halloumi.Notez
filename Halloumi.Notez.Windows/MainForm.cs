@@ -22,42 +22,49 @@ namespace Halloumi.Notez.Windows
 
         private void ReloadButton_Click(object sender, EventArgs e)
         {
-            Cursor = Cursors.WaitCursor;
-            var consoleOut = new StringWriter();
-            Console.SetOut(consoleOut);
-
-            _generator.LoadLibrary(CurrentLibrary(), true);
-
-            Console.SetOut(Console.Out);
-            var message = consoleOut.ToString();
-            if(message.Trim() != "")
-                MessageBox.Show(message);
-            Cursor = Cursors.Default;
+            LoadLibrary(true);
         }
 
         private void MergeButton_Click(object sender, EventArgs e)
         {
+            if(!LoadLibrary(true))
+                return;
+
+            if(!MergeClips())
+                return;
+
+            LoadLibrary(true);
+        }
+
+        private bool MergeClips()
+        {
             Cursor = Cursors.WaitCursor;
             var consoleOut = new StringWriter();
             Console.SetOut(consoleOut);
-            
+
             _generator.MergeSourceClips();
-            _generator.LoadLibrary(CurrentLibrary(), true);
 
             Console.SetOut(Console.Out);
             var message = consoleOut.ToString();
             if (message.Trim() != "")
                 MessageBox.Show(message);
             Cursor = Cursors.Default;
+
+            return (message == "");
         }
 
         private void LibraryDropdown_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LoadLibrary(false);
+        }
+
+        private bool LoadLibrary(bool clearCache)
         {
             Cursor = Cursors.WaitCursor;
             var consoleOut = new StringWriter();
             Console.SetOut(consoleOut);
 
-            _generator.LoadLibrary(CurrentLibrary(), false);
+            _generator.LoadLibrary(CurrentLibrary(), clearCache);
 
             seedArtistDropdown.Items.Clear();
             seedArtistDropdown.Items.Add("");
@@ -84,6 +91,8 @@ namespace Halloumi.Notez.Windows
             if (message.Trim() != "")
                 MessageBox.Show(message);
             Cursor = Cursors.Default;
+
+            return (message == "");
         }
 
         private string CurrentLibrary()
@@ -144,15 +153,20 @@ namespace Halloumi.Notez.Windows
         {
             Cursor = Cursors.WaitCursor;
 
-            var midiFiles = Directory.EnumerateFiles(".", "*.mid").Select(Path.GetFullPath);
-            var playlistName = "Notez.mpl";
+            var midiFiles = Directory.EnumerateFiles(".", "*.mid").Select(Path.GetFullPath).ToList();
 
-            File.WriteAllLines(playlistName, midiFiles);
-            Process.Start(playlistName);
-            Thread.Sleep(500);
-            File.Delete(playlistName);
+            if (midiFiles.Count > 0)
+            {
+                const string playlistName = "Notez.mpl";
+
+                File.WriteAllLines(playlistName, midiFiles);
+                Process.Start(playlistName);
+                Thread.Sleep(500);
+                File.Delete(playlistName);
+            }
 
             Cursor = Cursors.Default;
+
         }
     }
 }
