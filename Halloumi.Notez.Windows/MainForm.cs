@@ -2,7 +2,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace Halloumi.Notez.Windows
@@ -19,7 +20,7 @@ namespace Halloumi.Notez.Windows
             InitializeComponent();
         }
 
-        private void reloadButton_Click(object sender, EventArgs e)
+        private void ReloadButton_Click(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
             var consoleOut = new StringWriter();
@@ -28,13 +29,13 @@ namespace Halloumi.Notez.Windows
             _generator.LoadLibrary(CurrentLibrary(), true);
 
             Console.SetOut(Console.Out);
-            var messge = consoleOut.ToString();
-            if(messge.Trim() != "")
-                MessageBox.Show(messge);
+            var message = consoleOut.ToString();
+            if(message.Trim() != "")
+                MessageBox.Show(message);
             Cursor = Cursors.Default;
         }
 
-        private void mergeButton_Click(object sender, EventArgs e)
+        private void MergeButton_Click(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
             var consoleOut = new StringWriter();
@@ -44,13 +45,13 @@ namespace Halloumi.Notez.Windows
             _generator.LoadLibrary(CurrentLibrary(), true);
 
             Console.SetOut(Console.Out);
-            var messge = consoleOut.ToString();
-            if (messge.Trim() != "")
-                MessageBox.Show(messge);
+            var message = consoleOut.ToString();
+            if (message.Trim() != "")
+                MessageBox.Show(message);
             Cursor = Cursors.Default;
         }
 
-        private void libraryDropdown_SelectedIndexChanged(object sender, EventArgs e)
+        private void LibraryDropdown_SelectedIndexChanged(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
             var consoleOut = new StringWriter();
@@ -79,9 +80,9 @@ namespace Halloumi.Notez.Windows
             drumPatternDropdown.SelectedIndex = 0;
 
             Console.SetOut(Console.Out);
-            var messge = consoleOut.ToString();
-            if (messge.Trim() != "")
-                MessageBox.Show(messge);
+            var message = consoleOut.ToString();
+            if (message.Trim() != "")
+                MessageBox.Show(message);
             Cursor = Cursors.Default;
         }
 
@@ -103,7 +104,7 @@ namespace Halloumi.Notez.Windows
             libraryDropdown.SelectedIndex = 0;
         }
 
-        private void generateButton_Click(object sender, EventArgs e)
+        private void GenerateButton_Click(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
 
@@ -134,9 +135,24 @@ namespace Halloumi.Notez.Windows
             Cursor = Cursors.Default;
         }
 
-        private void exploreButton_Click(object sender, EventArgs e)
+        private void ExploreButton_Click(object sender, EventArgs e)
         {
             Process.Start(AppDomain.CurrentDomain.BaseDirectory);
+        }
+
+        private void PlayButton_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            var midiFiles = Directory.EnumerateFiles(".", "*.mid").Select(Path.GetFullPath);
+            var playlistName = "Notez.mpl";
+
+            File.WriteAllLines(playlistName, midiFiles);
+            Process.Start(playlistName);
+            Thread.Sleep(500);
+            File.Delete(playlistName);
+
+            Cursor = Cursors.Default;
         }
     }
 }

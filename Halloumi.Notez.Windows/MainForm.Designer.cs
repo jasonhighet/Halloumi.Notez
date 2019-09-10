@@ -45,6 +45,7 @@
             this.riffGenerator1 = new Halloumi.Notez.Windows.RiffGenerator();
             this.drumPatternDropdown = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
+            this.playButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -67,7 +68,7 @@
             this.libraryDropdown.Size = new System.Drawing.Size(144, 25);
             this.libraryDropdown.Sorted = true;
             this.libraryDropdown.TabIndex = 2;
-            this.libraryDropdown.SelectedIndexChanged += new System.EventHandler(this.libraryDropdown_SelectedIndexChanged);
+            this.libraryDropdown.SelectedIndexChanged += new System.EventHandler(this.LibraryDropdown_SelectedIndexChanged);
             // 
             // mergeButton
             // 
@@ -78,7 +79,7 @@
             this.mergeButton.TabIndex = 3;
             this.mergeButton.Text = "Merge Source";
             this.mergeButton.UseVisualStyleBackColor = true;
-            this.mergeButton.Click += new System.EventHandler(this.mergeButton_Click);
+            this.mergeButton.Click += new System.EventHandler(this.MergeButton_Click);
             // 
             // reloadButton
             // 
@@ -89,18 +90,18 @@
             this.reloadButton.TabIndex = 4;
             this.reloadButton.Text = "Reload";
             this.reloadButton.UseVisualStyleBackColor = true;
-            this.reloadButton.Click += new System.EventHandler(this.reloadButton_Click);
+            this.reloadButton.Click += new System.EventHandler(this.ReloadButton_Click);
             // 
             // generateButton
             // 
             this.generateButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.generateButton.Location = new System.Drawing.Point(260, 211);
+            this.generateButton.Location = new System.Drawing.Point(109, 258);
             this.generateButton.Name = "generateButton";
             this.generateButton.Size = new System.Drawing.Size(131, 28);
             this.generateButton.TabIndex = 7;
             this.generateButton.Text = "Generate!";
             this.generateButton.UseVisualStyleBackColor = true;
-            this.generateButton.Click += new System.EventHandler(this.generateButton_Click);
+            this.generateButton.Click += new System.EventHandler(this.GenerateButton_Click);
             // 
             // countDropdown
             // 
@@ -189,20 +190,20 @@
             // exploreButton
             // 
             this.exploreButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.exploreButton.Location = new System.Drawing.Point(397, 212);
+            this.exploreButton.Location = new System.Drawing.Point(260, 258);
             this.exploreButton.Name = "exploreButton";
             this.exploreButton.Size = new System.Drawing.Size(131, 28);
             this.exploreButton.TabIndex = 14;
             this.exploreButton.Text = "Explore";
             this.exploreButton.UseVisualStyleBackColor = true;
-            this.exploreButton.Click += new System.EventHandler(this.exploreButton_Click);
+            this.exploreButton.Click += new System.EventHandler(this.ExploreButton_Click);
             // 
             // riffGenerator1
             // 
             this.riffGenerator1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.riffGenerator1.Location = new System.Drawing.Point(0, 0);
             this.riffGenerator1.Name = "riffGenerator1";
-            this.riffGenerator1.Size = new System.Drawing.Size(603, 249);
+            this.riffGenerator1.Size = new System.Drawing.Size(849, 350);
             this.riffGenerator1.TabIndex = 0;
             // 
             // drumPatternDropdown
@@ -226,11 +227,23 @@
             this.label6.TabIndex = 15;
             this.label6.Text = "Drum Pattern";
             // 
+            // playButton
+            // 
+            this.playButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.playButton.Location = new System.Drawing.Point(406, 258);
+            this.playButton.Name = "playButton";
+            this.playButton.Size = new System.Drawing.Size(131, 28);
+            this.playButton.TabIndex = 17;
+            this.playButton.Text = "Play";
+            this.playButton.UseVisualStyleBackColor = true;
+            this.playButton.Click += new System.EventHandler(this.PlayButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(603, 249);
+            this.ClientSize = new System.Drawing.Size(849, 350);
+            this.Controls.Add(this.playButton);
             this.Controls.Add(this.drumPatternDropdown);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.exploreButton);
@@ -279,6 +292,7 @@
         private System.Windows.Forms.Button exploreButton;
         private System.Windows.Forms.ComboBox drumPatternDropdown;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Button playButton;
     }
 }
 
