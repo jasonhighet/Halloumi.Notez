@@ -580,19 +580,19 @@ namespace Halloumi.Notez.Engine.Generator
                     .Take(1));
             }
 
-            var inititialClip = clips[0];
-            var minDuration = inititialClip.Phrase.Elements.Min(x => x.Duration);
+            var initialClip = clips[0];
+            var minDuration = initialClip.Phrase.Elements.Min(x => x.Duration);
 
             clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase")
-                .Where(x => x != inititialClip)
+                .Where(x => x != initialClip)
                 .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
                 .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
                 //.Where(x => filter.AvgDistanceBetweenKicks == 0 || Math.Round(x.AvgDistanceBetweenKicks, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenKicks)
                 //.Where(x => filter.AvgDistanceBetweenSnares == 0 || Math.Round(x.AvgDistanceBetweenSnares, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenSnares)
-                .OrderBy(x => Math.Abs(x.AvgNotePitch - inititialClip.AvgNotePitch))
-                .ThenBy(x => Math.Abs(x.AvgNoteDuration - inititialClip.AvgNoteDuration))
-                .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
-                .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
+                .OrderBy(x => Math.Abs(x.AvgNotePitch - initialClip.AvgNotePitch))
+                .ThenBy(x => Math.Abs(x.AvgNoteDuration - initialClip.AvgNoteDuration))
+                .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - initialClip.AvgDistanceBetweenSnares))
+                .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - initialClip.AvgDistanceBetweenKicks))
                 .Take(10)
                 .OrderBy(x => _random.Next())
                 .Take(count - 1)
@@ -601,13 +601,13 @@ namespace Halloumi.Notez.Engine.Generator
             var missing = count - clips.Count;
             if (missing > 0)
                 clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase")
-                    .Where(x => x != inititialClip)
+                    .Where(x => x != initialClip)
                     .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
                     .Where(x => x.Phrase.Elements.Min(y => y.Duration) > minDuration)
-                    .OrderBy(x => Math.Abs(x.AvgNotePitch - inititialClip.AvgNotePitch))
-                    .ThenBy(x => Math.Abs(x.AvgNoteDuration - inititialClip.AvgNoteDuration))
-                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - inititialClip.AvgDistanceBetweenSnares))
-                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - inititialClip.AvgDistanceBetweenKicks))
+                    .OrderBy(x => Math.Abs(x.AvgNotePitch - initialClip.AvgNotePitch))
+                    .ThenBy(x => Math.Abs(x.AvgNoteDuration - initialClip.AvgNoteDuration))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - initialClip.AvgDistanceBetweenSnares))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - initialClip.AvgDistanceBetweenKicks))
                     .Take(10)
                     .OrderBy(x => _random.Next())
                     .Take(missing)
@@ -1281,9 +1281,6 @@ namespace Halloumi.Notez.Engine.Generator
 
             public class Channel
             {
-                public Channel()
-                { }
-
                 public string Name { get; set; }
 
                 public int MidiChannel { get; set; }

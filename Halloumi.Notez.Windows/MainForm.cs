@@ -1,8 +1,10 @@
 ﻿using Halloumi.Notez.Engine.Generator;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace Halloumi.Notez.Windows
@@ -10,6 +12,7 @@ namespace Halloumi.Notez.Windows
     public partial class MainForm : Form
     {
         private const string Folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\";
+        private const string GoodFolder = @"..\..\Good\";
 
         private readonly SectionGenerator _generator = new SectionGenerator(Folder);
 
@@ -19,44 +22,51 @@ namespace Halloumi.Notez.Windows
             InitializeComponent();
         }
 
-        private void reloadButton_Click(object sender, EventArgs e)
+        private void ReloadButton_Click(object sender, EventArgs e)
         {
-            Cursor = Cursors.WaitCursor;
-            var consoleOut = new StringWriter();
-            Console.SetOut(consoleOut);
-
-            _generator.LoadLibrary(CurrentLibrary(), true);
-
-            Console.SetOut(Console.Out);
-            var messge = consoleOut.ToString();
-            if(messge.Trim() != "")
-                MessageBox.Show(messge);
-            Cursor = Cursors.Default;
+            LoadLibrary(true);
         }
 
-        private void mergeButton_Click(object sender, EventArgs e)
+        private void MergeButton_Click(object sender, EventArgs e)
+        {
+            if(!LoadLibrary(true))
+                return;
+
+            if(!MergeClips())
+                return;
+
+            LoadLibrary(true);
+        }
+
+        private bool MergeClips()
         {
             Cursor = Cursors.WaitCursor;
             var consoleOut = new StringWriter();
             Console.SetOut(consoleOut);
-            
+
             _generator.MergeSourceClips();
-            _generator.LoadLibrary(CurrentLibrary(), true);
 
             Console.SetOut(Console.Out);
-            var messge = consoleOut.ToString();
-            if (messge.Trim() != "")
-                MessageBox.Show(messge);
+            var message = consoleOut.ToString();
+            if (message.Trim() != "")
+                MessageBox.Show(message);
             Cursor = Cursors.Default;
+
+            return (message == "");
         }
 
-        private void libraryDropdown_SelectedIndexChanged(object sender, EventArgs e)
+        private void LibraryDropdown_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LoadLibrary(false);
+        }
+
+        private bool LoadLibrary(bool clearCache)
         {
             Cursor = Cursors.WaitCursor;
             var consoleOut = new StringWriter();
             Console.SetOut(consoleOut);
 
-            _generator.LoadLibrary(CurrentLibrary(), false);
+            _generator.LoadLibrary(CurrentLibrary(), clearCache);
 
             seedArtistDropdown.Items.Clear();
             seedArtistDropdown.Items.Add("");
@@ -79,10 +89,12 @@ namespace Halloumi.Notez.Windows
             drumPatternDropdown.SelectedIndex = 0;
 
             Console.SetOut(Console.Out);
-            var messge = consoleOut.ToString();
-            if (messge.Trim() != "")
-                MessageBox.Show(messge);
+            var message = consoleOut.ToString();
+            if (message.Trim() != "")
+                MessageBox.Show(message);
             Cursor = Cursors.Default;
+
+            return (message == "");
         }
 
         private string CurrentLibrary()
@@ -101,13 +113,15 @@ namespace Halloumi.Notez.Windows
 
             _generator.GetLibraries().ForEach(x => libraryDropdown.Items.Add(x));
             libraryDropdown.SelectedIndex = 0;
+
+            LoadFilesList();
         }
 
-        private void generateButton_Click(object sender, EventArgs e)
+        private void GenerateButton_Click(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
 
-            foreach (var midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
+            foreach (var midiFile in GetMidiFiles()) File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
 
             var count = int.Parse(countDropdown.Items[countDropdown.SelectedIndex].ToString());
@@ -131,12 +145,56 @@ namespace Halloumi.Notez.Windows
 
             _generator.GenerateRiffs(now, count, sourceFilter);
 
+            LoadFilesList();
+
             Cursor = Cursors.Default;
         }
 
-        private void exploreButton_Click(object sender, EventArgs e)
+        private void LoadFilesList()
+        {
+            FilesListBox.Items.Clear();
+            foreach (var midiFile in GetMidiFiles()) FilesListBox.Items.Add(Path.GetFileName(midiFile) + "");
+        }
+
+        private void ExploreButton_Click(object sender, EventArgs e)
         {
             Process.Start(AppDomain.CurrentDomain.BaseDirectory);
+        }
+
+        private void PlayButton_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            var midiFiles = GetMidiFiles();
+
+            if (midiFiles.Count > 0)
+            {
+                const string playlistName = "Notez.mpl";
+
+                File.WriteAllLines(playlistName, midiFiles);
+                Process.Start(playlistName);
+            }
+
+            Cursor = Cursors.Default;
+
+        }
+
+        private static List<string> GetMidiFiles()
+        {
+            return Directory.EnumerateFiles(".", "*.mid").Select(Path.GetFullPath).ToList();
+        }
+
+        private void GoodButton_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            var sourceFileName = FilesListBox.SelectedItem.ToString();
+            var destFileName = Path.Combine(Path.Combine(GoodFolder, CurrentLibrary()), sourceFileName);
+            File.Move(sourceFileName, destFileName);
+
+            LoadFilesList();
+
+            Cursor = Cursors.Default;
         }
     }
 }
