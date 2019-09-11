@@ -1,5 +1,6 @@
 ﻿using Halloumi.Notez.Engine.Generator;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace Halloumi.Notez.Windows
     public partial class MainForm : Form
     {
         private const string Folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\";
+        private const string GoodFolder = @"..\..\Good\";
 
         private readonly SectionGenerator _generator = new SectionGenerator(Folder);
 
@@ -111,13 +113,15 @@ namespace Halloumi.Notez.Windows
 
             _generator.GetLibraries().ForEach(x => libraryDropdown.Items.Add(x));
             libraryDropdown.SelectedIndex = 0;
+
+            LoadFilesList();
         }
 
         private void GenerateButton_Click(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
 
-            foreach (var midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
+            foreach (var midiFile in GetMidiFiles()) File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
 
             var count = int.Parse(countDropdown.Items[countDropdown.SelectedIndex].ToString());
@@ -141,7 +145,15 @@ namespace Halloumi.Notez.Windows
 
             _generator.GenerateRiffs(now, count, sourceFilter);
 
+            LoadFilesList();
+
             Cursor = Cursors.Default;
+        }
+
+        private void LoadFilesList()
+        {
+            FilesListBox.Items.Clear();
+            foreach (var midiFile in GetMidiFiles()) FilesListBox.Items.Add(Path.GetFileName(midiFile) + "");
         }
 
         private void ExploreButton_Click(object sender, EventArgs e)
@@ -153,7 +165,7 @@ namespace Halloumi.Notez.Windows
         {
             Cursor = Cursors.WaitCursor;
 
-            var midiFiles = Directory.EnumerateFiles(".", "*.mid").Select(Path.GetFullPath).ToList();
+            var midiFiles = GetMidiFiles();
 
             if (midiFiles.Count > 0)
             {
@@ -161,11 +173,28 @@ namespace Halloumi.Notez.Windows
 
                 File.WriteAllLines(playlistName, midiFiles);
                 Process.Start(playlistName);
-                Thread.Sleep(500);
             }
 
             Cursor = Cursors.Default;
 
+        }
+
+        private static List<string> GetMidiFiles()
+        {
+            return Directory.EnumerateFiles(".", "*.mid").Select(Path.GetFullPath).ToList();
+        }
+
+        private void GoodButton_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            var sourceFileName = FilesListBox.SelectedItem.ToString();
+            var destFileName = Path.Combine(Path.Combine(GoodFolder, CurrentLibrary()), sourceFileName);
+            File.Move(sourceFileName, destFileName);
+
+            LoadFilesList();
+
+            Cursor = Cursors.Default;
         }
     }
 }
