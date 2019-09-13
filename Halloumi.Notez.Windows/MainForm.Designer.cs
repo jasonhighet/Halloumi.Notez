@@ -46,8 +46,8 @@
             this.label6 = new System.Windows.Forms.Label();
             this.playButton = new System.Windows.Forms.Button();
             this.FilesListBox = new System.Windows.Forms.ListBox();
-            this.riffGenerator1 = new Halloumi.Notez.Windows.RiffGenerator();
             this.GoodButton = new System.Windows.Forms.Button();
+            this.ExportDrumsButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -241,30 +241,34 @@
             this.FilesListBox.Size = new System.Drawing.Size(144, 180);
             this.FilesListBox.TabIndex = 18;
             // 
-            // riffGenerator1
-            // 
-            this.riffGenerator1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.riffGenerator1.Location = new System.Drawing.Point(0, 0);
-            this.riffGenerator1.Name = "riffGenerator1";
-            this.riffGenerator1.Size = new System.Drawing.Size(544, 523);
-            this.riffGenerator1.TabIndex = 0;
-            // 
             // GoodButton
             // 
             this.GoodButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.GoodButton.Location = new System.Drawing.Point(260, 302);
             this.GoodButton.Name = "GoodButton";
-            this.GoodButton.Size = new System.Drawing.Size(140, 28);
+            this.GoodButton.Size = new System.Drawing.Size(131, 28);
             this.GoodButton.TabIndex = 19;
             this.GoodButton.Text = "Good";
             this.GoodButton.UseVisualStyleBackColor = true;
             this.GoodButton.Click += new System.EventHandler(this.GoodButton_Click);
+            // 
+            // ExportDrumsButton
+            // 
+            this.ExportDrumsButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ExportDrumsButton.Location = new System.Drawing.Point(259, 173);
+            this.ExportDrumsButton.Name = "ExportDrumsButton";
+            this.ExportDrumsButton.Size = new System.Drawing.Size(131, 28);
+            this.ExportDrumsButton.TabIndex = 20;
+            this.ExportDrumsButton.Text = "Export";
+            this.ExportDrumsButton.UseVisualStyleBackColor = true;
+            this.ExportDrumsButton.Click += new System.EventHandler(this.ExportDrumsButton_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(544, 523);
+            this.Controls.Add(this.ExportDrumsButton);
             this.Controls.Add(this.GoodButton);
             this.Controls.Add(this.FilesListBox);
             this.Controls.Add(this.playButton);
@@ -284,7 +288,6 @@
             this.Controls.Add(this.mergeButton);
             this.Controls.Add(this.libraryDropdown);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.riffGenerator1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -299,7 +302,6 @@
 
         #endregion
 
-        private RiffGenerator riffGenerator1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox libraryDropdown;
         private System.Windows.Forms.Button mergeButton;
@@ -319,6 +321,7 @@
         private System.Windows.Forms.Button playButton;
         private System.Windows.Forms.ListBox FilesListBox;
         private System.Windows.Forms.Button GoodButton;
+        private System.Windows.Forms.Button ExportDrumsButton;
     }
 }
 
