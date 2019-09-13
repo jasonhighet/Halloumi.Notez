@@ -196,5 +196,20 @@ namespace Halloumi.Notez.Windows
 
             Cursor = Cursors.Default;
         }
+
+        private void ExportDrumsButton_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = @"Select folder to export to";
+                var result = dialog.ShowDialog();
+
+                if (result != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.SelectedPath)) return;
+
+                Cursor = Cursors.WaitCursor;
+                _generator.ExportDrums(dialog.SelectedPath);
+                Cursor = Cursors.Default;
+            }
+        }
     }
 }
