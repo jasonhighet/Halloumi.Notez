@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 using Halloumi.Notez.Engine.Midi;
@@ -301,13 +300,13 @@ namespace Halloumi.Notez.Engine.Generator
         private Phrase GenratePhraseBasic(PhraseProbabilities probabilities, decimal phraseLength)
         {
             var noteCount = GetBellCurvedRandom(probabilities.MinNotes, probabilities.MaxNotes + 1);
-            var phrase = new Phrase {PhraseLength = phraseLength};
+            var phrase = new Phrase { PhraseLength = phraseLength };
 
             var selectedNotes =
                 (from onoffProbability in probabilities.NoteProbabilities
-                    let noteOn = GetRandomBool(onoffProbability.OnOffChance)
-                    where noteOn
-                    select onoffProbability).ToList();
+                 let noteOn = GetRandomBool(onoffProbability.OnOffChance)
+                 where noteOn
+                 select onoffProbability).ToList();
 
             while (selectedNotes.Count > noteCount)
             {
@@ -397,10 +396,10 @@ namespace Halloumi.Notez.Engine.Generator
             var probabilities = new PhraseProbabilities();
 
             var allNotes = phrases.SelectMany(x => x.Elements).GroupBy(x => new
-                {
-                    Position = Math.Round(x.Position, 8),
-                    x.Note
-                })
+            {
+                Position = Math.Round(x.Position, 8),
+                x.Note
+            })
                 .Select(x => new
                 {
                     x.Key.Position,
@@ -670,7 +669,7 @@ namespace Halloumi.Notez.Engine.Generator
 
                 var primaryClip = clips.Where(x => GetGeneratorSettingsByClip(x) != null
                                                    && GetGeneratorSettingsByClip(x).IsPrimaryRiff)
-                    .OrderBy(x => GetAverageNote(x.Phrase))
+                    .OrderBy(x => PhraseHelper.GetAverageNote(x.Phrase))
                     .ThenByDescending(x => x.Phrase.Elements.Sum(y => y.Duration))
                     .ThenBy(x => x.Phrase.Elements.Count)
                     .ThenBy(x => GetGeneratorSettingsByClip(x).MidiChannel)
@@ -687,8 +686,8 @@ namespace Halloumi.Notez.Engine.Generator
                     if (channelClip == null || channelClip == primaryClip)
                         continue;
 
-                    var diff = (int) RoundToNearestMultiple(
-                        GetAverageNote(channelClip.Phrase) - GetAverageNote(primaryClip.Phrase), 12);
+                    var diff = (int)RoundToNearestMultiple(
+                        PhraseHelper.GetAverageNote(channelClip.Phrase) - PhraseHelper.GetAverageNote(primaryClip.Phrase), 12);
                     channelClip.BaseIntervalDiff = diff;
 
                     var shiftedPhrase = NoteHelper.ShiftNotes(channelClip.Phrase, diff * -1, Interval.Step,
@@ -711,7 +710,7 @@ namespace Halloumi.Notez.Engine.Generator
                     Song = primaryClip.Song,
                     Filename = primaryClip.Filename,
                     IsSecondary = primaryClip.IsSecondary,
-                    AvgNotePitch = GetAverageNote(basePhrase),
+                    AvgNotePitch = PhraseHelper.GetAverageNote(basePhrase),
                     AvgNoteDuration = basePhrase.Elements.Average(x => x.Duration),
                     AvgDistanceBetweenSnares = drumClip?.AvgDistanceBetweenSnares ?? 0,
                     AvgDistanceBetweenKicks = drumClip?.AvgDistanceBetweenKicks ?? 0
@@ -752,7 +751,7 @@ namespace Halloumi.Notez.Engine.Generator
                 while (phrase.PhraseLength < length) PhraseHelper.DuplicatePhrase(phrase);
             }
 
-            var newPhrase = new Phrase {PhraseLength = length};
+            var newPhrase = new Phrase { PhraseLength = length };
 
             var positions = sourcePhrases.SelectMany(x => x.Elements)
                 .Select(x => x.Position)
@@ -770,7 +769,7 @@ namespace Halloumi.Notez.Engine.Generator
                     .ToList();
 
                 var distinctNotes = distinctElements
-                    .GroupBy(x => new {x.Note, x.Duration})
+                    .GroupBy(x => new { x.Note, x.Duration })
                     .Select(x => new
                     {
                         x.Key.Note,
@@ -785,7 +784,7 @@ namespace Halloumi.Notez.Engine.Generator
                     .ThenByDescending(x => x.Duration)
                     .ThenBy(x => x.Note)
                     .Take(1)
-                    .Select(x => new PhraseElement {Duration = x.Duration, Note = x.Note, Position = position})
+                    .Select(x => new PhraseElement { Duration = x.Duration, Note = x.Note, Position = position })
                     .FirstOrDefault();
 
                 if (newElement == null)
@@ -821,12 +820,6 @@ namespace Halloumi.Notez.Engine.Generator
             return Math.Round(value / factor, MidpointRounding.AwayFromZero) * factor;
         }
 
-        private static decimal GetAverageNote(Phrase phrase)
-        {
-            //return (int)Math.Round((phrase.Elements.Average(y => y.Note) + phrase.Elements.Min(y => y.Note)) / 2);
-            return phrase.Elements.Sum(x => x.Note * x.Duration) / phrase.Elements.Sum(x => x.Duration);
-        }
-
         private void MergeRepeatedNotes()
         {
             foreach (var clip in InstrumentClips()) PhraseHelper.MergeRepeatedNotes(clip.Phrase);
@@ -841,11 +834,11 @@ namespace Halloumi.Notez.Engine.Generator
         {
             var invalidClips = Clips.Where(x => !ValidLength(x.Phrase.PhraseLength)).ToList();
             foreach (var clip in invalidClips)
-            foreach (var validLength in new List<int> {2, 4, 8, 16, 32, 64, 128, 256})
-            {
-                var diff = validLength - clip.Phrase.PhraseLength;
-                if (diff > 0 && diff / validLength <= .25M) clip.Phrase.PhraseLength = validLength;
-            }
+                foreach (var validLength in new List<int> { 2, 4, 8, 16, 32, 64, 128, 256 })
+                {
+                    var diff = validLength - clip.Phrase.PhraseLength;
+                    if (diff > 0 && diff / validLength <= .25M) clip.Phrase.PhraseLength = validLength;
+                }
 
 
             invalidClips = Clips.Where(x => !ValidLength(x.Phrase.PhraseLength)).ToList();
@@ -888,7 +881,6 @@ namespace Halloumi.Notez.Engine.Generator
             {
                 if (clip.ScaleMatchIncomplete)
                     clip.Phrase = ScaleHelper.MashNotesToScale(clip.Phrase, clip.Scale);
-                //Console.WriteLine(clip.Name.PadRight(20) + clip.Scale + (clip.ScaleMatchIncomplete ? $"({clip.ScaleMatch.DistanceFromScale})" : ""));
                 clip.Phrase = ScaleHelper.TransposeToScale(clip.Phrase, clip.Scale, _generatorSettings.Scale);
             }
         }
@@ -901,6 +893,21 @@ namespace Halloumi.Notez.Engine.Generator
         private IEnumerable<Clip> DrumClips()
         {
             return Clips.Where(x => x.ClipType != "BasePhrase" && GetGeneratorSettingsByClip(x).IsDrums);
+        }
+
+        private string CalculateScale(Section section)
+        {
+            var newPhrase = new Phrase();
+            newPhrase = section.Phrases.Where(x => !x.IsDrums)
+                .Aggregate(newPhrase, PhraseHelper.Join);
+
+            var scales = ScaleHelper.FindMatchingScales(newPhrase);
+            var scaleMatch = scales
+                .OrderBy(x => x.DistanceFromScale)
+                .ThenByDescending(x => x.Scale.Name.EndsWith("Minor") ? 1 : 0)
+                .ToList();
+                
+            return scaleMatch.FirstOrDefault()?.Scale.Name;
         }
 
 
@@ -920,7 +927,7 @@ namespace Halloumi.Notez.Engine.Generator
                     ScaleCounts = group.SelectMany(x => x.MatchingScales)
                         .Select(x => x.Scale.Name)
                         .GroupBy(x => x)
-                        .Select(x => new ScaleCount {Count = x.Count(), Scale = x.Key})
+                        .Select(x => new ScaleCount { Count = x.Count(), Scale = x.Key })
                         .OrderByDescending(x => x.Count)
                         .ToList()
                 })
@@ -933,7 +940,7 @@ namespace Halloumi.Notez.Engine.Generator
                     ScaleCounts = group.SelectMany(x => x.MatchingScales)
                         .Select(x => x.Scale.Name)
                         .GroupBy(x => x)
-                        .Select(x => new ScaleCount {Count = x.Count(), Scale = x.Key})
+                        .Select(x => new ScaleCount { Count = x.Count(), Scale = x.Key })
                         .OrderByDescending(x => x.Count)
                         .ToList()
                 })
@@ -946,7 +953,7 @@ namespace Halloumi.Notez.Engine.Generator
                     ScaleCounts = group.SelectMany(x => x.MatchingScales)
                         .Select(x => x.Scale.Name)
                         .GroupBy(x => x)
-                        .Select(x => new ScaleCount {Count = x.Count(), Scale = x.Key})
+                        .Select(x => new ScaleCount { Count = x.Count(), Scale = x.Key })
                         .OrderByDescending(x => x.Count)
                         .ToList()
                 })
@@ -982,6 +989,14 @@ namespace Halloumi.Notez.Engine.Generator
                     .GroupBy(x => x)
                     .OrderByDescending(x => x.Count())
                     .Select(x => x.Key).First();
+
+                var sectionSection = GetSectionFromClips(section.Name);
+                var scale = CalculateScale(sectionSection);
+                if (scale != primaryScale)
+                {
+                    Console.WriteLine(section.Name);
+                }
+
 
                 foreach (var clip in sectionClips)
                 {
@@ -1165,7 +1180,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void ApplyStrategiesToSection(Section section)
         {
-            if(section.Phrases.Count != _generatorSettings.Channels.Count)
+            if (section.Phrases.Count != _generatorSettings.Channels.Count)
                 throw new ApplicationException("Phrase count does not equal channel count");
 
             foreach (var channel in _generatorSettings.Channels)

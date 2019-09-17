@@ -6,6 +6,11 @@ namespace Halloumi.Notez.Engine.Notes
 {
     public static class PhraseHelper
     {
+        public static decimal GetAverageNote(Phrase phrase)
+        {
+            return phrase.Elements.Sum(x => x.Note * x.Duration) / phrase.Elements.Sum(x => x.Duration);
+        }
+
         public static void TrimPhrase(Phrase phrase, decimal newLength)
         {
             var toRemove = phrase.Elements.Where(x => x.Position >= newLength).ToList();
