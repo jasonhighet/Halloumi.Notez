@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 using Halloumi.Notez.Engine.Midi;
@@ -455,6 +456,16 @@ namespace Halloumi.Notez.Engine.Generator
             if (sourceCount < 2) sourceCount = 2;
             var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount, filter);
 
+            var section = GenerateSection(sourceBaseClips);
+            ApplyStrategiesToSection(section);
+
+            if (!filename.EndsWith(".mid"))
+                filename += ".mid";
+            MidiHelper.SaveToMidi(section, filename);
+        }
+
+        private Section GenerateSection(List<Clip> sourceBaseClips)
+        {
             var randomClips = GenerateRandomClips(sourceBaseClips);
             sourceBaseClips.AddRange(randomClips.Where(x => x.ClipType == "BasePhrase"));
 
@@ -484,30 +495,12 @@ namespace Halloumi.Notez.Engine.Generator
                     var channelClips = Clips.Where(x => x.ClipType == channel.Name).ToList();
                     channelClips.AddRange(randomClips.Where(x => x.ClipType == channel.Name));
                     channelPhrase = GeneratePhraseFromBasePhrase(mergedPhrase, sourceBaseClips, channelClips);
-
-                    foreach (var element in channelPhrase.Elements.Where(x => x.Note < -24)) element.Note += 12;
-
-                    PhraseHelper.MergeChords(channelPhrase);
-                    ProcessChords(channel, channelPhrase);
                 }
 
-                if (channelPhrase == null)
-                    continue;
-
-                channelPhrase.IsDrums = channel.IsDrums;
-                channelPhrase.Description = channel.Name;
-                channelPhrase.Instrument = channel.Instrument;
-
-                section.Phrases.Add(channelPhrase);
-
-                VelocityHelper.ApplyVelocityStrategy(channelPhrase, channel.VelocityStrategy);
+                section.Phrases.Add(channelPhrase ?? new Phrase());
             }
 
-            if (!filename.EndsWith(".mid"))
-                filename += ".mid";
-
-            PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
-            MidiHelper.SaveToMidi(section, filename);
+            return section;
         }
 
         private void ProcessChords()
@@ -1156,6 +1149,65 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
+        public void ExportSections(string folder)
+        {
+            var sections = Clips.Select(x => x.Section).Distinct().ToList();
+
+            foreach (var sectionName in sections)
+            {
+                var section = GetSectionFromClips(sectionName);
+                ApplyStrategiesToSection(section);
+
+                var path = Path.Combine(folder, sectionName + ".mid");
+                MidiHelper.SaveToMidi(section, path);
+            }
+        }
+
+        private void ApplyStrategiesToSection(Section section)
+        {
+            if(section.Phrases.Count != _generatorSettings.Channels.Count)
+                throw new ApplicationException("Phrase count does not equal channel count");
+
+            foreach (var channel in _generatorSettings.Channels)
+            {
+                var channelPhrase = section.Phrases[_generatorSettings.Channels.IndexOf(channel)];
+                if (!channelPhrase.IsDrums)
+                {
+                    foreach (var element in channelPhrase.Elements.Where(x => x.Note < -24)) element.Note += 12;
+                    PhraseHelper.MergeChords(channelPhrase);
+                    ProcessChords(channel, channelPhrase);
+                    VelocityHelper.ApplyVelocityStrategy(channelPhrase, channel.VelocityStrategy);
+                }
+
+                channelPhrase.IsDrums = channel.IsDrums;
+                channelPhrase.Description = channel.Name;
+                channelPhrase.Instrument = channel.Instrument;
+                channelPhrase.Bpm = _generatorSettings.Bpm;
+            }
+
+            PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
+        }
+
+        private Section GetSectionFromClips(string sectionName)
+        {
+            var section = new Section();
+            foreach (var channel in _generatorSettings.Channels)
+            {
+                Phrase channelPhrase;
+                if (channel.IsDrums)
+                {
+                    channelPhrase = DrumClips().FirstOrDefault(x => x.Section == sectionName)?.Phrase.Clone();
+                }
+                else
+                {
+                    channelPhrase = Clips
+                        .FirstOrDefault(x => x.ClipType == channel.Name && x.Section == sectionName)?.Phrase.Clone();
+                }
+                section.Phrases.Add(channelPhrase ?? new Phrase());
+            }
+
+            return section;
+        }
 
         private class SectionCounts
         {
@@ -1269,5 +1321,6 @@ namespace Halloumi.Notez.Engine.Generator
                 public decimal ConvertChordsToNotesCoverage { get; set; }
             }
         }
+
     }
 }
