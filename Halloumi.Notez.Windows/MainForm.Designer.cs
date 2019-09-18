@@ -48,6 +48,7 @@
             this.FilesListBox = new System.Windows.Forms.ListBox();
             this.GoodButton = new System.Windows.Forms.Button();
             this.ExportDrumsButton = new System.Windows.Forms.Button();
+            this.ExportSectionsButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -263,11 +264,23 @@
             this.ExportDrumsButton.UseVisualStyleBackColor = true;
             this.ExportDrumsButton.Click += new System.EventHandler(this.ExportDrumsButton_Click);
             // 
+            // ExportSectionsButton
+            // 
+            this.ExportSectionsButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ExportSectionsButton.Location = new System.Drawing.Point(260, 58);
+            this.ExportSectionsButton.Name = "ExportSectionsButton";
+            this.ExportSectionsButton.Size = new System.Drawing.Size(131, 28);
+            this.ExportSectionsButton.TabIndex = 21;
+            this.ExportSectionsButton.Text = "Export";
+            this.ExportSectionsButton.UseVisualStyleBackColor = true;
+            this.ExportSectionsButton.Click += new System.EventHandler(this.ExportSectionsButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(544, 523);
+            this.Controls.Add(this.ExportSectionsButton);
             this.Controls.Add(this.ExportDrumsButton);
             this.Controls.Add(this.GoodButton);
             this.Controls.Add(this.FilesListBox);
@@ -322,6 +335,7 @@
         private System.Windows.Forms.ListBox FilesListBox;
         private System.Windows.Forms.Button GoodButton;
         private System.Windows.Forms.Button ExportDrumsButton;
+        private System.Windows.Forms.Button ExportSectionsButton;
     }
 }
 

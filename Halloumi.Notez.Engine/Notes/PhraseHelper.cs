@@ -6,6 +6,23 @@ namespace Halloumi.Notez.Engine.Notes
 {
     public static class PhraseHelper
     {
+        public static decimal GetAverageNote(Phrase phrase)
+        {
+            return phrase.Elements.Sum(x => x.Note * x.Duration) / phrase.Elements.Sum(x => x.Duration);
+        }
+
+        public static int GetMostCommonNote(Phrase phrase)
+        {
+            var notes = phrase.Elements
+                .GroupBy(x => NoteHelper.RemoveOctave(x.Note), 
+                    x => x.Duration, 
+                    (key, values) => new {Note = key, Duration = values.Sum()})
+                .OrderByDescending(x => x.Duration)
+                .ToList();
+
+            return notes.FirstOrDefault()?.Note ?? 0;
+        }
+
         public static void TrimPhrase(Phrase phrase, decimal newLength)
         {
             var toRemove = phrase.Elements.Where(x => x.Position >= newLength).ToList();
@@ -222,7 +239,6 @@ namespace Halloumi.Notez.Engine.Notes
 
         }
 
-
         public static bool IsPhraseDuplicated(Phrase phrase)
         {
             if (phrase.Elements.Count % 2 != 0)
@@ -236,15 +252,6 @@ namespace Halloumi.Notez.Engine.Notes
             }
 
             return true;
-        }
-
-
-        public static bool AreTheSame(Phrase phrase1, Phrase phrase2)
-        {
-            if (phrase1.PhraseLength != phrase2.PhraseLength)
-                return false;
-
-            return !phrase1.Elements.Where((t, i) => !AreTheSame(t, phrase2.Elements[i])).Any();
         }
 
         private static bool AreTheSame(PhraseElement element1, PhraseElement element2)
@@ -322,14 +329,6 @@ namespace Halloumi.Notez.Engine.Notes
             phrase.PhraseLength = phrase.PhraseLength * multiplier;
 
             phrase.Bpm = phrase.Bpm * multiplier;
-        }
-
-        public static void ChangeLength(Section section, decimal multiplier)
-        {
-            foreach (var phrase in section.Phrases)
-            {
-                ChangeLength(phrase, multiplier);
-            }
         }
     }
 }
