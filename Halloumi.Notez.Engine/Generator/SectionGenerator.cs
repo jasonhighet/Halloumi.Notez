@@ -895,15 +895,19 @@ namespace Halloumi.Notez.Engine.Generator
             return Clips.Where(x => x.ClipType != "BasePhrase" && GetGeneratorSettingsByClip(x).IsDrums);
         }
 
-        private string CalculateScale(Section section)
+        private string CalculateScale(Section section, string preferredScale)
         {
             var newPhrase = new Phrase();
             newPhrase = section.Phrases.Where(x => !x.IsDrums)
                 .Aggregate(newPhrase, PhraseHelper.Join);
 
+            var mostCommonNote = NoteHelper.NumberToNoteOnly(PhraseHelper.GetMostCommonNote(newPhrase));
+
             var scales = ScaleHelper.FindMatchingScales(newPhrase);
             var scaleMatch = scales
                 .OrderBy(x => x.DistanceFromScale)
+                .ThenBy(x=> string.IsNullOrEmpty(preferredScale) || x.Scale.Name == preferredScale)
+                .ThenByDescending(x => x.Scale.Name.StartsWith(mostCommonNote) ? 1 : 0)
                 .ThenByDescending(x => x.Scale.Name.EndsWith("Minor") ? 1 : 0)
                 .ToList();
                 
@@ -990,8 +994,17 @@ namespace Halloumi.Notez.Engine.Generator
                     .OrderByDescending(x => x.Count())
                     .Select(x => x.Key).First();
 
+
+                //var songSection = new Section()
+                //{
+                //    Phrases = InstrumentClips().Where(x => x.Song == sectionClips.FirstOrDefault()?.Song)
+                //        .Select(x => x.Phrase)
+                //        .ToList()
+                //};
+                //var songScale = CalculateScale(songSection, _generatorSettings.Scale);
+
                 var sectionSection = GetSectionFromClips(section.Name);
-                var scale = CalculateScale(sectionSection);
+                var scale = CalculateScale(sectionSection, _generatorSettings.Scale);
                 if (scale != primaryScale)
                 {
                     Console.WriteLine(section.Name);
