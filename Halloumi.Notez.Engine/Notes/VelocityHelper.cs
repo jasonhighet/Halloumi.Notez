@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Halloumi.Notez.Engine.Notes
 {
@@ -42,8 +39,8 @@ namespace Halloumi.Notez.Engine.Notes
 
         private static void ApplyShreddage(Phrase phrase)
         {
-            var minVelocity = 60M;
-            var maxVelocity = 120M;
+            const decimal minVelocity = 60M;
+            const decimal maxVelocity = 120M;
             var velocityRange = maxVelocity - minVelocity;
 
             var minLength = phrase.Elements.Min(x => x.Duration);

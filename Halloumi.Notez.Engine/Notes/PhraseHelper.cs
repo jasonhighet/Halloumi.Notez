@@ -62,6 +62,12 @@ namespace Halloumi.Notez.Engine.Notes
             if (length == 0) length = phrases.Max(x => x.PhraseLength);
             foreach (var phrase in phrases)
             {
+                if (phrase.PhraseLength == 0)
+                {
+                    Console.WriteLine("phrase length is 0");
+                    continue;
+                }
+
                 while (phrase.PhraseLength < length)
                 {
                     DuplicatePhrase(phrase);
@@ -187,7 +193,7 @@ namespace Halloumi.Notez.Engine.Notes
             foreach (var repeatedNote in repeatedNotes)
             {
                 var duration = repeatedNote.RepeatDuration;
-                for (int i = 1; i < repeatedNote.RepeatCount; i++)
+                for (var i = 1; i < repeatedNote.RepeatCount; i++)
                 {
                     var newElement = repeatedNote.Clone();
                     newElement.RepeatDuration = 0;
@@ -322,13 +328,13 @@ namespace Halloumi.Notez.Engine.Notes
         {
             foreach (var element in phrase.Elements)
             {
-                element.Position = element.Position * multiplier;
-                element.Duration = element.Duration * multiplier;
+                element.Position *= multiplier;
+                element.Duration *= multiplier;
             }
 
-            phrase.PhraseLength = phrase.PhraseLength * multiplier;
+            phrase.PhraseLength *= multiplier;
 
-            phrase.Bpm = phrase.Bpm * multiplier;
+            phrase.Bpm *= multiplier;
         }
     }
 }

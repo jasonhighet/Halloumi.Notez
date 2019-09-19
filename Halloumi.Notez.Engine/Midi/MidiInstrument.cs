@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Halloumi.Notez.Engine.Midi
+﻿namespace Halloumi.Notez.Engine.Midi
 {
     public enum MidiInstrument
     {

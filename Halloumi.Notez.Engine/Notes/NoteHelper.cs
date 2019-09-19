@@ -19,7 +19,7 @@ namespace Halloumi.Notez.Engine.Notes
             var octave = GetOctaveFromNumber(number);
             var noteIndex = GetNoteIndexFromNumber(number);
 
-            return FormateNote(octave, noteIndex);
+            return FormatNote(octave, noteIndex);
         }
 
         public static string NumberToNoteOnly(int number)
@@ -32,11 +32,6 @@ namespace Halloumi.Notez.Engine.Notes
         {
             var note = NumberToNoteOnly(number);
             return NoteToNumber(note);
-        }
-
-        public static int GetDistanceBetweenNotes(string note1, string note2)
-        {
-            return GetDistanceBetweenNotes(NoteToNumber(note1), NoteToNumber(note2));
         }
 
         public static int GetDistanceBetweenNotes(int note1, int note2)
@@ -73,10 +68,7 @@ namespace Halloumi.Notez.Engine.Notes
 
             var shiftedPhrase = phrase.Clone();
 
-            foreach (var element in shiftedPhrase.Elements)
-            {
-                element.Note = ShiftNote(element.Note, amount, step, direction);
-            }
+            ShiftNotesDirect(shiftedPhrase, amount,step, direction);
 
             return shiftedPhrase;
         }
@@ -86,11 +78,21 @@ namespace Halloumi.Notez.Engine.Notes
             foreach (var element in phrase.Elements)
             {
                 element.Note = ShiftNote(element.Note, amount, step, direction);
+
+                if (!element.IsChord) continue;
+
+                var newChord = new List<int>();
+                foreach (var chordNote in element.ChordNotes)
+                {
+                    newChord.Add(ShiftNote(chordNote, amount, step, direction));
+                }
+
+                element.ChordNotes = newChord;
             }
         }
 
 
-        private static string FormateNote(int octave, int noteIndex)
+        private static string FormatNote(int octave, int noteIndex)
         {
             var noteName = GetNoteNames()[noteIndex];
             return noteName + octave;

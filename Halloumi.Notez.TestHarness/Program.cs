@@ -1,14 +1,6 @@
-﻿using Halloumi.Notez.Engine;
-using Halloumi.Notez.Engine.Generator;
-using Halloumi.Notez.Engine.Midi;
-using Halloumi.Notez.Engine.Notes;
+﻿using Halloumi.Notez.Engine.Generator;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Melanchall.DryWetMidi.Smf;
-using Melanchall.DryWetMidi.Smf.Interaction;
 
 namespace Halloumi.Notez.TestHarness
 {
@@ -22,7 +14,7 @@ namespace Halloumi.Notez.TestHarness
             sourceLibrary.LoadLibrary("Death", true);
 
 
-            foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
+            foreach (var midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
 
             //sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { SeedArtist = "SL" });
