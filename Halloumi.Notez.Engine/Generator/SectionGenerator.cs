@@ -6,6 +6,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 using Halloumi.Notez.Engine.Midi;
 using Halloumi.Notez.Engine.Notes;
+using Melanchall.DryWetMidi.Smf.Interaction;
 using Newtonsoft.Json;
 
 namespace Halloumi.Notez.Engine.Generator
@@ -879,8 +880,7 @@ namespace Halloumi.Notez.Engine.Generator
         {
             foreach (var clip in InstrumentClips())
             {
-                if (clip.ScaleMatchIncomplete)
-                    clip.Phrase = ScaleHelper.MashNotesToScale(clip.Phrase, clip.Scale);
+                ScaleHelper.MashNotesToScaleDirect(clip.Phrase, clip.Scale);
                 clip.Phrase = ScaleHelper.TransposeToScale(clip.Phrase, clip.Scale, _generatorSettings.Scale);
             }
         }
@@ -895,7 +895,7 @@ namespace Halloumi.Notez.Engine.Generator
             return Clips.Where(x => x.ClipType != "BasePhrase" && GetGeneratorSettingsByClip(x).IsDrums);
         }
 
-        private string CalculateScale(Section section, string preferredScale)
+        private static ScaleHelper.ScaleMatch CalculateScale(Section section, string preferredScale)
         {
             var newPhrase = new Phrase();
             newPhrase = section.Phrases.Where(x => !x.IsDrums)
@@ -906,118 +906,31 @@ namespace Halloumi.Notez.Engine.Generator
             var scales = ScaleHelper.FindMatchingScales(newPhrase);
             var scaleMatch = scales
                 .OrderBy(x => x.DistanceFromScale)
-                .ThenBy(x=> string.IsNullOrEmpty(preferredScale) || x.Scale.Name == preferredScale)
+                .ThenByDescending(x=> string.IsNullOrEmpty(preferredScale) || x.Scale.Name == preferredScale)
                 .ThenByDescending(x => x.Scale.Name.StartsWith(mostCommonNote) ? 1 : 0)
                 .ThenByDescending(x => x.Scale.Name.EndsWith("Minor") ? 1 : 0)
                 .ToList();
-                
-            return scaleMatch.FirstOrDefault()?.Scale.Name;
+
+            return scaleMatch.FirstOrDefault();
         }
 
 
         private void CalculateScales()
         {
-            foreach (var clip in InstrumentClips())
+            var sectionNames = InstrumentClips().Select(x => x.Section).Distinct().ToList();
+
+            foreach (var sectionName in sectionNames)
             {
-                var scales = ScaleHelper.FindMatchingScales(clip.Phrase);
-                var minDistance = scales.Min(x => x.DistanceFromScale);
-                clip.MatchingScales = scales.Where(x => x.DistanceFromScale == minDistance).ToList();
-            }
+                var section = GetSectionFromClips(sectionName);
+                var scale = CalculateScale(section, _generatorSettings.Scale);
+                if(scale == null)
+                    throw new ApplicationException("no scale");
 
-            var sections = InstrumentClips()
-                .GroupBy(x => x.Section, (key, group) => new SectionCounts
+                var clips = Clips.Where(x => x.Section == sectionName).ToList();
+                foreach (var clip in clips)
                 {
-                    Name = key,
-                    ScaleCounts = group.SelectMany(x => x.MatchingScales)
-                        .Select(x => x.Scale.Name)
-                        .GroupBy(x => x)
-                        .Select(x => new ScaleCount { Count = x.Count(), Scale = x.Key })
-                        .OrderByDescending(x => x.Count)
-                        .ToList()
-                })
-                .ToList();
-
-            var songs = InstrumentClips()
-                .GroupBy(x => x.Song, (key, group) => new SectionCounts
-                {
-                    Name = key,
-                    ScaleCounts = group.SelectMany(x => x.MatchingScales)
-                        .Select(x => x.Scale.Name)
-                        .GroupBy(x => x)
-                        .Select(x => new ScaleCount { Count = x.Count(), Scale = x.Key })
-                        .OrderByDescending(x => x.Count)
-                        .ToList()
-                })
-                .ToList();
-
-            var artists = InstrumentClips()
-                .GroupBy(x => x.Artist, (key, group) => new SectionCounts
-                {
-                    Name = key,
-                    ScaleCounts = group.SelectMany(x => x.MatchingScales)
-                        .Select(x => x.Scale.Name)
-                        .GroupBy(x => x)
-                        .Select(x => new ScaleCount { Count = x.Count(), Scale = x.Key })
-                        .OrderByDescending(x => x.Count)
-                        .ToList()
-                })
-                .ToList();
-
-
-            foreach (var clip in InstrumentClips())
-            {
-                var matchingScales = clip.MatchingScales.Select(x => x.Scale.Name).ToList();
-
-                var section = sections.FirstOrDefault(x => x.Name == clip.Section);
-                var song = songs.FirstOrDefault(x => x.Name == clip.Song);
-                var artist = artists.FirstOrDefault(x => x.Name == clip.Artist);
-                clip.Scale = matchingScales
-                    .OrderByDescending(x => GetSectionRank(section, x))
-                    .ThenByDescending(x => GetSectionRank(song, x))
-                    .ThenByDescending(x => GetSectionRank(artist, x))
-                    .ThenByDescending(x => x.EndsWith("Minor") ? 1 : 0)
-                    .FirstOrDefault();
-            }
-
-            foreach (var section in sections)
-            {
-                var sectionClips = InstrumentClips().Where(x => x.Section == section.Name).ToList();
-                var scaleCount = sectionClips.Select(x => x.Scale).GroupBy(x => x).Count();
-                if (scaleCount == 1)
-                    continue;
-                if (scaleCount > 3)
-                    throw new ApplicationException("Too many scales");
-
-                var primaryScale = sectionClips
-                    .Select(x => x.Scale)
-                    .GroupBy(x => x)
-                    .OrderByDescending(x => x.Count())
-                    .Select(x => x.Key).First();
-
-
-                //var songSection = new Section()
-                //{
-                //    Phrases = InstrumentClips().Where(x => x.Song == sectionClips.FirstOrDefault()?.Song)
-                //        .Select(x => x.Phrase)
-                //        .ToList()
-                //};
-                //var songScale = CalculateScale(songSection, _generatorSettings.Scale);
-
-                var sectionSection = GetSectionFromClips(section.Name);
-                var scale = CalculateScale(sectionSection, _generatorSettings.Scale);
-                if (scale != primaryScale)
-                {
-                    Console.WriteLine(section.Name);
-                }
-
-
-                foreach (var clip in sectionClips)
-                {
-                    clip.Scale = primaryScale;
-                    if (clip.MatchingScales.Select(x => x.Scale.Name).Contains(primaryScale)) continue;
-
-                    ScaleHelper.MatchPhraseToScale(clip.Phrase, primaryScale);
-                    clip.ScaleMatchIncomplete = true;
+                    clip.Scale = scale.Scale.Name;
+                    clip.ScaleMatchIncomplete = scale.NotInScale.Count > 0;
                 }
             }
         }
@@ -1154,13 +1067,6 @@ namespace Halloumi.Notez.Engine.Generator
             throw new ApplicationException("Unknown midi extension");
         }
 
-        private static int GetSectionRank(SectionCounts section, string scaleName)
-        {
-            var counts = section.ScaleCounts.FirstOrDefault(x => x.Scale == scaleName);
-
-            return counts?.Count ?? 0;
-        }
-
         public void ExportDrums(string folder)
         {
             foreach (var clip in DrumClips().Where(x => !x.IsSecondary))
@@ -1213,6 +1119,17 @@ namespace Halloumi.Notez.Engine.Generator
                 channelPhrase.Bpm = _generatorSettings.Bpm;
             }
 
+            var scale = CalculateScale(section, _generatorSettings.Scale);
+            if (scale.Scale.Name != _generatorSettings.Scale)
+            {
+                ScaleHelper.MashNotesToScale(section, _generatorSettings.Scale);
+                scale = CalculateScale(section, _generatorSettings.Scale);
+                if (scale.Scale.Name != _generatorSettings.Scale)
+                {
+                    throw new ApplicationException("does not scale");
+                }
+            }
+
             PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
         }
 
@@ -1237,18 +1154,6 @@ namespace Halloumi.Notez.Engine.Generator
             return section;
         }
 
-        private class SectionCounts
-        {
-            public string Name { get; set; }
-            public List<ScaleCount> ScaleCounts { get; set; }
-        }
-
-        private class ScaleCount
-        {
-            public string Scale { get; set; }
-            public int Count { get; set; }
-        }
-
         [Serializable]
         private class Clip
         {
@@ -1257,7 +1162,7 @@ namespace Halloumi.Notez.Engine.Generator
             public string Artist { get; set; }
             public string Section { get; set; }
             public Phrase Phrase { get; set; }
-            public List<ScaleHelper.ScaleMatch> MatchingScales { get; set; }
+            //public List<ScaleHelper.ScaleMatch> MatchingScales { get; set; }
             public string Scale { get; set; }
             public bool ScaleMatchIncomplete { get; set; }
             public int BaseIntervalDiff { get; set; }

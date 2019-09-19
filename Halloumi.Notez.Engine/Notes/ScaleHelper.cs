@@ -54,18 +54,42 @@ namespace Halloumi.Notez.Engine.Notes
             return _scales;
         }
 
-        public static Phrase MashNotesToScale(Phrase phrase, string toScale)
+
+        public static void MashNotesToScale(Section section, string toScale)
+        {
+            foreach (var phrase in section.Phrases.Where(x => !x.IsDrums))
+            {
+                MashNotesToScaleDirect(phrase, toScale);
+            }
+        }
+
+        public static void MashNotesToScaleDirect(Phrase phrase, string toScale)
         {
             var scale = GetScaleByName(toScale);
-            if(scale == null)
+            if (scale == null)
                 throw new ApplicationException("Invalid scale name");
 
-            var mashedPhrase = phrase.Clone();
-
-            foreach (var element in mashedPhrase.Elements)
+            foreach (var element in phrase.Elements)
             {
                 element.Note = MashNoteToScale(scale, element.Note);
+
+                if (!element.IsChord) continue;
+
+                var newChordNotes = new List<int>();
+                foreach (var chordNote in element.ChordNotes)
+                {
+                    newChordNotes.Add(MashNoteToScale(scale, chordNote));
+                }
+
+                element.ChordNotes = newChordNotes;
+
             }
+        }
+
+        public static Phrase MashNotesToScale(Phrase phrase, string toScale)
+        {
+            var mashedPhrase = phrase.Clone();
+            MashNotesToScaleDirect(mashedPhrase, toScale);
             return mashedPhrase;
         }
 
@@ -74,12 +98,17 @@ namespace Halloumi.Notez.Engine.Notes
             if (ScaleContainsNote(scale, note))
                 return note;
 
-                var difference = scale.Notes
-                .Select(x=> NoteHelper.GetDistanceBetweenNotes(x, NoteHelper.RemoveOctave(note)))
-                .OrderBy(Math.Abs)
-                .FirstOrDefault();
+            var difference = 1;
+            while (true)
+            {
+                if (ScaleContainsNote(scale, note + difference))
+                    return note + difference;
 
-            return note + difference;
+                if (ScaleContainsNote(scale, note - difference))
+                    return note + difference;
+
+                difference++;
+            }
         }
 
         private static bool ScaleContainsNote(Scale scale, int note)
@@ -142,7 +171,14 @@ namespace Halloumi.Notez.Engine.Notes
 
         public static List<ScaleMatch> FindMatchingScales(Phrase phrase)
         {
-            return FindMatchingScales(phrase.Elements.Select(x => x.Note).Distinct().ToList());
+            var notes = phrase.Elements.Where(x=>!x.IsChord)
+                .Select(x => x.Note)
+                .Union(phrase.Elements.Where(x => x.IsChord)
+                    .SelectMany(x => x.ChordNotes))
+                .Distinct()
+                .ToList();
+
+            return FindMatchingScales(notes);
         }
 
         public static List<ScaleMatch> FindMatchingScales(List<int> notes)
@@ -157,7 +193,7 @@ namespace Halloumi.Notez.Engine.Notes
             var matches = new List<ScaleMatch>();
             foreach (var scale in GetScales())
             {
-                ScaleMatch match = MatchNotesToScale(noteNumbers, scale);
+                var match = MatchNotesToScale(noteNumbers, scale);
                 matches.Add(match);
             }
 
@@ -166,21 +202,21 @@ namespace Halloumi.Notez.Engine.Notes
                 .ToList();
         }
 
-        public static ScaleMatch MatchPhraseToScale(Phrase phrase, string scaleName)
-        {
-            var notes = phrase.Elements.Select(x => x.Note).Distinct().ToList();
-            var scale = GetScaleByName(scaleName);
-            var noteNumbers = notes
-                .Select(NoteHelper.NumberToNoteOnly)
-                .Select(NoteHelper.NoteToNumber)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToList();
+        //public static ScaleMatch MatchPhraseToScale(Phrase phrase, string scaleName)
+        //{
+        //    var notes = phrase.Elements.Select(x => x.Note).Distinct().ToList();
+        //    var scale = GetScaleByName(scaleName);
+        //    var noteNumbers = notes
+        //        .Select(NoteHelper.NumberToNoteOnly)
+        //        .Select(NoteHelper.NoteToNumber)
+        //        .Distinct()
+        //        .OrderBy(x => x)
+        //        .ToList();
 
-            return MatchNotesToScale(noteNumbers, scale);
-        }
+        //    return MatchNotesToScale(noteNumbers, scale);
+        //}
 
-        private static ScaleMatch MatchNotesToScale(List<int> noteNumbers, Scale scale)
+        private static ScaleMatch MatchNotesToScale(IEnumerable<int> noteNumbers, Scale scale)
         {
             var match = new ScaleMatch
             {

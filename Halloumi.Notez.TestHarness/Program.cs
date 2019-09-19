@@ -22,7 +22,7 @@ namespace Halloumi.Notez.TestHarness
             sourceLibrary.LoadLibrary("Death", true);
 
 
-            foreach (string midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
+            foreach (var midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
             var now = DateTime.Now.ToString("yyyymmddhhss");
 
             //sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { SeedArtist = "SL" });

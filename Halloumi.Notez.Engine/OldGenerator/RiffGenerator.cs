@@ -17,7 +17,7 @@ namespace Halloumi.Notez.Engine.OldGenerator
             for (var i = 1; i <= riffCount; i++)
             {
                 var phrase = generator.GeneratePhrase();
-                string midiPath = GetFileName(i, phrase);
+                var midiPath = GetFileName(i, phrase);
                 phrase.Instrument = MidiInstrument.OverdrivenGuitar;
 
                 var section = new Section();
@@ -39,7 +39,7 @@ namespace Halloumi.Notez.Engine.OldGenerator
 
         private static void DeleteMidiFiles()
         {
-            foreach (string file in Directory.EnumerateFiles(".", "*.mid"))
+            foreach (var file in Directory.EnumerateFiles(".", "*.mid"))
             {
                 File.Delete(file);
             }
