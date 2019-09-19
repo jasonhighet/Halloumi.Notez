@@ -1083,7 +1083,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void ExportSections(string folder)
         {
-            var sections = Clips.Select(x => x.Section).Distinct().ToList();
+            var sections = Clips.Where(x=>!x.IsSecondary).Select(x => x.Section).Distinct().ToList();
 
             foreach (var sectionName in sections)
             {
