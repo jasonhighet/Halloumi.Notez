@@ -1,19 +1,9 @@
-﻿using Halloumi.Notez.Engine;
-using Halloumi.Notez.Engine.Generator;
-using Halloumi.Notez.Engine.Midi;
-using Halloumi.Notez.Engine.Notes;
-using System;
-using System.Collections.Generic;
+﻿using Halloumi.Notez.Engine.Generator;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
-
-using Halloumi.Notez.Engine.OldGenerator;
 
 namespace Halloumi.Notez.Api.Controllers
 {

@@ -6,7 +6,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 using Halloumi.Notez.Engine.Midi;
 using Halloumi.Notez.Engine.Notes;
-using Melanchall.DryWetMidi.Smf.Interaction;
 using Newtonsoft.Json;
 
 namespace Halloumi.Notez.Engine.Generator

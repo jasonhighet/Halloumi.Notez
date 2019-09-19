@@ -129,7 +129,7 @@ namespace Halloumi.Notez.Engine.Tabs
 
             TabNotes = TabNotes.Except(chords).ToList();
 
-            CalculatePostitionsAndLengths(tabLines);
+            CalculatePositionsAndLengths(tabLines);
         }
 
         public List<int> GetDistinctNoteNumbers()
@@ -137,7 +137,7 @@ namespace Halloumi.Notez.Engine.Tabs
             return TabNotes.Select(x => x.Number).Distinct().OrderBy(x => x).ToList();
         }
 
-        private void CalculatePostitionsAndLengths(IEnumerable<string> tabLines)
+        private void CalculatePositionsAndLengths(IEnumerable<string> tabLines)
         {
             var offset = TabNotes[0].PositionInCharacters;
             var tabWidth = GetLastDashPosition(tabLines);
@@ -170,7 +170,7 @@ namespace Halloumi.Notez.Engine.Tabs
                                  Convert.ToDecimal(NoteDivision);
                 if (tabNote.Length == 0) tabNote.Length = stepLength;
             }
-            CalculatePostions(TabNotes);
+            CalculatePositions(TabNotes);
 
 
             var remainder = 1M - TabNotes.Sum(x => x.Length);
@@ -179,11 +179,11 @@ namespace Halloumi.Notez.Engine.Tabs
 
             while (Math.Abs(remainder) >= stepLength)
             {
-                var possiblities = new Dictionary<TabNote, List<TabNote>>();
+                var possibilities = new Dictionary<TabNote, List<TabNote>>();
                 foreach (var tabNote in TabNotes)
                 {
-                    var possiblilty = TabNotes.Select(x => x.Clone()).ToList();
-                    var changedTabNote = possiblilty.FirstOrDefault(x => x.PositionInCharacters == tabNote.PositionInCharacters);
+                    var possibility = TabNotes.Select(x => x.Clone()).ToList();
+                    var changedTabNote = possibility.FirstOrDefault(x => x.PositionInCharacters == tabNote.PositionInCharacters);
                     if(changedTabNote == null) continue;
 
                     if (removeSteps)
@@ -191,33 +191,33 @@ namespace Halloumi.Notez.Engine.Tabs
                         if (changedTabNote.Length > stepLength)
                         {
                             changedTabNote.Length -= stepLength;
-                            possiblities.Add(tabNote, possiblilty);
+                            possibilities.Add(tabNote, possibility);
                         }
                     }
                     else
                     {
                         changedTabNote.Length += stepLength;
-                        possiblities.Add(tabNote, possiblilty);
+                        possibilities.Add(tabNote, possibility);
                     }
-                    CalculatePostions(possiblilty);
+                    CalculatePositions(possibility);
                 }
 
-                var tabNoteToChange = possiblities.OrderBy(x => x.Value.Sum(y => y.DifferenceFromIdeal)).FirstOrDefault();
+                var tabNoteToChange = possibilities.OrderBy(x => x.Value.Sum(y => y.DifferenceFromIdeal)).FirstOrDefault();
                 var tentativeChangedTabNote = tabNoteToChange.Value.FirstOrDefault(x => x.PositionInCharacters == tabNoteToChange.Key.PositionInCharacters);
 
                 if (tentativeChangedTabNote != null)
                     tabNoteToChange.Key.Length = tentativeChangedTabNote.Length;
 
-                CalculatePostions(TabNotes);
+                CalculatePositions(TabNotes);
 
                 remainder = 1M - TabNotes.Sum(x => x.Length);
             }
 
             foreach (var tabNote in TabNotes)
-                tabNote.Length = tabNote.Length * NoteDivision;
+                tabNote.Length *= NoteDivision;
         }
 
-        private static void CalculatePostions(IEnumerable<TabNote> tabNotes)
+        private static void CalculatePositions(IEnumerable<TabNote> tabNotes)
         {
             var position = 0M;
             foreach (var tabNote in tabNotes)
