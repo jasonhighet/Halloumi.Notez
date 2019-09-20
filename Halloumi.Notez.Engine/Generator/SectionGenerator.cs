@@ -1095,6 +1095,16 @@ namespace Halloumi.Notez.Engine.Generator
             }
         }
 
+        public void ApplyStrategiesToMidiFiles(List<string> midiFiles)
+        {
+            foreach (var midiFile in midiFiles)
+            {
+                var section = MidiHelper.ReadMidi(midiFile);
+                ApplyStrategiesToSection(section);
+                MidiHelper.SaveToMidi(section, midiFile);
+            }
+        }
+
         private void ApplyStrategiesToSection(Section section)
         {
             if (section.Phrases.Count != _generatorSettings.Channels.Count)

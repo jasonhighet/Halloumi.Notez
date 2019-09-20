@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Halloumi.Notez.Engine.Midi;
 
 namespace Halloumi.Notez.Windows
 {
@@ -224,6 +225,78 @@ namespace Halloumi.Notez.Windows
                 _generator.ExportSections(dialog.SelectedPath);
                 Cursor = Cursors.Default;
             }
+        }
+
+        private void ApplyButton_Click(object sender, EventArgs e)
+        {
+            var files = OpenFiles(@"mid files (*.mid)| *.mid|All files (*.*)|*.*");
+            if (files == null || files.Count == 0) return;
+
+            Cursor = Cursors.WaitCursor;
+            _generator.ApplyStrategiesToMidiFiles(files);
+            Cursor = Cursors.Default;
+
+        }
+
+        private void CopyButton_Click(object sender, EventArgs e)
+        {
+            var file = OpenFile(@"mpl files (*.mpl)| *.mpl|All files (*.*)|*.*");
+            if(file == "") return;
+            var folder = OpenFolder("Select destination");
+            if (folder == "") return;
+
+            Cursor = Cursors.WaitCursor;
+            MidiFileLibraryHelper.CopyPlaylistFiles(file, folder);
+            Cursor = Cursors.Default;
+        }
+
+        private static string OpenFolder(string description)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = description;
+                var result = dialog.ShowDialog();
+
+                if (result != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.SelectedPath)) return "";
+
+                return dialog.SelectedPath;
+            }
+        }
+
+        private static string OpenFile(string filter)
+        {
+            using (var dialog = new OpenFileDialog())
+            {
+                dialog.Multiselect = false;
+                dialog.Filter = filter;
+                var result = dialog.ShowDialog();
+                if (result != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.FileName)) return "";
+                return dialog.FileName;
+            }
+        }
+
+        private static List<string> OpenFiles(string filter)
+        {
+            using (var dialog = new OpenFileDialog())
+            {
+                dialog.Multiselect = true;
+                dialog.Filter = filter;
+                var result = dialog.ShowDialog();
+                if (result != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.FileName)) return new List<string>();
+                return dialog.FileNames.ToList();
+            }
+        }
+
+        private void TidyButton_Click(object sender, EventArgs e)
+        {
+            var files = OpenFiles(@"mid files (*.mid)| *.mid|All files (*.*)|*.*");
+            if (files == null || files.Count == 0) return;
+            var folder = OpenFolder("Select destination");
+            if (folder == "") return;
+
+            Cursor = Cursors.WaitCursor;
+            MidiFileLibraryHelper.CopyPlaylistFiles(files, folder);
+            Cursor = Cursors.Default;
         }
     }
 }

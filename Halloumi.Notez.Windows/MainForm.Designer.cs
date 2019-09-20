@@ -49,6 +49,9 @@
             this.GoodButton = new System.Windows.Forms.Button();
             this.ExportDrumsButton = new System.Windows.Forms.Button();
             this.ExportSectionsButton = new System.Windows.Forms.Button();
+            this.ApplyButton = new System.Windows.Forms.Button();
+            this.CopyButton = new System.Windows.Forms.Button();
+            this.TidyButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -275,11 +278,47 @@
             this.ExportSectionsButton.UseVisualStyleBackColor = true;
             this.ExportSectionsButton.Click += new System.EventHandler(this.ExportSectionsButton_Click);
             // 
+            // ApplyButton
+            // 
+            this.ApplyButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ApplyButton.Location = new System.Drawing.Point(543, 21);
+            this.ApplyButton.Name = "ApplyButton";
+            this.ApplyButton.Size = new System.Drawing.Size(131, 28);
+            this.ApplyButton.TabIndex = 22;
+            this.ApplyButton.Text = "Apply";
+            this.ApplyButton.UseVisualStyleBackColor = true;
+            this.ApplyButton.Click += new System.EventHandler(this.ApplyButton_Click);
+            // 
+            // CopyButton
+            // 
+            this.CopyButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.CopyButton.Location = new System.Drawing.Point(406, 454);
+            this.CopyButton.Name = "CopyButton";
+            this.CopyButton.Size = new System.Drawing.Size(131, 28);
+            this.CopyButton.TabIndex = 23;
+            this.CopyButton.Text = "Copy";
+            this.CopyButton.UseVisualStyleBackColor = true;
+            this.CopyButton.Click += new System.EventHandler(this.CopyButton_Click);
+            // 
+            // TidyButton
+            // 
+            this.TidyButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.TidyButton.Location = new System.Drawing.Point(543, 454);
+            this.TidyButton.Name = "TidyButton";
+            this.TidyButton.Size = new System.Drawing.Size(131, 28);
+            this.TidyButton.TabIndex = 24;
+            this.TidyButton.Text = "Tidy";
+            this.TidyButton.UseVisualStyleBackColor = true;
+            this.TidyButton.Click += new System.EventHandler(this.TidyButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(544, 523);
+            this.ClientSize = new System.Drawing.Size(680, 490);
+            this.Controls.Add(this.TidyButton);
+            this.Controls.Add(this.CopyButton);
+            this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.ExportSectionsButton);
             this.Controls.Add(this.ExportDrumsButton);
             this.Controls.Add(this.GoodButton);
@@ -336,6 +375,9 @@
         private System.Windows.Forms.Button GoodButton;
         private System.Windows.Forms.Button ExportDrumsButton;
         private System.Windows.Forms.Button ExportSectionsButton;
+        private System.Windows.Forms.Button ApplyButton;
+        private System.Windows.Forms.Button CopyButton;
+        private System.Windows.Forms.Button TidyButton;
     }
 }
 
