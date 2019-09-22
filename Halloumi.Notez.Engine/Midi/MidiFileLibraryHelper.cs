@@ -12,16 +12,21 @@ namespace Halloumi.Notez.Engine.Midi
     {
         public static void CopyPlaylistFiles(string playlistFile, string destinationFolder)
         {
+            var files = LoadPlaylist(playlistFile);
+            CopyPlaylistFiles(files.ToList(), destinationFolder);
+        }
+
+        public static void CopyPlaylistFiles(List<string> files, string destinationFolder)
+        {
             if (!Directory.Exists(destinationFolder))
                 Directory.CreateDirectory(destinationFolder);
 
-            var files = LoadPlaylist(playlistFile);
             foreach (var file in files)
             {
                 var newFile = GetNewFileName(file, destinationFolder);
                 File.Copy(file, newFile, true);
             }
-            
+
             var renamedFiles = Directory.GetFiles(destinationFolder);
             Parallel.ForEach(renamedFiles, UpdateMidiChannelNamesToMatchInstruments);
         }

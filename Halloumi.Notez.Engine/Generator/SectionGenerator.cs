@@ -303,10 +303,10 @@ namespace Halloumi.Notez.Engine.Generator
             var phrase = new Phrase { PhraseLength = phraseLength };
 
             var selectedNotes =
-                (from onoffProbability in probabilities.NoteProbabilities
-                 let noteOn = GetRandomBool(onoffProbability.OnOffChance)
+                (from onOffProbability in probabilities.NoteProbabilities
+                 let noteOn = GetRandomBool(onOffProbability.OnOffChance)
                  where noteOn
-                 select onoffProbability).ToList();
+                 select onOffProbability).ToList();
 
             while (selectedNotes.Count > noteCount)
             {
@@ -929,7 +929,6 @@ namespace Halloumi.Notez.Engine.Generator
                 foreach (var clip in clips)
                 {
                     clip.Scale = scale.Scale.Name;
-                    clip.ScaleMatchIncomplete = scale.NotInScale.Count > 0;
                 }
             }
         }
@@ -1084,7 +1083,7 @@ namespace Halloumi.Notez.Engine.Generator
 
         public void ExportSections(string folder)
         {
-            var sections = Clips.Select(x => x.Section).Distinct().ToList();
+            var sections = Clips.Where(x=>!x.IsSecondary).Select(x => x.Section).Distinct().ToList();
 
             foreach (var sectionName in sections)
             {
@@ -1093,6 +1092,16 @@ namespace Halloumi.Notez.Engine.Generator
 
                 var path = Path.Combine(folder, sectionName + ".mid");
                 MidiHelper.SaveToMidi(section, path);
+            }
+        }
+
+        public void ApplyStrategiesToMidiFiles(List<string> midiFiles)
+        {
+            foreach (var midiFile in midiFiles)
+            {
+                var section = MidiHelper.ReadMidi(midiFile);
+                ApplyStrategiesToSection(section);
+                MidiHelper.SaveToMidi(section, midiFile);
             }
         }
 
@@ -1161,9 +1170,7 @@ namespace Halloumi.Notez.Engine.Generator
             public string Artist { get; set; }
             public string Section { get; set; }
             public Phrase Phrase { get; set; }
-            //public List<ScaleHelper.ScaleMatch> MatchingScales { get; set; }
             public string Scale { get; set; }
-            public bool ScaleMatchIncomplete { get; set; }
             public int BaseIntervalDiff { get; set; }
 
             public string ClipType { get; set; }

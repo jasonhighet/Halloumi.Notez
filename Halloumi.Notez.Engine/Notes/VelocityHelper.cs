@@ -41,7 +41,7 @@ namespace Halloumi.Notez.Engine.Notes
         {
             const decimal minVelocity = 60M;
             const decimal maxVelocity = 120M;
-            var velocityRange = maxVelocity - minVelocity;
+            const decimal velocityRange = maxVelocity - minVelocity;
 
             var minLength = phrase.Elements.Min(x => x.Duration);
             var maxLength = phrase.Elements.Max(x => x.Duration);
