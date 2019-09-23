@@ -27,9 +27,10 @@ namespace Halloumi.Notez.Engine.Midi
                 var trackChunk = new TrackChunk();
                 AddBpmEvent(trackChunk, bpm);
                 AddTimeSignatureEvent(trackChunk);
-
                 AddNameEvent(trackChunk, phrase.Description);
                 SetInstrument(trackChunk, phrase);
+                SetPan(trackChunk, phrase);
+
                 _trackChunks.Add(trackChunk);
             }
 
@@ -67,6 +68,21 @@ namespace Halloumi.Notez.Engine.Midi
 
 
             }
+        }
+
+        private void SetPan(TrackChunk chunk, Phrase phrase)
+        {
+            const int panControl = 10;
+            var panAmount = Convert.ToInt32(((phrase.Panning + 1) / 2) * 126);
+
+            var controlChange = new ControlChangeEvent()
+            {
+                Channel = GetChannel(_trackChunks.Count, phrase),
+                ControlNumber = (SevenBitNumber)panControl,
+                ControlValue = (SevenBitNumber)panAmount
+            };
+
+            chunk.Events.Add(controlChange);
         }
 
         private static void AddBpmEvent(TrackChunk trackChunk, decimal bpm)

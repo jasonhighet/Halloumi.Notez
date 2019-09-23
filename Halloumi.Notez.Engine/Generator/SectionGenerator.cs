@@ -1148,6 +1148,7 @@ namespace Halloumi.Notez.Engine.Generator
                 channelPhrase.Description = channel.Name;
                 channelPhrase.Instrument = channel.Instrument;
                 channelPhrase.Bpm = _generatorSettings.Bpm;
+                channelPhrase.Panning = channel.Panning;
             }
 
             var scale = CalculateScale(section, _generatorSettings.Scale);
@@ -1276,6 +1277,8 @@ namespace Halloumi.Notez.Engine.Generator
                 public int MaximumNotesInChord { get; set; }
 
                 public decimal ConvertChordsToNotesCoverage { get; set; }
+
+                public decimal Panning { get; set; }
             }
         }
     }

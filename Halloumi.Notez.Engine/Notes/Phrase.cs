@@ -26,6 +26,8 @@ namespace Halloumi.Notez.Engine.Notes
 
         public bool IsDrums { get; set; }
 
+        public decimal Panning { get; set; }
+
         public Phrase Clone()
         {
             return new Phrase()
@@ -35,7 +37,8 @@ namespace Halloumi.Notez.Engine.Notes
                 Description = Description,
                 Bpm = Bpm,
                 Instrument = Instrument,
-                IsDrums = IsDrums
+                IsDrums = IsDrums,
+                Panning = Panning
             };
         }
     }

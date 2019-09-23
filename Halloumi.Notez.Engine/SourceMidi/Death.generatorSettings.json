@@ -17,7 +17,8 @@
       "IsDrums": false,
       "IsPrimaryRiff": true,
       "VelocityStrategy": "Shreddage",
-      "MaximumNotesInChord": 3
+      "MaximumNotesInChord": 3,
+      "Panning": -0.5
     },
     {
       "Name": "AltGuitar",
@@ -28,7 +29,8 @@
       "IsDrums": false,
       "IsPrimaryRiff": true,
       "VelocityStrategy": "Shreddage",
-      "MaximumNotesInChord": 3
+      "MaximumNotesInChord": 3,
+      "Panning": 0.5
     },
     {
       "Name": "BassGuitar",

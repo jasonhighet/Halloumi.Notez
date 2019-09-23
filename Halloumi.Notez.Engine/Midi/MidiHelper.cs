@@ -50,7 +50,7 @@ namespace Halloumi.Notez.Engine.Midi
 
                 var programEvent = chunk.Events.OfType<ProgramChangeEvent>().FirstOrDefault();
                 if (programEvent != null)
-                    phrase.Instrument = (MidiInstrument)(int) programEvent.ProgramNumber;
+                    phrase.Instrument = (MidiInstrument)(int)programEvent.ProgramNumber;
 
                 var nameEvent = chunk.Events.OfType<SequenceTrackNameEvent>().FirstOrDefault();
                 if (nameEvent != null)
@@ -59,6 +59,12 @@ namespace Halloumi.Notez.Engine.Midi
                 var tempoEvent = chunk.Events.OfType<SetTempoEvent>().FirstOrDefault();
                 if (tempoEvent != null)
                     phrase.Bpm = Math.Round(1M / (tempoEvent.MicrosecondsPerQuarterNote / 60M) * 1000000M, 2);
+
+                var panEvent = chunk.Events
+                    .OfType<ControlChangeEvent>().FirstOrDefault(x => x.ControlNumber == (SevenBitNumber)10);
+                if (panEvent != null)
+                    phrase.Panning = (panEvent.ControlValue / 126M * 2M) - 1M;
+
 
                 using (var manager = new TimedEventsManager(chunk.Events))
                 {
@@ -95,8 +101,8 @@ namespace Halloumi.Notez.Engine.Midi
                 throw new ApplicationException("Invalid Midi File");
 
             // remove blank tempo phrase
-            if (section.Phrases.Count > 1 
-                && section.Phrases[0].PhraseLength == 0 
+            if (section.Phrases.Count > 1
+                && section.Phrases[0].PhraseLength == 0
                 && section.Phrases[0].Instrument == MidiInstrument.AcousticGrandPiano
                 && !section.Phrases[0].IsDrums)
             {
@@ -182,7 +188,7 @@ namespace Halloumi.Notez.Engine.Midi
                         break;
 
                     var sourceElement = sourcePhrase.Elements[index];
-                    if (testElement.Note == sourceElement.Note 
+                    if (testElement.Note == sourceElement.Note
                         && Math.Abs(testElement.Duration - sourceElement.Duration) < 0.00000000000000000001M
                         && Math.Abs(testElement.OffPosition - sourceElement.OffPosition) < 0.00000000000000000001M
                         && Math.Abs(testElement.Position - sourceElement.Position) < 0.00000000000000000001M) continue;
