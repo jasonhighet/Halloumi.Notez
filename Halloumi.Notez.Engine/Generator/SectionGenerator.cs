@@ -134,7 +134,7 @@ namespace Halloumi.Notez.Engine.Generator
 
             foreach (var sectionName in sections)
             {
-                var section = new Section();
+                var section = new Section(sectionName);
                 foreach (var channel in _generatorSettings.Channels)
                 {
                     var channelClip = clips.First(x => x.ClipType == channel.Name && x.Section == sectionName);
@@ -149,7 +149,8 @@ namespace Halloumi.Notez.Engine.Generator
                     section.Phrases.Add(channelPhrase);
                 }
 
-                MidiHelper.SaveToMidi(section, Path.Combine(GetLibraryFolder(), sectionName + ".mid"));
+                var filepath = Path.Combine(GetLibraryFolder(), sectionName + ".mid");
+                MidiHelper.SaveToMidi(section, filepath);
             }
 
             var filesToDelete = Directory.EnumerateFiles(GetLibraryFolder(), "*.mid", SearchOption.AllDirectories)
@@ -450,20 +451,22 @@ namespace Halloumi.Notez.Engine.Generator
 
         private void GenerateSection(string filename, SourceFilter filter)
         {
+            if (!filename.EndsWith(".mid"))
+                filename += ".mid";
+
             var sourceCount =
                 GetBellCurvedRandom(_generatorSettings.SourceCount - 1, _generatorSettings.SourceCount + 1);
             if (sourceCount < 2) sourceCount = 2;
             var sourceBaseClips = LoadSourceBasePhraseClips(sourceCount, filter);
 
-            var section = GenerateSection(sourceBaseClips);
-            ApplyStrategiesToSection(section);
+            var section = GenerateSection(sourceBaseClips, Path.GetFileNameWithoutExtension(filename));
+            if(!ApplyStrategiesToSection(section))
+                throw new ApplicationException("Cannot apply strategies to generated section");
 
-            if (!filename.EndsWith(".mid"))
-                filename += ".mid";
             MidiHelper.SaveToMidi(section, filename);
         }
 
-        private Section GenerateSection(List<Clip> sourceBaseClips)
+        private Section GenerateSection(List<Clip> sourceBaseClips, string name)
         {
             var randomClips = GenerateRandomClips(sourceBaseClips);
             sourceBaseClips.AddRange(randomClips.Where(x => x.ClipType == "BasePhrase"));
@@ -471,7 +474,7 @@ namespace Halloumi.Notez.Engine.Generator
             var mergedPhrase = MergePhrases(sourceBaseClips.Select(x => x.Phrase).ToList());
             mergedPhrase.Phrase.Bpm = _generatorSettings.Bpm;
 
-            var section = new Section();
+            var section = new Section(name);
             foreach (var channel in _generatorSettings.Channels)
             {
                 Phrase channelPhrase;
@@ -1070,7 +1073,7 @@ namespace Halloumi.Notez.Engine.Generator
             foreach (var clip in DrumClips().Where(x => !x.IsSecondary))
             {
                 var path = Path.Combine(folder, clip.Section + " Drums.mid");
-                var section = new Section();
+                var section = new Section(clip.Section + " Drums");
                 var phrase = clip.Phrase.Clone();
                 phrase.IsDrums = true;
                 phrase.Bpm = _generatorSettings.Bpm;
@@ -1088,7 +1091,8 @@ namespace Halloumi.Notez.Engine.Generator
             foreach (var sectionName in sections)
             {
                 var section = GetSectionFromClips(sectionName);
-                ApplyStrategiesToSection(section);
+
+                if (!ApplyStrategiesToSection(section)) continue;
 
                 var path = Path.Combine(folder, sectionName + ".mid");
                 MidiHelper.SaveToMidi(section, path);
@@ -1100,15 +1104,20 @@ namespace Halloumi.Notez.Engine.Generator
             foreach (var midiFile in midiFiles)
             {
                 var section = MidiHelper.ReadMidi(midiFile);
-                ApplyStrategiesToSection(section);
+
+                if (!ApplyStrategiesToSection(section)) continue;
+
                 MidiHelper.SaveToMidi(section, midiFile);
             }
         }
 
-        private void ApplyStrategiesToSection(Section section)
+        private bool ApplyStrategiesToSection(Section section)
         {
             if (section.Phrases.Count != _generatorSettings.Channels.Count)
-                throw new ApplicationException("Phrase count does not equal channel count");
+            {
+                Console.WriteLine(section.Description + " -  Phrase count does not equal channel count");
+                return false;
+            }
 
             foreach (var channel in _generatorSettings.Channels)
             {
@@ -1139,11 +1148,13 @@ namespace Halloumi.Notez.Engine.Generator
             }
 
             PhraseHelper.EnsureLengthsAreEqual(section.Phrases);
+
+            return false;
         }
 
         private Section GetSectionFromClips(string sectionName)
         {
-            var section = new Section();
+            var section = new Section(sectionName);
             foreach (var channel in _generatorSettings.Channels)
             {
                 Phrase channelPhrase;

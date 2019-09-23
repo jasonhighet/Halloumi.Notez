@@ -40,7 +40,7 @@ namespace Halloumi.Notez.Engine.Midi
         {
             var midi = MidiFile.Read(filepath);
 
-            var section = new Section();
+            var section = new Section(Path.GetFileNameWithoutExtension(filepath));
             foreach (var midiChunk in midi.Chunks)
             {
                 if (!(midiChunk is TrackChunk chunk))
@@ -93,6 +93,15 @@ namespace Halloumi.Notez.Engine.Midi
 
             if (section.Phrases.Count == 0)
                 throw new ApplicationException("Invalid Midi File");
+
+            // remove blank tempo phrase
+            if (section.Phrases.Count > 1 
+                && section.Phrases[0].PhraseLength == 0 
+                && section.Phrases[0].Instrument == MidiInstrument.AcousticGrandPiano
+                && !section.Phrases[0].IsDrums)
+            {
+                section.Phrases.RemoveAt(0);
+            }
 
             return section;
         }

@@ -232,10 +232,18 @@ namespace Halloumi.Notez.Windows
             var files = OpenFiles(@"mid files (*.mid)| *.mid|All files (*.*)|*.*");
             if (files == null || files.Count == 0) return;
 
-            Cursor = Cursors.WaitCursor;
-            _generator.ApplyStrategiesToMidiFiles(files);
-            Cursor = Cursors.Default;
 
+            Cursor = Cursors.WaitCursor;
+            var consoleOut = new StringWriter();
+            Console.SetOut(consoleOut);
+
+            _generator.ApplyStrategiesToMidiFiles(files);
+
+            Console.SetOut(Console.Out);
+            var message = consoleOut.ToString();
+            if (message.Trim() != "")
+                MessageBox.Show(message);
+            Cursor = Cursors.Default;
         }
 
         private void CopyButton_Click(object sender, EventArgs e)

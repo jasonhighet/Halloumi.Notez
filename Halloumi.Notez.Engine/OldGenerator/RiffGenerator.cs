@@ -20,7 +20,7 @@ namespace Halloumi.Notez.Engine.OldGenerator
                 var midiPath = GetFileName(i, phrase);
                 phrase.Instrument = MidiInstrument.OverdrivenGuitar;
 
-                var section = new Section();
+                var section = new Section(Path.GetFileNameWithoutExtension(midiPath));
                 section.Phrases.Add(phrase);
 
                 MidiHelper.SaveToMidi(section, midiPath);
