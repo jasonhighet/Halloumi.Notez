@@ -32,7 +32,7 @@
       "VelocityStrategy": "Shreddage",
       "MaximumNotesInChord": 3,
       "ConvertChordsToNotesCoverage": 0.5,
-      "Panning": -0.5
+      "Panning": 0.5
     },
     {
       "Name": "BassGuitar",

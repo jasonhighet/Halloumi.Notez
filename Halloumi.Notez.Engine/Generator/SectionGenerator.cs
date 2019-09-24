@@ -1023,7 +1023,7 @@ namespace Halloumi.Notez.Engine.Generator
             filename = GetSectionNameFromFilename(filename);
             filename = filename.Split('-')[0];
 
-            return filename;
+            return filename.ToUpper();
         }
 
         private string RemoveFileEnding(string filename)
