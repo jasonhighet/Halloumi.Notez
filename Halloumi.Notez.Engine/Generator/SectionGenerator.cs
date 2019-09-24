@@ -132,7 +132,7 @@ namespace Halloumi.Notez.Engine.Generator
             var clips = LoadMidiInFolder(GetLibraryFolder());
             var sections = clips
                 .Where(x => !x.IsSecondary)
-              //  .Where(x=> IsSingleChannelMidiFile(x.Filename))
+                .Where(x=> IsSingleChannelMidiFile(x.Filename))
                 .Select(x => x.Section)
                 .Distinct().ToList();
 
