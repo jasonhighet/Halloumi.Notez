@@ -130,27 +130,38 @@ namespace Halloumi.Notez.Engine.Generator
         public void MergeSourceClips()
         {
             var clips = LoadMidiInFolder(GetLibraryFolder());
-            var sections = clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
+            var sections = clips
+                .Where(x => !x.IsSecondary)
+              //  .Where(x=> IsSingleChannelMidiFile(x.Filename))
+                .Select(x => x.Section)
+                .Distinct().ToList();
 
             foreach (var sectionName in sections)
             {
                 var section = new Section(sectionName);
                 foreach (var channel in _generatorSettings.Channels)
                 {
-                    var channelClip = clips.First(x => x.ClipType == channel.Name && x.Section == sectionName);
+                    var channelClip = clips.FirstOrDefault(x => x.ClipType == channel.Name && x.Section == sectionName);
+                    if (channelClip == null)
+                    {
+                        Console.WriteLine(sectionName + " is missing " + channel.Name);
+                        continue;
+                    }
 
-                    var channelPhrase = channelClip.Phrase.Clone();
-                    channelPhrase.IsDrums = channel.IsDrums;
-                    channelPhrase.Description = channel.Name;
-                    channelPhrase.Instrument = channel.Instrument;
-                    channelPhrase.Bpm = _generatorSettings.Bpm;
-                    channelPhrase.PhraseLength = NoteHelper.GetTotalDuration(channelPhrase);
+                    section.Phrases.Add(channelClip.Phrase.Clone());
+                }
 
-                    section.Phrases.Add(channelPhrase);
+                if (section.Phrases.Count != _generatorSettings.Channels.Count) continue;
+
+                if (!ApplyStrategiesToSection(section))
+                {
+                    Console.WriteLine("Can't apply strategies to "  + sectionName);
+                    continue;
                 }
 
                 var filepath = Path.Combine(GetLibraryFolder(), sectionName + ".mid");
                 MidiHelper.SaveToMidi(section, filepath);
+
             }
 
             var filesToDelete = Directory.EnumerateFiles(GetLibraryFolder(), "*.mid", SearchOption.AllDirectories)
