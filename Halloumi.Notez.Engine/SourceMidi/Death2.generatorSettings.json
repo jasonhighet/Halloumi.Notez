@@ -1,0 +1,54 @@
+{
+  "SourceCount": 2,
+  "RandomSourceCount": 0,
+  "Bpm": 180.0,
+  "Scale": "C Harmonic Minor",
+  "LibraryFolder": "Death2",
+  "Channels": [
+    {
+      "Name": "MainGuitar",
+      "MidiChannel": 1,
+      "Instrument": 30,
+      "FileEnding": " 1",
+      "DefaultStepDifference": 0,
+      "IsDrums": false,
+      "IsPrimaryRiff": true,
+      "VelocityStrategy": "Shreddage",
+      "MaximumNotesInChord": 3,
+      "Panning": -0.5
+    },
+    {
+      "Name": "AltGuitar",
+      "MidiChannel": 2,
+      "Instrument": 29,
+      "FileEnding": " 2",
+      "DefaultStepDifference": 12,
+      "IsDrums": false,
+      "IsPrimaryRiff": true,
+      "VelocityStrategy": "Shreddage",
+      "MaximumNotesInChord": 3,
+      "Panning": 0.5
+    },
+    {
+      "Name": "BassGuitar",
+      "MidiChannel": 3,
+      "Instrument": 33,
+      "FileEnding": " 3",
+      "DefaultStepDifference": -12,
+      "IsDrums": false,
+      "IsPrimaryRiff": false,
+      "VelocityStrategy": "",
+      "MaximumNotesInChord": 1
+    },
+    {
+      "Name": "Drums",
+      "MidiChannel": 10,
+      "Instrument": 0,
+      "FileEnding": " 4",
+      "DefaultStepDifference": 0,
+      "IsDrums": true,
+      "IsPrimaryRiff": false,
+      "VelocityStrategy": ""
+    }
+  ]
+}
