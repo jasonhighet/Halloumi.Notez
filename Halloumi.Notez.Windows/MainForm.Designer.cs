@@ -242,6 +242,7 @@
             this.FilesListBox.ItemHeight = 16;
             this.FilesListBox.Location = new System.Drawing.Point(109, 302);
             this.FilesListBox.Name = "FilesListBox";
+            this.FilesListBox.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
             this.FilesListBox.Size = new System.Drawing.Size(144, 180);
             this.FilesListBox.TabIndex = 18;
             this.FilesListBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.FilesListBox_MouseDown);

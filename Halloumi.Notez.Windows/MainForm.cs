@@ -310,10 +310,16 @@ namespace Halloumi.Notez.Windows
 
         private void FilesListBox_MouseDown(object sender, MouseEventArgs e)
         {
-            var sourceFileName = FilesListBox.SelectedItem.ToString();
+            if(FilesListBox.SelectedItems.Count == 0)
+                return;
 
             var dataObject = new DataObject();
-            var filePaths = new StringCollection {sourceFileName};
+            var filePaths = new StringCollection();
+            foreach (var item in FilesListBox.SelectedItems)
+            {
+                filePaths.Add(Path.GetFullPath(item.ToString()));
+            }
+
             dataObject.SetFileDropList(filePaths);
             
             FilesListBox.DoDragDrop(dataObject, DragDropEffects.All);
