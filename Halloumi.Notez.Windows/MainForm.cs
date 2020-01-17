@@ -1,6 +1,7 @@
 ﻿using Halloumi.Notez.Engine.Generator;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -305,6 +306,17 @@ namespace Halloumi.Notez.Windows
             Cursor = Cursors.WaitCursor;
             MidiFileLibraryHelper.CopyPlaylistFiles(files, folder);
             Cursor = Cursors.Default;
+        }
+
+        private void FilesListBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            var sourceFileName = FilesListBox.SelectedItem.ToString();
+
+            var dataObject = new DataObject();
+            var filePaths = new StringCollection {sourceFileName};
+            dataObject.SetFileDropList(filePaths);
+            
+            FilesListBox.DoDragDrop(dataObject, DragDropEffects.All);
         }
     }
 }
