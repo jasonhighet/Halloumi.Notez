@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Halloumi.Notez.Engine.Magenta;
 using Halloumi.Notez.Engine.Midi;
 
 namespace Halloumi.Notez.Windows
@@ -23,6 +24,7 @@ namespace Halloumi.Notez.Windows
             magenta.Dock = DockStyle.Fill;
 
             generator.Initialise();
+            magenta.Inititalise();
 
             ViewGeneratorButton_Click(null, null);
         }
@@ -42,6 +44,11 @@ namespace Halloumi.Notez.Windows
 
             magenta.Visible = true;
             generator.Visible = false;
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            MagentaHelper.Stop();
         }
     }
 }

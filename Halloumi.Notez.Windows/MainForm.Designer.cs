@@ -32,8 +32,8 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ViewGeneratorButton = new System.Windows.Forms.ToolStripMenuItem();
             this.ViewMagentaButton = new System.Windows.Forms.ToolStripMenuItem();
-            this.magenta = new Halloumi.Notez.Windows.Controls.Magenta();
             this.generator = new Halloumi.Notez.Windows.Controls.Generator();
+            this.magenta = new Halloumi.Notez.Windows.Controls.Magenta();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -73,23 +73,22 @@
             this.ViewMagentaButton.Text = "&Magenta";
             this.ViewMagentaButton.Click += new System.EventHandler(this.ViewMagentaButton_Click);
             // 
+            // generator
+            // 
+            this.generator.Location = new System.Drawing.Point(0, 273);
+            this.generator.Name = "generator";
+            this.generator.Size = new System.Drawing.Size(692, 259);
+            this.generator.TabIndex = 2;
+            // 
             // magenta
             // 
             this.magenta.AllowDrop = true;
-            this.magenta.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.magenta.Location = new System.Drawing.Point(0, 0);
+            this.magenta.Dock = System.Windows.Forms.DockStyle.Top;
+            this.magenta.Location = new System.Drawing.Point(0, 28);
             this.magenta.Name = "magenta";
-            this.magenta.Size = new System.Drawing.Size(692, 532);
-            this.magenta.TabIndex = 3;
+            this.magenta.Size = new System.Drawing.Size(692, 239);
+            this.magenta.TabIndex = 4;
             this.magenta.Visible = false;
-            // 
-            // generator
-            // 
-            this.generator.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.generator.Location = new System.Drawing.Point(0, 28);
-            this.generator.Name = "generator";
-            this.generator.Size = new System.Drawing.Size(692, 504);
-            this.generator.TabIndex = 2;
             // 
             // MainForm
             // 
@@ -97,9 +96,9 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(692, 532);
+            this.Controls.Add(this.magenta);
             this.Controls.Add(this.generator);
             this.Controls.Add(this.menuStrip1);
-            this.Controls.Add(this.magenta);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
@@ -107,6 +106,7 @@
             this.Name = "MainForm";
             this.ShowIcon = false;
             this.Text = "Notez";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

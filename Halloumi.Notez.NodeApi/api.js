@@ -33,9 +33,11 @@ app.use(bodyParser.json());
 
 var upload = multer();
 
-app.post("", upload.array("midi"), (req, res) => {
-  console.log(req);
+app.get("/test", function(req, res) {
+  res.send("Hello, World!");
+});
 
+app.post("/interpolate", upload.array("midi"), (req, res) => {
   var file = req.files[0];
 
   var midi1 = req.files[0].buffer.toString("binary");
