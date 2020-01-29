@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Halloumi.Notez.Engine.Magenta;
 
 namespace Halloumi.Notez.Windows.Controls
 {
@@ -34,5 +35,15 @@ namespace Halloumi.Notez.Windows.Controls
                 : DragDropEffects.None;
         }
 
+        private void InterpolateButton_Click(object sender, EventArgs e)
+        {
+            var midiFiles = new List<string>();
+            foreach (var item in FilesListBox.Items)
+            {
+                midiFiles.Add(item.ToString());
+            }
+
+            MagentaHelper.Interpolate(midiFiles);
+        }
     }
 }

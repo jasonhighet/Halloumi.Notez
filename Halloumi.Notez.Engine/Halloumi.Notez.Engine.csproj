@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Generator\PatternFinder.cs" />
     <Compile Include="Generator\SectionGenerator.cs" />
+    <Compile Include="Magenta\MagentaHelper.cs" />
     <Compile Include="Midi\MidiBuilder.cs" />
     <Compile Include="Notes\Section.cs" />
     <Compile Include="Notes\DrumHelper.cs" />
