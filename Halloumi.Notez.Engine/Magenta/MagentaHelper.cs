@@ -21,14 +21,10 @@ namespace Halloumi.Notez.Engine.Magenta
 
                 foreach (var midFile in midiFiles)
                 {
-                    var stream = new FileStream(midFile, FileMode.Open);
-                    var content = new StreamContent(stream);
-                    content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
-                    {
-                        Name = "midi",
-                    };
+                    var fileContent = new ByteArrayContent(File.ReadAllBytes(midFile));
+                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/midi");
 
-                    form.Add(content, "midi");
+                    form.Add(fileContent, "\"midi\"", "\"" + midFile + "\"");
                 }
 
                 var task = client.PostAsync(url, form);
