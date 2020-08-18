@@ -32,8 +32,10 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ViewGeneratorButton = new System.Windows.Forms.ToolStripMenuItem();
             this.ViewMagentaButton = new System.Windows.Forms.ToolStripMenuItem();
+            this.ViewTabulatorButton = new System.Windows.Forms.ToolStripMenuItem();
             this.generator = new Halloumi.Notez.Windows.Controls.Generator();
             this.magenta = new Halloumi.Notez.Windows.Controls.Magenta();
+            this.tabulator = new Halloumi.Notez.Windows.Controls.Tabulator();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -52,9 +54,10 @@
             // 
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ViewGeneratorButton,
-            this.ViewMagentaButton});
+            this.ViewMagentaButton,
+            this.ViewTabulatorButton});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-            this.viewToolStripMenuItem.Size = new System.Drawing.Size(55, 24);
+            this.viewToolStripMenuItem.Size = new System.Drawing.Size(53, 24);
             this.viewToolStripMenuItem.Text = "&View";
             // 
             // ViewGeneratorButton
@@ -62,22 +65,29 @@
             this.ViewGeneratorButton.Checked = true;
             this.ViewGeneratorButton.CheckState = System.Windows.Forms.CheckState.Checked;
             this.ViewGeneratorButton.Name = "ViewGeneratorButton";
-            this.ViewGeneratorButton.Size = new System.Drawing.Size(158, 26);
+            this.ViewGeneratorButton.Size = new System.Drawing.Size(216, 26);
             this.ViewGeneratorButton.Text = "&Generator";
             this.ViewGeneratorButton.Click += new System.EventHandler(this.ViewGeneratorButton_Click);
             // 
             // ViewMagentaButton
             // 
             this.ViewMagentaButton.Name = "ViewMagentaButton";
-            this.ViewMagentaButton.Size = new System.Drawing.Size(158, 26);
+            this.ViewMagentaButton.Size = new System.Drawing.Size(216, 26);
             this.ViewMagentaButton.Text = "&Magenta";
             this.ViewMagentaButton.Click += new System.EventHandler(this.ViewMagentaButton_Click);
             // 
+            // ViewTabulatorButton
+            // 
+            this.ViewTabulatorButton.Name = "ViewTabulatorButton";
+            this.ViewTabulatorButton.Size = new System.Drawing.Size(216, 26);
+            this.ViewTabulatorButton.Text = "&Tabulator";
+            this.ViewTabulatorButton.Click += new System.EventHandler(this.ViewTabulatorButton_Click);
+            // 
             // generator
             // 
-            this.generator.Location = new System.Drawing.Point(0, 273);
+            this.generator.Location = new System.Drawing.Point(0, 140);
             this.generator.Name = "generator";
-            this.generator.Size = new System.Drawing.Size(692, 259);
+            this.generator.Size = new System.Drawing.Size(692, 137);
             this.generator.TabIndex = 2;
             // 
             // magenta
@@ -86,9 +96,16 @@
             this.magenta.Dock = System.Windows.Forms.DockStyle.Top;
             this.magenta.Location = new System.Drawing.Point(0, 28);
             this.magenta.Name = "magenta";
-            this.magenta.Size = new System.Drawing.Size(692, 239);
+            this.magenta.Size = new System.Drawing.Size(692, 106);
             this.magenta.TabIndex = 4;
             this.magenta.Visible = false;
+            // 
+            // tabulator
+            // 
+            this.tabulator.Location = new System.Drawing.Point(0, 299);
+            this.tabulator.Name = "tabulator";
+            this.tabulator.Size = new System.Drawing.Size(689, 427);
+            this.tabulator.TabIndex = 5;
             // 
             // MainForm
             // 
@@ -96,10 +113,10 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(692, 532);
+            this.Controls.Add(this.tabulator);
             this.Controls.Add(this.magenta);
             this.Controls.Add(this.generator);
             this.Controls.Add(this.menuStrip1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -123,6 +140,8 @@
         private System.Windows.Forms.ToolStripMenuItem ViewMagentaButton;
         private Controls.Generator generator;
         private Controls.Magenta magenta;
+        private Controls.Tabulator tabulator;
+        private System.Windows.Forms.ToolStripMenuItem ViewTabulatorButton;
     }
 }
 

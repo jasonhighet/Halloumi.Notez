@@ -238,9 +238,11 @@ namespace Halloumi.Notez.Engine.Tabs
         }
 
 
-        public void LoadTabFromPhrase(Phrase phrase)
+        public void LoadTabFromPhrase(Phrase phrase, bool oneLineIfPossible = false)
         {
             TabNotes = new List<TabNote>();
+
+            var lowestLineCutOffFret = oneLineIfPossible ? 16 : 10;
 
             var lowestNote = TabLines.Last().Number;
             var lowestNote2 = TabLines[4].Number;
@@ -251,7 +253,7 @@ namespace Halloumi.Notez.Engine.Tabs
                 var fret = element.Note - lowestNote;
                 var line = TabLines.IndexOf(TabLines.Last());
 
-                if (fret >= 10)
+                if (fret >= lowestLineCutOffFret)
                 {
                     line--;
                     fret = element.Note - lowestNote2;

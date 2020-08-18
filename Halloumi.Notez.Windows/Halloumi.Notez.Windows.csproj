@@ -58,6 +58,12 @@
     <Compile Include="Controls\Magenta.Designer.cs">
       <DependentUpon>Magenta.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\Tabulator.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\Tabulator.Designer.cs">
+      <DependentUpon>Tabulator.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -68,6 +74,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Controls\Magenta.resx">
       <DependentUpon>Magenta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\Tabulator.resx">
+      <DependentUpon>Tabulator.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>

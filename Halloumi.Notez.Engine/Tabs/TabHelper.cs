@@ -50,7 +50,7 @@ namespace Halloumi.Notez.Engine.Tabs
 
         }
 
-        public static string GenerateTab(Phrase phrase, string tuning = "E,B,G,D,A,E")
+        public static string GenerateTab(Phrase phrase, string tuning = "E,B,G,D,A,E", bool oneLineIfPossible = false)
         {
 
             phrase = phrase.Clone();
@@ -73,7 +73,7 @@ namespace Halloumi.Notez.Engine.Tabs
 
 
 
-            tabParser.LoadTabFromPhrase(phrase);
+            tabParser.LoadTabFromPhrase(phrase, oneLineIfPossible);
 
 
             return BuildTab(tabParser);
