@@ -65,7 +65,7 @@
             // NextButton
             // 
             this.NextButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold);
-            this.NextButton.Location = new System.Drawing.Point(512, 15);
+            this.NextButton.Location = new System.Drawing.Point(593, 17);
             this.NextButton.Name = "NextButton";
             this.NextButton.Size = new System.Drawing.Size(75, 28);
             this.NextButton.TabIndex = 2;
@@ -76,7 +76,7 @@
             // PreviousButton
             // 
             this.PreviousButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold);
-            this.PreviousButton.Location = new System.Drawing.Point(593, 14);
+            this.PreviousButton.Location = new System.Drawing.Point(512, 17);
             this.PreviousButton.Name = "PreviousButton";
             this.PreviousButton.Size = new System.Drawing.Size(75, 29);
             this.PreviousButton.TabIndex = 3;
