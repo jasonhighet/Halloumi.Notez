@@ -1,6 +1,9 @@
 ﻿using Halloumi.Notez.Engine.Generator;
 using System;
 using System.IO;
+using Halloumi.Notez.Engine.Midi;
+using Halloumi.Notez.Engine.Notes;
+using Halloumi.Notez.Engine.Tabs;
 
 namespace Halloumi.Notez.TestHarness
 {
@@ -8,22 +11,20 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\";
+            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\doom";
 
-            var sourceLibrary = new SectionGenerator(folder);
-            sourceLibrary.LoadLibrary("Death", true);
+            var section = MidiHelper.ReadMidi(folder + @"\AC-Gasoline1.mid");
+            var phrase = section.Phrases[0];
+            NoteHelper.ShiftNotesDirect(phrase, 2, Interval.Step);
 
 
-            foreach (var midiFile in Directory.EnumerateFiles(".", "*.mid")) File.Delete(midiFile);
-            var now = DateTime.Now.ToString("yyyymmddhhss");
+            var tab = TabHelper.GenerateTab(phrase, "E,B,G,D,A,D");
+            Console.WriteLine(tab);
 
-            //sourceLibrary.GenerateRiffs(now, 20, new SectionGenerator.SourceFilter() { SeedArtist = "SL" });
-            //sourceLibrary.GenerateRiffs(now, 20);
-             
             Console.WriteLine("push any key..");
             Console.ReadLine();
 
-            sourceLibrary.MergeSourceClips();
+            
         }
 
     }

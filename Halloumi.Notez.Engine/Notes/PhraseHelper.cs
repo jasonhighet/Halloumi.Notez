@@ -250,7 +250,7 @@ namespace Halloumi.Notez.Engine.Notes
             if (phrase.Elements.Count % 2 != 0)
                 return false;
 
-            var halfLength = phrase.Elements.Count / 2;
+            var halfLength = (phrase.Elements.Count / 2) -1;
             for (var i = 0; i < halfLength; i++)
             {
                 if (!AreTheSame(phrase.Elements[i], phrase.Elements[i + halfLength]))

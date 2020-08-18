@@ -8,9 +8,14 @@ namespace Halloumi.Notez.Engine.Tabs
 {
     public class TabParser
     {
-        public TabParser()
+        public TabParser() : this("E,B,G,D,A,E")
         {
-            SetTabTuning("E,B,G,D,A,E");
+      
+        }
+
+        public TabParser(string tabTuning)
+        {
+            SetTabTuning(tabTuning);
             NoteDivision = 32;
         }
 
@@ -231,6 +236,58 @@ namespace Halloumi.Notez.Engine.Tabs
         {
             return tabLines.Select(line => line.LastIndexOf("-", StringComparison.Ordinal)).Concat(new[] {0}).Max();
         }
+
+
+        public void LoadTabFromPhrase(Phrase phrase)
+        {
+            TabNotes = new List<TabNote>();
+
+            var lowestNote = TabLines.Last().Number;
+            var lowestNote2 = TabLines[4].Number;
+            var lowestNote3 = TabLines[3].Number;
+
+            foreach (var element in phrase.Elements)
+            {
+                var fret = element.Note - lowestNote;
+                var line = TabLines.IndexOf(TabLines.Last());
+
+                if (fret >= 10)
+                {
+                    line--;
+                    fret = element.Note - lowestNote2;
+                    if (fret >= 10)
+                    {
+                        line--;
+                        fret = element.Note - lowestNote3;
+                    }
+                }
+
+                var tabNote = new TabNote()
+                {
+                    Number = element.Note,
+                    Length = element.Duration,
+                    Fret = fret,
+                    Line = line,
+                    LengthInCharacters = Convert.ToInt32(element.Duration * 2) + 2
+                };
+
+
+                TabNotes.Add(tabNote);
+            }
+
+            var position = 0M;
+            var positionInCharacters = 0;
+            foreach (var tabNote in TabNotes)
+            {
+                tabNote.Position = position;
+                position += tabNote.Length;
+
+                tabNote.PositionInCharacters = positionInCharacters;
+                positionInCharacters += tabNote.LengthInCharacters;
+            }
+        }
+
+
 
         public class TabLine
         {

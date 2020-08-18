@@ -40,5 +40,9 @@ namespace Halloumi.Notez.Engine.Notes
             };
         }
 
+        public override string ToString()
+        {
+            return NoteHelper.NumberToNote(this.Note);
+        }
     }
 }
