@@ -72,6 +72,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Controls\Generator.resx">
+      <DependentUpon>Generator.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\Magenta.resx">
       <DependentUpon>Magenta.cs</DependentUpon>
     </EmbeddedResource>

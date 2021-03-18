@@ -52,6 +52,7 @@
             this.ApplyButton = new System.Windows.Forms.Button();
             this.CopyButton = new System.Windows.Forms.Button();
             this.TidyButton = new System.Windows.Forms.Button();
+            this.DeleteButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -242,15 +243,14 @@
             this.FilesListBox.ItemHeight = 16;
             this.FilesListBox.Location = new System.Drawing.Point(109, 302);
             this.FilesListBox.Name = "FilesListBox";
-            this.FilesListBox.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
-            this.FilesListBox.Size = new System.Drawing.Size(144, 180);
+            this.FilesListBox.Size = new System.Drawing.Size(282, 180);
             this.FilesListBox.TabIndex = 18;
             this.FilesListBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.FilesListBox_MouseDown);
             // 
             // GoodButton
             // 
             this.GoodButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GoodButton.Location = new System.Drawing.Point(260, 302);
+            this.GoodButton.Location = new System.Drawing.Point(406, 307);
             this.GoodButton.Name = "GoodButton";
             this.GoodButton.Size = new System.Drawing.Size(131, 28);
             this.GoodButton.TabIndex = 19;
@@ -313,11 +313,22 @@
             this.TidyButton.UseVisualStyleBackColor = true;
             this.TidyButton.Click += new System.EventHandler(this.TidyButton_Click);
             // 
-            // MainForm
+            // DeleteButton
+            // 
+            this.DeleteButton.Font = new System.Drawing.Font("Segoe UI Semibold", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.DeleteButton.Location = new System.Drawing.Point(406, 341);
+            this.DeleteButton.Name = "DeleteButton";
+            this.DeleteButton.Size = new System.Drawing.Size(131, 28);
+            this.DeleteButton.TabIndex = 25;
+            this.DeleteButton.Text = "Delete";
+            this.DeleteButton.UseVisualStyleBackColor = true;
+            this.DeleteButton.Click += new System.EventHandler(this.DeleteButton_Click);
+            // 
+            // Generator
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(680, 490);
+            this.Controls.Add(this.DeleteButton);
             this.Controls.Add(this.TidyButton);
             this.Controls.Add(this.CopyButton);
             this.Controls.Add(this.ApplyButton);
@@ -342,10 +353,11 @@
             this.Controls.Add(this.mergeButton);
             this.Controls.Add(this.libraryDropdown);
             this.Controls.Add(this.label1);
-            this.Name = "MainForm";
-            this.Text = "Notez";
+            this.Name = "Generator";
+            this.Size = new System.Drawing.Size(710, 530);
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion
@@ -374,5 +386,6 @@
         private System.Windows.Forms.Button ApplyButton;
         private System.Windows.Forms.Button CopyButton;
         private System.Windows.Forms.Button TidyButton;
+        private System.Windows.Forms.Button DeleteButton;
     }
 }

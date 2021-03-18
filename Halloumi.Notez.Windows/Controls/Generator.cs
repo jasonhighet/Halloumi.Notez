@@ -324,5 +324,17 @@ namespace Halloumi.Notez.Windows.Controls
 
             FilesListBox.DoDragDrop(dataObject, DragDropEffects.All);
         }
+
+        private void DeleteButton_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            var sourceFileName = FilesListBox.SelectedItem.ToString();
+            File.Delete(sourceFileName);
+
+            LoadFilesList();
+
+            Cursor = Cursors.Default;
+        }
     }
 }
