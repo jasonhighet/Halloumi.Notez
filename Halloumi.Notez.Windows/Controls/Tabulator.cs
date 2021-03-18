@@ -86,19 +86,19 @@ namespace Halloumi.Notez.Windows.Controls
             TuningBox.Items.Add("E Standard");
             TuningBox.Items.Add("Drop C#");
             TuningBox.Items.Add("Drop C");
-            TuningBox.SelectedIndex = 0;
+            TuningBox.SelectedIndex = 3;
 
             OneLineBox.Items.Clear();
             OneLineBox.Items.Add("Yes");
             OneLineBox.Items.Add("No");
-            OneLineBox.SelectedIndex = 0;
+            OneLineBox.SelectedIndex = 1;
 
             TransposeBox.Items.Clear();
-            for (int i = -6; i < 7; i++)
+            for (int i = -7; i < 7; i++)
             {
                 TransposeBox.Items.Add(i.ToString());
             }
-            TransposeBox.SelectedIndex = 8;
+            TransposeBox.SelectedIndex = 0;
 
         }
 
