@@ -11,18 +11,24 @@ namespace Halloumi.Notez.TestHarness
     {
         static void Main(string[] args)
         {
-            var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\doom";
+            //var folder = @"..\..\..\Halloumi.Notez.Engine\SourceMidi\doom";
 
-            var section = MidiHelper.ReadMidi(folder + @"\AC-Gasoline1.mid");
-            var phrase = section.Phrases[0];
-            NoteHelper.ShiftNotesDirect(phrase, 2, Interval.Step);
+            var generator = new SectionGenerator(@"C:\Users\jason\Documents\GitHub\Halloumi.Notez\Halloumi.Notez.Engine\SourceMidi");
+
+            generator.LoadLibrary("Doom", true);
+
+            generator.ExportBass("");
+
+            //var section = MidiHelper.ReadMidi(folder + @"\AC-Gasoline1.mid");
+            //var phrase = section.Phrases[0];
+            //NoteHelper.ShiftNotesDirect(phrase, 2, Interval.Step);
 
 
-            var tab = TabHelper.GenerateTab(phrase, "E,B,G,D,A,D");
-            Console.WriteLine(tab);
+            //var tab = TabHelper.GenerateTab(phrase, "E,B,G,D,A,D");
+            //Console.WriteLine(tab);
 
-            Console.WriteLine("push any key..");
-            Console.ReadLine();
+            //Console.WriteLine("push any key..");
+            //Console.ReadLine();
 
             
         }

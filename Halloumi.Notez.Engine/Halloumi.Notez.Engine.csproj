@@ -75,5 +75,8 @@
     <None Include="SourceMidi\Death.generatorSettings.json" />
     <None Include="SourceMidi\Doom.generatorSettings.json" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="SourceMidi\DoomBass.generatorSettings.json" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

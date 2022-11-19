@@ -304,7 +304,8 @@ namespace Halloumi.Notez.Engine.Notes
 
                 element.Duration = nextPosition - element.Position;
                 if (element.Duration <= 0)
-                    throw new ApplicationException("Update duration has gone rogue");
+                    element.Duration = 1;
+                    //throw new ApplicationException("Update duration has gone rogue");
             }
         }
 
@@ -328,11 +329,11 @@ namespace Halloumi.Notez.Engine.Notes
         {
             foreach (var element in phrase.Elements)
             {
-                element.Position *= multiplier;
-                element.Duration *= multiplier;
+                element.Position *= (1/multiplier);
+                element.Duration *= (1 / multiplier);
             }
 
-            phrase.PhraseLength *= multiplier;
+            phrase.PhraseLength *= (1 / multiplier);
 
             phrase.Bpm *= multiplier;
         }

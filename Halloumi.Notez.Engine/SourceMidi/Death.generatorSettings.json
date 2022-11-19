@@ -1,5 +1,5 @@
 {
-  "SourceCount": 3,
+  "SourceCount": 2,
   "RandomSourceCount": 1,
   "Bpm": 180.0,
   "Scale": "C Natural Minor",
@@ -7,6 +7,7 @@
   "SecondaryLibraryFolder": "Doom",
   "SecondaryLibraryLengthMultiplier": 2,
   "SecondaryLibraryIncludeDrums": true,
+  "SecondaryLibrarySourceCount": 1,
   "Channels": [
     {
       "Name": "MainGuitar",

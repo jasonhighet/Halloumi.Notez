@@ -70,6 +70,8 @@ namespace Halloumi.Notez.Windows.Controls
                 tuning = "D#,A#,F#,C#,G#,C#";
             else if (tuningName == "Drop C")
                 tuning = "D,A,F,C,G,C";
+            else if (tuningName == "C Standard")
+                tuning = "C,G,D#,A#,F,C"; 
 
             var section = MidiHelper.ReadMidi(_currentFile);
             var phrase = section.Phrases[0];
@@ -86,6 +88,7 @@ namespace Halloumi.Notez.Windows.Controls
             TuningBox.Items.Add("E Standard");
             TuningBox.Items.Add("Drop C#");
             TuningBox.Items.Add("Drop C");
+            TuningBox.Items.Add("C Standard");
             TuningBox.SelectedIndex = 3;
 
             OneLineBox.Items.Clear();
@@ -94,11 +97,11 @@ namespace Halloumi.Notez.Windows.Controls
             OneLineBox.SelectedIndex = 1;
 
             TransposeBox.Items.Clear();
-            for (int i = -7; i < 7; i++)
+            for (int i = -10; i < 10; i++)
             {
                 TransposeBox.Items.Add(i.ToString());
             }
-            TransposeBox.SelectedIndex = 0;
+            TransposeBox.SelectedIndex = 2;
 
         }
 

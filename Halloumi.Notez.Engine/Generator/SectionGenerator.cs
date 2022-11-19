@@ -564,6 +564,8 @@ namespace Halloumi.Notez.Engine.Generator
             var clips = new List<Clip>();
             if (filter == null) filter = new SourceFilter();
 
+            var secondaryCount = _generatorSettings.SecondaryLibrarySourceCount;
+
             clips.AddRange(Clips
                 .Where(x => x.ClipType == "BasePhrase" && !x.IsSecondary)
                 .Where(x => string.IsNullOrEmpty(filter.SeedArtist) || x.Artist == filter.SeedArtist)
@@ -588,20 +590,51 @@ namespace Halloumi.Notez.Engine.Generator
             var initialClip = clips[0];
             var minDuration = initialClip.Phrase.Elements.Min(x => x.Duration);
 
-            clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase")
-                .Where(x => x != initialClip)
-                .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
-                .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
-                //.Where(x => filter.AvgDistanceBetweenKicks == 0 || Math.Round(x.AvgDistanceBetweenKicks, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenKicks)
-                //.Where(x => filter.AvgDistanceBetweenSnares == 0 || Math.Round(x.AvgDistanceBetweenSnares, 0, MidpointRounding.AwayFromZero) == filter.AvgDistanceBetweenSnares)
-                .OrderBy(x => Math.Abs(x.AvgNotePitch - initialClip.AvgNotePitch))
-                .ThenBy(x => Math.Abs(x.AvgNoteDuration - initialClip.AvgNoteDuration))
-                .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - initialClip.AvgDistanceBetweenSnares))
-                .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - initialClip.AvgDistanceBetweenKicks))
-                .Take(10)
-                .OrderBy(x => _random.Next())
-                .Take(count - 1)
-                .ToList());
+            if (secondaryCount > 0)
+            {
+                clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase" && !x.IsSecondary)
+                    .Where(x => x != initialClip)
+                    .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
+                    .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
+                    .OrderBy(x => Math.Abs(x.AvgNotePitch - initialClip.AvgNotePitch))
+                    .ThenBy(x => Math.Abs(x.AvgNoteDuration - initialClip.AvgNoteDuration))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - initialClip.AvgDistanceBetweenSnares))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - initialClip.AvgDistanceBetweenKicks))
+                    .Take(10)
+                    .OrderBy(x => _random.Next())
+                    .Take(count - 1)
+                    .ToList());
+
+                clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase" && x.IsSecondary)
+                    .Where(x => x != initialClip)
+                    .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
+                    .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
+                    .OrderBy(x => Math.Abs(x.AvgNotePitch - initialClip.AvgNotePitch))
+                    .ThenBy(x => Math.Abs(x.AvgNoteDuration - initialClip.AvgNoteDuration))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - initialClip.AvgDistanceBetweenSnares))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - initialClip.AvgDistanceBetweenKicks))
+                    .Take(10)
+                    .OrderBy(x => _random.Next())
+                    .Take(secondaryCount)
+                    .ToList());
+            }
+            else
+            {
+                clips.AddRange(Clips.Where(x => x.ClipType == "BasePhrase")
+                    .Where(x => x != initialClip)
+                    .Where(x => string.IsNullOrEmpty(filter.ArtistFilter) || x.Artist == filter.ArtistFilter)
+                    .Where(x => x.Phrase.Elements.Min(y => y.Duration) == minDuration)
+                    .OrderBy(x => Math.Abs(x.AvgNotePitch - initialClip.AvgNotePitch))
+                    .ThenBy(x => Math.Abs(x.AvgNoteDuration - initialClip.AvgNoteDuration))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenSnares - initialClip.AvgDistanceBetweenSnares))
+                    .ThenBy(x => Math.Abs(x.AvgDistanceBetweenKicks - initialClip.AvgDistanceBetweenKicks))
+                    .Take(10)
+                    .OrderBy(x => _random.Next())
+                    .Take(count - 1)
+                    .ToList());
+            }
+
+
 
             var missing = count - clips.Count;
             if (missing > 0)
@@ -1024,7 +1057,15 @@ namespace Halloumi.Notez.Engine.Generator
 
             if (lengthModifier == 0) return clips;
 
-            foreach (var clip in clips) PhraseHelper.ChangeLength(clip.Phrase, lengthModifier);
+            foreach (var clip in clips)
+            {
+                PhraseHelper.ChangeLength(clip.Phrase, lengthModifier);
+                if (clip.Phrase.PhraseLength > 256)
+                {
+                    PhraseHelper.TrimPhrase(clip.Phrase, 256);
+                }
+            }
+               
 
             return clips;
         }
@@ -1040,7 +1081,7 @@ namespace Halloumi.Notez.Engine.Generator
         private string RemoveFileEnding(string filename)
         {
             foreach (var channel in _generatorSettings.Channels)
-                if (filename.EndsWith(channel.FileEnding + ".mid"))
+                if (!string.IsNullOrEmpty(channel.FileEnding) && filename.EndsWith(channel.FileEnding + ".mid"))
                     filename = filename.Replace(channel.FileEnding + ".mid", "");
 
             return filename;
@@ -1057,7 +1098,10 @@ namespace Halloumi.Notez.Engine.Generator
         private string GetSongNameFromFilename(string filename)
         {
             filename = GetSectionNameFromFilename(filename);
-            filename = filename.Split('-')[1];
+
+            if(filename.Contains("-"))
+                filename = filename.Split('-')[1];
+
             filename = Regex.Replace(filename, @"[\d-]", string.Empty);
 
             return filename;
@@ -1106,6 +1150,36 @@ namespace Halloumi.Notez.Engine.Generator
                 section.Phrases.Add(phrase);
 
                 MidiHelper.SaveToMidi(section, path);
+            }
+        }
+
+        public void ExportBass(string folder)
+        {
+            var sections = Clips.Where(x => !x.IsSecondary).Select(x => x.Section).Distinct().ToList();
+
+            foreach (var sectionName in sections)
+            {
+                var section = GetSectionFromClips(sectionName);
+
+                if (!ApplyStrategiesToSection(section)) continue;
+
+                var bassPhrase = section.Phrases.FirstOrDefault(x => x.Instrument == MidiInstrument.ElectricBassFinger);
+
+
+                var newSection = new Section(section.Description);
+                var phrase = bassPhrase.Clone();
+
+                NoteHelper.ShiftNotesDirect(phrase, 1, Interval.Octave);
+                VelocityHelper.ApplyVelocityStrategy(phrase, "Shreddage");
+
+                phrase.Description = sectionName;
+                phrase.Bpm = _generatorSettings.Bpm;
+
+                newSection.Phrases.Add(phrase);
+
+
+                var path = Path.Combine(folder, sectionName + ".mid");
+                MidiHelper.SaveToMidi(newSection, path);
             }
         }
 
@@ -1250,6 +1324,9 @@ namespace Halloumi.Notez.Engine.Generator
 
         public class GeneratorSettings
         {
+            /// <summary>
+            /// the number of source files to merge together into a new one
+            /// </summary>
             public int SourceCount { get; set; }
 
             public int RandomSourceCount { get; set; }
@@ -1266,6 +1343,8 @@ namespace Halloumi.Notez.Engine.Generator
             public decimal SecondaryLibraryLengthMultiplier { get; set; }
 
             public bool SecondaryLibraryIncludeDrums { get; set; }
+
+            public int SecondaryLibrarySourceCount { get; set; }
 
             public class Channel
             {

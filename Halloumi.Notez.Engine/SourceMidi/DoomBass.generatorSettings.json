@@ -1,0 +1,23 @@
+{
+  "SourceCount": 2,
+  "RandomSourceCount": 1,
+  "Bpm": 70.0,
+  "Scale": "D Natural Minor",
+  "LibraryFolder": "DoomBass",
+  "SecondaryLibraryFolder": "",
+  "SecondaryLibraryLengthMultiplier": 1,
+  "SecondaryLibraryIncludeDrums": false,
+  "Channels": [
+    {
+      "Name": "BassGuitar",
+      "MidiChannel": 3,
+      "Instrument": 33,
+      "FileEnding": "",
+      "DefaultStepDifference": 0,
+      "IsDrums": false,
+      "IsPrimaryRiff": true,
+      "VelocityStrategy": "Shreddage",
+      "MaximumNotesInChord": 1
+    }
+  ]
+}

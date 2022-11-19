@@ -1,12 +1,13 @@
 {
-  "SourceCount": 3,
+  "SourceCount": 2,
   "RandomSourceCount": 1,
   "Bpm": 70.0,
-  "Scale": "C Natural Minor",
+  "Scale": "D Natural Minor",
   "LibraryFolder": "Doom",
   "SecondaryLibraryFolder": "Death",
   "SecondaryLibraryLengthMultiplier": 0.5,
   "SecondaryLibraryIncludeDrums": false,
+  "SecondaryLibrarySourceCount": 1,
   "Channels": [
     {
       "Name": "MainGuitar",
