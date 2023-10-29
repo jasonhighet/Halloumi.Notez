@@ -97,7 +97,7 @@ namespace Halloumi.Notez.Windows.Controls
             OneLineBox.SelectedIndex = 1;
 
             TransposeBox.Items.Clear();
-            for (int i = -10; i < 10; i++)
+            for (int i = -12; i < 13; i++)
             {
                 TransposeBox.Items.Add(i.ToString());
             }

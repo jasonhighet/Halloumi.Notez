@@ -61,22 +61,27 @@ namespace Halloumi.Notez.Engine.Tabs
 
             var tabParser = new TabParser(tuning);
 
-            while (phrase.Elements.Min(x => x.Note) > tabParser.TabLines.Last().Number)
+            var lowNotes = phrase.Elements.Where(x=> x.Note < tabParser.TabLines.Last().Number).ToList();
+            foreach(var lowNote in lowNotes ) 
             {
-                NoteHelper.ShiftNotesDirect(phrase, 1, Interval.Octave, Direction.Down);
+                lowNote.Note = NoteHelper.ShiftNote(lowNote.Note, 1, Interval.Octave);
             }
 
-            while (phrase.Elements.Min(x => x.Note) < tabParser.TabLines.Last().Number)
+            var tabText = "";
+            var tabSections = Convert.ToInt32(phrase.PhraseLength / 32);
+            for (var i = 0; i < tabSections; i++)
             {
-                NoteHelper.ShiftNotesDirect(phrase, 1, Interval.Octave);
+                var start = i * 32;
+                
+                var sectionPhrase = phrase.Clone();
+                PhraseHelper.CropPhrase(sectionPhrase, start, 32);
+                tabParser.LoadTabFromPhrase(sectionPhrase, oneLineIfPossible);
+                tabText += BuildTab(tabParser);
             }
 
+            return tabText;
 
-
-            tabParser.LoadTabFromPhrase(phrase, oneLineIfPossible);
-
-
-            return BuildTab(tabParser);
+            
         }
 
         private static string BuildTab(TabParser parser)
@@ -102,6 +107,7 @@ namespace Halloumi.Notez.Engine.Tabs
             {
                 builder.Append(tabNote.Note.PadRight(tabNote.LengthInCharacters));
             }
+            builder.AppendLine();
             builder.AppendLine();
 
             return builder.ToString();

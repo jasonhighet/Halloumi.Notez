@@ -40,6 +40,33 @@ namespace Halloumi.Notez.Engine.Notes
             phrase.PhraseLength = newLength;
         }
 
+        public static void CropPhrase(Phrase phrase, decimal start, decimal newLength)
+        {
+            var toRemove = phrase.Elements.Where(x => x.Position >= start + newLength).ToList();
+            if (toRemove.Any())
+            {
+                phrase.Elements.RemoveAll(x => x.Position >= start + newLength);
+            }
+            toRemove = phrase.Elements.Where(x => x.Position < start).ToList();
+            if (toRemove.Any())
+            {
+                phrase.Elements.RemoveAll(x => x.Position < start);
+            }
+
+
+            foreach (var element in phrase.Elements.Where(x => x.OffPosition >= start + newLength))
+            {
+                element.Duration = start + newLength - element.Position;
+            }
+
+            foreach (var element in phrase.Elements)
+            {
+                element.Position -= start;
+            }
+
+            phrase.PhraseLength = newLength;
+        }
+
         public static void DuplicatePhrase(Phrase phrase, int count = 1)
         {
             for (var i = 0; i < count; i++)
